@@ -746,6 +746,10 @@ repackager's chart, however much more convenient it is.</p>
   is less work than auditing somebody else's chart on every bump.</li>
 </ul>
 <p>Pin every version. No <code>latest</code>, no floating tags. Renovate moves them.</p>
+<div class="admonition warning">
+<p class="admonition-title">A custom manager for an image field must capture <code>currentDigest</code></p>
+<p><code>config:best-practices</code> pins container images to digests as well as tags, and a custom regex manager that captures only <code>depName</code> and <code>currentValue</code> gives that pin nowhere to write. Renovate then builds an update it cannot apply and fails with <code>Error updating branch: update failure</code>, which takes down the whole shared <code>renovate/pin-dependencies</code> branch rather than the one dependency — while version bumps keep working, so the only visible symptom is the Repository Problems banner on the Dependency Dashboard. Add the group as an optional trailing match, <code>(?&lt;currentValue&gt;[^\s"'@]+)(?:@(?&lt;currentDigest&gt;sha256:[a-f0-9]+))?</code>, where excluding <code>@</code> from <code>currentValue</code> is what stops it swallowing the digest on the next run. A field holding a bare tag rather than a full image reference has no room for a digest at all; those need <code>pinDigests: false</code> instead. Upstream: <a href="https://github.com/renovatebot/renovate/issues/24942">renovate#24942</a>.</p>
+</div>
 <h3 id="3-postgresql-is-always-a-cloudnativepg-cluster">3. PostgreSQL is always a CloudNativePG <code>Cluster</code><a class="headerlink" href="#3-postgresql-is-always-a-cloudnativepg-cluster" title="Permanent link">&para;</a></h3>
 <p>Never the database a chart bundles — disable it (<code>internalDatabase.enabled:
 false</code>, <code>postgresql.enabled: false</code>) and point the chart at a <code>Cluster</code> in the
