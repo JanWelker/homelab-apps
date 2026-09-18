@@ -802,7 +802,14 @@ requests — a workload should not be able to take itself out from behind the
 authentication layer on its own.</p>
 <p>Because discovery is asynchronous, anything that configures itself <em>against</em> a
 provider has to tolerate the provider not existing yet. Fail soft and log it;
-do not make it the reason the pod will not start.</p>
+do not make it the reason the pod will not start. And verify the provider
+actually answers before you disable a local login on the strength of it —
+registering a provider is not the same as reaching one.</p>
+<p>Watch for <strong>SSRF guards</strong>, too. <code>auth.k8s.wlkr.ch</code> resolves to the apps
+Gateway's private address, and applications that refuse to let their own HTTP
+client reach private IPs will fail discovery while <code>curl</code> from the same
+container succeeds. Nextcloud needs <code>allow_local_remote_servers</code>; assume the
+next one needs its own equivalent.</p>
 <p><strong>Use <code>auth.k8s.wlkr.ch</code></strong>, never <code>auth.infra.k8s.wlkr.ch</code>. The <code>*.infra</code> zone
 resolves only on the local network, so a client reachable from outside it would
 send its users to an authorize endpoint that does not exist for them. Never mix
