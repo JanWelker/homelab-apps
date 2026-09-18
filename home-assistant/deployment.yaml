@@ -25,7 +25,7 @@ spec:
         - name: seed-config
           # Same tag as the container below. Renovate updates every occurrence
           # of an image in one pull request, so the two cannot drift apart.
-          image: ghcr.io/home-assistant/home-assistant:2026.9.3
+          image: ghcr.io/home-assistant/home-assistant:2026.9.3@sha256:d8922685169707fd91e8b9729902d975f06157d005e422874d201e0261dda196
           command:
             - /bin/sh
             - -c
@@ -59,7 +59,7 @@ spec:
               mountPath: /config
       containers:
         - name: home-assistant
-          image: ghcr.io/home-assistant/home-assistant:2026.9.3
+          image: ghcr.io/home-assistant/home-assistant:2026.9.3@sha256:d8922685169707fd91e8b9729902d975f06157d005e422874d201e0261dda196
           ports:
             - name: http
               containerPort: 8123
