@@ -26,47 +26,68 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
+      # One parser, not two. Reading chart, repo, version and values out of the
+      # YAML with awk looks simpler until a `- repoURL:` list item shifts the
+      # fields by one and helm is handed the string "repoURL:" as a chart
+      # repository -- which it resolves against a same-named directory in the
+      # working tree and renders something that was never asked for.
+      - name: Extract chart sources
+        run: |
+          python3 - <<'PY'
+          import json, pathlib, yaml
+
+          jobs = []
+          for app in sorted(pathlib.Path(".").glob("*/application.yaml")):
+              name = app.parent.name
+              spec = yaml.safe_load(app.read_text())["spec"]
+              charts = [s for s in (spec.get("sources") or [spec["source"]])
+                        if "chart" in s]
+              if not charts:
+                  print(f"::notice title={name}::plain manifests, nothing to render")
+                  continue
+              for i, source in enumerate(charts):
+                  values_file = f"/tmp/values-{name}-{i}.yaml"
+                  values = source.get("helm", {}).get("valuesObject", {})
+                  pathlib.Path(values_file).write_text(yaml.safe_dump(values))
+                  jobs.append({
+                      "name": name,
+                      "chart": source["chart"],
+                      "repo": source["repoURL"],
+                      "version": source["targetRevision"],
+                      "values": values_file,
+                  })
+
+          pathlib.Path("/tmp/jobs.json").write_text(json.dumps(jobs, indent=2))
+          print(json.dumps(jobs, indent=2))
+          PY
+
       - name: Render every chart-based Application
         run: |
           set -euo pipefail
           failed=0
-          for app in */application.yaml; do
-            name="$(dirname "$app")"
 
-            # Applications built from plain manifests have no chart to render.
-            if ! grep -q '^\s*chart:' "$app"; then
-              echo "::notice title=$name::plain manifests, nothing to render"
-              continue
-            fi
+          # From an empty directory: `helm template <name> <chart> --repo <url>`
+          # prefers a local directory of that name over the repository, and
+          # every chart here is named after a directory that exists.
+          workdir="$(mktemp -d)"
 
-            repo="$(awk '/repoURL:/{r=$2} /chart:/{print r; exit}' "$app")"
-            chart="$(awk '/chart:/{print $2; exit}' "$app")"
-            version="$(awk '/chart:/{f=1} f&&/targetRevision:/{print $2; exit}' "$app")"
-
-            # The Application embeds its values under helm.valuesObject; lift
-            # that subtree out so helm sees the same values ArgoCD will.
-            python3 - "$app" > /tmp/values.yaml <<'PY'
-          import sys, yaml
-          app = yaml.safe_load(open(sys.argv[1]))
-          sources = app["spec"].get("sources") or [app["spec"]["source"]]
-          for s in sources:
-              values = s.get("helm", {}).get("valuesObject")
-              if values is not None:
-                  yaml.safe_dump(values, sys.stdout)
-                  break
-          PY
-
+          while read -r name chart repo version values; do
             echo "::group::$name ($chart $version from $repo)"
-            if helm template "$name" "$chart" \
+            if (cd "$workdir" && helm template "$name" "$chart" \
                  --repo "$repo" \
                  --version "$version" \
                  --namespace "$name" \
-                 --values /tmp/values.yaml > /dev/null; then
+                 --values "$values" > /dev/null); then
               echo "ok"
             else
               echo "::error title=$name::helm template failed"
               failed=1
             fi
             echo "::endgroup::"
-          done
+          done < <(python3 -c '
+          import json
+          for j in json.load(open("/tmp/jobs.json")):
+              print(j["name"], j["chart"], j["repo"], j["version"], j["values"])
+          ')
+
           exit "$failed"
