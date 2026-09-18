@@ -433,6 +433,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#the-provider-is-defined-here-too" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The provider is defined here too
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#break-glass" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -584,6 +595,17 @@
   
     <nav class="md-nav" aria-label="Authentik, not Nextcloud&#x27;s own accounts">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-provider-is-defined-here-too" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The provider is defined here too
+      </span>
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#break-glass" class="md-nav__link">
@@ -745,10 +767,24 @@ cases and re-asserts the configuration if somebody changes it in the UI. Every
 command is idempotent: <code>app:install</code> is a no-op once installed, and
 <code>user_oidc:provider</code> updates the provider of that name rather than adding a
 second one.</p>
-<p>The client credentials come from <code>kv/nextcloud/config</code>, which <strong>Authentik reads
-too</strong> — its blueprint configures the provider from the same two values through
-its own <code>ExternalSecret</code>. Neither side is ever copied out of a UI, and a rebuilt
-cluster reproduces both from one path.</p>
+<h3 id="the-provider-is-defined-here-too">The provider is defined here too<a class="headerlink" href="#the-provider-is-defined-here-too" title="Permanent link">&para;</a></h3>
+<p><code>nextcloud/authentik-blueprint.yaml</code> is a ConfigMap targeted at the <code>authentik</code>
+namespace, holding the <code>oauth2provider</code> and the Authentik application. So the
+provider and the client that authenticates against it change in one commit,
+rather than one commit per repository.</p>
+<p>The platform mounts it into Authentik's worker as an <strong>optional</strong> projected
+volume — optional because this arrives in <code>12-workloads</code>, four stages after
+Authentik has to be Healthy, and a required mount would have the worker waiting
+for a stage that is waiting for the worker.</p>
+<p>Two things stay in the platform repository, and both are deliberate: the client
+credentials, which <code>bao-secrets.sh</code> generates into <code>kv/nextcloud/config</code> — a
+workload cannot mint its own, which is what keeps SSO onboarding a two-repository
+act — and the embedded outpost's provider list, which is one global object that
+two repositories writing would overwrite.</p>
+<div class="admonition warning">
+<p class="admonition-title">Discovery is asynchronous, so the hook tolerates its absence</p>
+<p><code>blueprints_discovery</code> runs on the worker's startup, hourly, and on a file watcher — so on a first deploy the hook above can run before the provider exists. The <code>user_oidc:provider</code> call is therefore <strong>not</strong> fatal: if it fails, the login form stays visible, a warning goes to the pod log, and the next restart configures it. A Nextcloud that will not start is a much worse outcome than one that is up with the local login still working.</p>
+</div>
 <div class="admonition warning">
 <p class="admonition-title">The hostname is <code>auth.k8s.wlkr.ch</code>, not <code>auth.infra...</code></p>
 <p>The <code>*.infra</code> zone resolves only on the local network. A discovery URI pointing there would work from the sofa and hang from anywhere else, because the browser would be redirected to an authorize endpoint that does not resolve. Authentik answers on both names and builds every OIDC URL from the one the request arrived on — but a client must use one of them consistently, or the <code>iss</code> claim fails the check against the issuer it discovered.</p>
