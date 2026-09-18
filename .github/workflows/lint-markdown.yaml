@@ -1,0 +1,30 @@
+---
+name: Lint Markdown
+permissions:
+  contents: read
+
+"on":
+  push:
+    branches:
+      - "main"
+    paths:
+      - "**/*.md"
+  pull_request:
+    paths:
+      - "**/*.md"
+  workflow_dispatch:
+
+jobs:
+  markdown-lint:
+    name: Markdown
+    runs-on: ubuntu-latest
+    container: node:24.21.0-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install markdownlint-cli2
+        run: npm install -g markdownlint-cli2
+
+      - name: Run markdownlint
+        run: markdownlint-cli2 '**/*.md'

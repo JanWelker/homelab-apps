@@ -1,0 +1,44 @@
+---
+# Home Assistant's recorder, which is SQLite by default. SQLite on a network
+# block device is the single most common cause of a slow Home Assistant, and
+# this cluster has an operator for the alternative. See CONVENTIONS.md.
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: home-assistant-db
+  namespace: home-assistant
+  annotations:
+    # Ahead of the Deployment: ArgoCD has a health check for this kind, so the
+    # wave does not advance until Postgres reports "Cluster in healthy state".
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  instances: 1
+
+  # Renovate tracks this through the cnpg-image-name manager in renovate.json.
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.4-system-trixie
+
+  storage:
+    size: 10Gi
+    storageClass: rook-ceph-block
+
+  bootstrap:
+    initdb:
+      database: homeassistant
+      owner: homeassistant
+
+  postgresql:
+    parameters:
+      # The recorder writes constantly and reads little; the default 128MB
+      # shared_buffers is more than this workload needs on a homelab node.
+      shared_buffers: 128MB
+      max_connections: "50"
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 256Mi
+    limits:
+      memory: 512Mi
+
+  monitoring:
+    enablePodMonitor: true

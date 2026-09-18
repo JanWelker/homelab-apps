@@ -1,0 +1,112 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: home-assistant
+  namespace: home-assistant
+spec:
+  replicas: 1
+  # Recreate, not RollingUpdate: one ReadWriteOnce volume, and two Home
+  # Assistant processes against one /config corrupt the .storage registries.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: home-assistant
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: home-assistant
+    spec:
+      # Home Assistant reads configuration.yaml once, at startup. Editing the
+      # ConfigMap changes nothing until the pod restarts:
+      #   kubectl -n home-assistant rollout restart deploy/home-assistant
+      initContainers:
+        - name: seed-config
+          # Same tag as the container below. Renovate updates every occurrence
+          # of an image in one pull request, so the two cannot drift apart.
+          image: ghcr.io/home-assistant/home-assistant:2026.9.3
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+
+              # configuration.yaml !includes these three. On a fresh volume
+              # they do not exist yet, and Home Assistant fails to start
+              # rather than creating them.
+              for f in automations.yaml scripts.yaml scenes.yaml; do
+                [ -e "/config/$f" ] || : > "/config/$f"
+              done
+
+              # secrets.yaml is GENERATED, every start, and anything added to
+              # it by hand is lost. The database password is CloudNativePG's
+              # to rotate, and this is the only way !secret can see it.
+              # json.dumps produces a quoted scalar that is valid YAML
+              # whatever the generated password contains.
+              python3 -c 'import json, os; print("db_url: " + json.dumps(os.environ["HA_RECORDER_DB_URL"]))' \
+                > /config/secrets.yaml
+              chmod 600 /config/secrets.yaml
+          env:
+            - name: HA_RECORDER_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  # Written by CloudNativePG, never by us.
+                  name: home-assistant-db-app
+                  key: uri
+          volumeMounts:
+            - name: config
+              mountPath: /config
+      containers:
+        - name: home-assistant
+          image: ghcr.io/home-assistant/home-assistant:2026.9.3
+          ports:
+            - name: http
+              containerPort: 8123
+              protocol: TCP
+          env:
+            - name: TZ
+              value: Europe/Zurich
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: configuration
+              mountPath: /config/configuration.yaml
+              subPath: configuration.yaml
+              readOnly: true
+          # Home Assistant loads every integration before it serves anything,
+          # which on a cold start with a populated registry is minutes rather
+          # than seconds. The startup probe buys that time without making the
+          # liveness probe useless afterwards.
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 10
+            failureThreshold: 60
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 1536Mi
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: home-assistant-config
+        - name: configuration
+          configMap:
+            name: home-assistant-config

@@ -1,0 +1,24 @@
+---
+# Cilium, not NetworkPolicy: a plain one blocks the kubelet's health probes and
+# the pod restarts forever. See the homelab repository's Security Policies page.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-ingress
+  namespace: nextcloud
+spec:
+  description: >-
+    Default-deny ingress for Nextcloud. The UI arrives through the Gateway, the
+    web pod and the cron job reach Postgres inside the namespace, Prometheus
+    scrapes the metrics exporter, and the node runs the health probes.
+  endpointSelector: {}
+  ingress:
+    - fromEndpoints:
+        - {}
+    - fromEntities:
+        - host
+        - remote-node
+        - ingress
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring

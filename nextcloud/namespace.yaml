@@ -1,0 +1,19 @@
+---
+# The workload owns its namespace so the Pod Security labels are declarative
+# rather than whatever CreateNamespace=true happened to leave behind. An
+# unlabelled namespace runs at `privileged`, which enforces nothing.
+#
+# baseline, not restricted: the apache flavour of the official Nextcloud image
+# starts as root and drops to www-data itself.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nextcloud
+  labels:
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+  annotations:
+    # Pruning a Namespace deletes the PVCs inside it. Never available by accident.
+    argocd.argoproj.io/sync-options: Prune=false
+    argocd.argoproj.io/sync-wave: "-2"

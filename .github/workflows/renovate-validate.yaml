@@ -1,0 +1,26 @@
+---
+name: Renovate Config Validation
+
+permissions:
+  contents: read
+
+"on":
+  push:
+    branches:
+      - "main"
+    paths:
+      - "renovate.json"
+      - ".github/workflows/renovate-validate.yaml"
+  pull_request:
+    paths:
+      - "renovate.json"
+      - ".github/workflows/renovate-validate.yaml"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Validate Renovate Config
+        run: npx --package renovate@latest renovate-config-validator

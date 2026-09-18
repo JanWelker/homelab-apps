@@ -1,0 +1,29 @@
+---
+name: Lint YAML
+permissions:
+  contents: read
+
+"on":
+  push:
+    branches:
+      - "main"
+    paths:
+      - "**/*.yaml"
+  pull_request:
+    paths:
+      - "**/*.yaml"
+  workflow_dispatch:
+
+jobs:
+  yaml-lint:
+    name: YAML
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install yamllint
+        run: pipx install yamllint==1.38.0
+
+      - name: Run yamllint
+        run: yamllint -f github .

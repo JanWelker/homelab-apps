@@ -1,0 +1,26 @@
+---
+# Cilium, not NetworkPolicy: a plain one blocks the kubelet's health probes and
+# the pod restarts forever. See the homelab repository's Security Policies page.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-ingress
+  namespace: home-assistant
+spec:
+  description: >-
+    Default-deny ingress for Home Assistant. The UI arrives through the
+    Gateway, the recorder reaches its database inside the namespace, and the
+    node runs the health probes. Nothing else has a reason to connect --
+    including the rest of the cluster, which is the point: this namespace holds
+    a long-lived token for every device in the house.
+  endpointSelector: {}
+  ingress:
+    - fromEndpoints:
+        - {}
+    - fromEntities:
+        - host
+        - remote-node
+        - ingress
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring

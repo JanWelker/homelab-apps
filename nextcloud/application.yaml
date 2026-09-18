@@ -1,0 +1,146 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nextcloud
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/manifest-generate-paths: .
+    link.argocd.argoproj.io/external-link: https://cloud.k8s.wlkr.ch
+spec:
+  project: apps
+  sources:
+    # The Nextcloud organisation's own chart, from the repository Nextcloud
+    # publishes. Not a repackager's. See CONVENTIONS.md.
+    - repoURL: https://nextcloud.github.io/helm/
+      chart: nextcloud
+      targetRevision: 9.2.6
+      helm:
+        valuesObject:
+          image:
+            repository: library/nextcloud
+            flavor: apache
+
+          nextcloud:
+            host: cloud.k8s.wlkr.ch
+
+            openmetrics:
+              # Nextcloud's own /metrics endpoint refuses clients outside this
+              # list, and the chart's default is k3s's CIDRs. Ours, from
+              # ansible/inventory.yaml in the homelab repository.
+              allowedClients:
+                - "127.0.0.1"
+                - "10.244.0.0/16"
+                - "10.96.0.0/12"
+
+            existingSecret:
+              enabled: true
+              secretName: nextcloud-admin
+              usernameKey: username
+              passwordKey: password
+
+            # Behind the apps-gateway: Nextcloud generates absolute URLs from
+            # what it thinks the request scheme was, and without these it
+            # builds http:// links on an https:// site and the login redirect
+            # loops.
+            configs:
+              proxy.config.php: |-
+                <?php
+                $CONFIG = array (
+                  'trusted_proxies' => array('10.244.0.0/16'),
+                  'overwriteprotocol' => 'https',
+                  'overwritehost' => 'cloud.k8s.wlkr.ch',
+                  'overwrite.cli.url' => 'https://cloud.k8s.wlkr.ch',
+                );
+
+          internalDatabase:
+            # Never the chart's own database. CloudNativePG runs it instead,
+            # from database.yaml in this directory.
+            enabled: false
+
+          externalDatabase:
+            enabled: true
+            type: postgresql
+            existingSecret:
+              enabled: true
+              # Written by CloudNativePG. No password is copied anywhere.
+              secretName: nextcloud-db-app
+              usernameKey: username
+              passwordKey: password
+              hostKey: host
+              databaseKey: dbname
+
+          redis:
+            # Disabled deliberately: the chart's Redis is a Bitnami subchart
+            # already pointing at bitnamilegacy. One replica does not need a
+            # shared cache, and APCu is configured by default for the local one.
+            enabled: false
+
+          persistence:
+            enabled: true
+            storageClass: rook-ceph-block
+            accessMode: ReadWriteOnce
+            size: 50Gi
+
+          # Nextcloud runs database migrations on startup after an upgrade,
+          # which takes it well past a default liveness probe's patience.
+          startupProbe:
+            enabled: true
+            failureThreshold: 60
+            periodSeconds: 10
+
+          # One replica, one ReadWriteOnce volume: a surging second pod cannot
+          # mount it and the rollout wedges until the deadline expires.
+          replicaCount: 1
+          deploymentStrategy:
+            type: Recreate
+
+          cronjob:
+            # Nextcloud's background jobs. Left at the default type `sidecar`
+            # deliberately: a separate CronJob pod would have to mount the same
+            # ReadWriteOnce volume as the web pod, which only works while both
+            # land on one node.
+            enabled: true
+
+          metrics:
+            # The nextcloud-exporter sidecar deployment. It authenticates as
+            # the admin account from the same Secret the app uses.
+            enabled: true
+
+          prometheus:
+            # Note the key: the chart's ServiceMonitor reads `prometheus.`,
+            # not `metrics.serviceMonitor`, despite what the values file's own
+            # comments say. Setting the documented one renders nothing at all.
+            serviceMonitor:
+              enabled: true
+              interval: 30s
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+
+    # The database, the route, the policy and the admin secret: everything the
+    # chart does not render.
+    - repoURL: https://github.com/JanWelker/homelab-apps.git
+      targetRevision: HEAD
+      path: nextcloud
+      directory:
+        exclude: "application.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nextcloud
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m
+    syncOptions:
+      - ServerSideApply=true

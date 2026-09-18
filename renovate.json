@@ -1,0 +1,100 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "platformAutomerge": true,
+  "extends": [
+    "config:best-practices",
+    ":dependencyDashboard",
+    ":prHourlyLimitNone",
+    ":prConcurrentLimitNone",
+    ":timezone(Europe/Berlin)"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "schedule": "at any time",
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": [
+      "security"
+    ]
+  },
+  "packageRules": [
+    {
+      "description": "Same policy as the homelab repository: patch and minor automerge, majors wait for a human. No groups -- every workload gets its own PR.",
+      "matchUpdateTypes": [
+        "patch",
+        "minor"
+      ],
+      "automerge": true
+    },
+    {
+      "description": "Major updates always require review.",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false
+    },
+    {
+      "description": "A PostgreSQL major version is an offline migration that takes the workload down while it runs, and it is not reversible. It waits for a human even though the image tag makes it look like any other bump. See cloudnative-pg.md in the homelab docs.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/cloudnative-pg/postgresql"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false,
+      "labels": [
+        "dependencies",
+        "database-major"
+      ]
+    },
+    {
+      "description": "Home Assistant versions its releases as calendar dates, which semver reads as a major bump every month. Without this every routine release would wait for a human and none of them would ever be automerged.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/home-assistant/home-assistant"
+      ],
+      "versioning": "regex:^(?<major>\\d{4})\\.(?<minor>\\d{1,2})\\.(?<patch>\\d+)$"
+    }
+  ],
+  "kubernetes": {
+    "managerFilePatterns": [
+      "/^[^/]+/.+\\.yaml$/"
+    ]
+  },
+  "argocd": {
+    "managerFilePatterns": [
+      "/^[^/]+/.+\\.yaml$/"
+    ]
+  },
+  "customManagers": [
+    {
+      "description": "CloudNativePG names its operand image in `imageName`, which holds a complete image reference rather than a bare tag, so neither the kubernetes manager nor a tag-shaped comment manager reads it.",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^[^/]+/.+\\.yaml$/"
+      ],
+      "matchStrings": [
+        "imageName:\\s*[\"']?(?<depName>[^\\s:\"']+):(?<currentValue>[^\\s\"']+)[\"']?"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    },
+    {
+      "description": "Track versions annotated with a `# renovate:` comment. Needed for image tags written inline in a Helm `valuesObject:`, which the helm-values manager only reads from real values files.",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^[^/]+/.+\\.yaml$/"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?[^\\n]*\\n\\s*[\\w.-]+:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    }
+  ]
+}
