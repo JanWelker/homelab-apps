@@ -123,7 +123,15 @@ authentication layer on its own.
 
 Because discovery is asynchronous, anything that configures itself *against* a
 provider has to tolerate the provider not existing yet. Fail soft and log it;
-do not make it the reason the pod will not start.
+do not make it the reason the pod will not start. And verify the provider
+actually answers before you disable a local login on the strength of it —
+registering a provider is not the same as reaching one.
+
+Watch for **SSRF guards**, too. `auth.k8s.wlkr.ch` resolves to the apps
+Gateway's private address, and applications that refuse to let their own HTTP
+client reach private IPs will fail discovery while `curl` from the same
+container succeeds. Nextcloud needs `allow_local_remote_servers`; assume the
+next one needs its own equivalent.
 
 **Use `auth.k8s.wlkr.ch`**, never `auth.infra.k8s.wlkr.ch`. The `*.infra` zone
 resolves only on the local network, so a client reachable from outside it would

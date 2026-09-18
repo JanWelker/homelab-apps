@@ -79,6 +79,27 @@ spec:
                 # every start, so the next restart fixes it.
                 discovery="https://auth.k8s.wlkr.ch/application/o/nextcloud/.well-known/openid-configuration"
 
+                # Nextcloud refuses to let its own HTTP client reach a private
+                # address -- an SSRF guard, and a sensible default for a server
+                # that fetches URLs users give it. But auth.k8s.wlkr.ch is the
+                # apps Gateway, 10.9.2.249, so every discovery fetch failed
+                # with:
+                #
+                #   Host "10.9.2.249" (auth.k8s.wlkr.ch:80) violates local
+                #   access rules
+                #
+                # Pointing user_oidc at the in-cluster Service instead would
+                # dodge the guard and break the issuer check, since the browser
+                # and the server would then discover different issuers.
+                #
+                # So the guard is lifted. It is a real reduction in defence in
+                # depth -- it applies to every outbound request Nextcloud
+                # makes, not just this one -- and the compensating control is
+                # the namespace's CiliumNetworkPolicy plus the fact that
+                # federation and external storage are not enabled here.
+                php occ config:system:set allow_local_remote_servers \
+                  --type boolean --value true
+
                 php occ user_oidc:provider Authentik \
                   --clientid="$NEXTCLOUD_OIDC_CLIENT_ID" \
                   --clientsecret="$NEXTCLOUD_OIDC_CLIENT_SECRET" \
