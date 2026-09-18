@@ -29,6 +29,24 @@ spec:
             # provider and its client are configured from one place and
             # neither is ever copied out of a UI.
             extraEnv:
+              # Behind the apps-gateway, TLS is terminated before the request
+              # arrives and the source address is Cilium's Envoy. Without these
+              # Nextcloud builds http:// links on an https:// site, and
+              # user_oidc refuses to start a login at all with "You must access
+              # Nextcloud with HTTPS to use OpenID Connect".
+              #
+              # Env vars, not a file in `nextcloud.configs`: the image ships
+              # reverse-proxy.config.php, which reads exactly these, and config
+              # files load alphabetically -- a proxy.config.php of our own
+              # would be overridden by the one the image already has.
+              - name: OVERWRITEPROTOCOL
+                value: https
+              - name: OVERWRITEHOST
+                value: cloud.k8s.wlkr.ch
+              - name: OVERWRITECLIURL
+                value: https://cloud.k8s.wlkr.ch
+              - name: TRUSTED_PROXIES
+                value: "10.244.0.0/16"
               - name: NEXTCLOUD_OIDC_CLIENT_ID
                 valueFrom:
                   secretKeyRef:
@@ -59,27 +77,40 @@ spec:
                 # start is a far worse outcome than one that is up with the
                 # local login still available, and this hook runs again on
                 # every start, so the next restart fixes it.
-                if php occ user_oidc:provider Authentik \
-                     --clientid="$NEXTCLOUD_OIDC_CLIENT_ID" \
-                     --clientsecret="$NEXTCLOUD_OIDC_CLIENT_SECRET" \
-                     --discoveryuri="https://auth.k8s.wlkr.ch/application/o/nextcloud/.well-known/openid-configuration" \
-                     --unique-uid=0 \
-                     --mapping-uid=preferred_username \
-                     --mapping-email=email \
-                     --mapping-display-name=name \
-                     --scope="openid email profile" \
-                     --check-bearer=0; then
-                  # Hides the username/password form, leaving the Authentik
-                  # button. It does not disable the local accounts: the admin
-                  # stays reachable at /login?direct=1 for the days when
-                  # Authentik is the thing that is broken.
+                discovery="https://auth.k8s.wlkr.ch/application/o/nextcloud/.well-known/openid-configuration"
+
+                php occ user_oidc:provider Authentik \
+                  --clientid="$NEXTCLOUD_OIDC_CLIENT_ID" \
+                  --clientsecret="$NEXTCLOUD_OIDC_CLIENT_SECRET" \
+                  --discoveryuri="$discovery" \
+                  --unique-uid=0 \
+                  --mapping-uid=preferred_username \
+                  --mapping-email=email \
+                  --mapping-display-name=name \
+                  --scope="openid email profile" \
+                  --check-bearer=0 || true
+
+                # Registering the provider does not prove it works --
+                # user_oidc:provider never fetches the discovery document, so
+                # it succeeds just as happily against a provider Authentik has
+                # not created yet. Hiding the login form on the strength of
+                # that exit code is how everyone ends up locked out behind a
+                # button that 404s, which is exactly what happened the first
+                # time this ran.
+                #
+                # So ask the issuer directly, and only hide the form once it
+                # answers. The `false` branch is not a no-op: it brings the
+                # form back if a working login later stops working.
+                if curl -fsS --max-time 10 "$discovery" | grep -q '"issuer"'; then
                   php occ config:system:set hide_login_form --type boolean --value true
                 else
-                  echo "WARNING: could not configure the Authentik provider." >&2
+                  php occ config:system:set hide_login_form --type boolean --value false
+                  echo "WARNING: $discovery did not answer with an issuer." >&2
                   echo "  Leaving the local login form visible rather than" >&2
-                  echo "  locking everyone out. Check that Authentik has" >&2
-                  echo "  discovered authentik-blueprint-nextcloud, then" >&2
-                  echo "  restart this deployment." >&2
+                  echo "  locking everyone out behind a button that 404s." >&2
+                  echo "  Check that Authentik's worker has the NEXTCLOUD_*" >&2
+                  echo "  env vars -- envFrom only injects them at pod start," >&2
+                  echo "  so a Secret updated later needs a worker restart." >&2
                 fi
 
           internalDatabase:
