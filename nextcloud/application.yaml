@@ -24,34 +24,63 @@ spec:
           nextcloud:
             host: cloud.k8s.wlkr.ch
 
-            openmetrics:
-              # Nextcloud's own /metrics endpoint refuses clients outside this
-              # list, and the chart's default is k3s's CIDRs. Ours, from
-              # ansible/inventory.yaml in the homelab repository.
-              allowedClients:
-                - "127.0.0.1"
-                - "10.244.0.0/16"
-                - "10.96.0.0/12"
+            # user_oidc reads these; so does the hook below. The Secret is the
+            # same one Authentik's blueprint reads the pair from, so the
+            # provider and its client are configured from one place and
+            # neither is ever copied out of a UI.
+            extraEnv:
+              - name: NEXTCLOUD_OIDC_CLIENT_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: nextcloud-oidc
+                    key: client-id
+              - name: NEXTCLOUD_OIDC_CLIENT_SECRET
+                valueFrom:
+                  secretKeyRef:
+                    name: nextcloud-oidc
+                    key: client-secret
 
-            existingSecret:
-              enabled: true
-              secretName: nextcloud-admin
-              usernameKey: username
-              passwordKey: password
+            # before-starting is the last hook the image runs, on every
+            # start, after an install or an upgrade has finished -- so one
+            # hook covers both cases and re-asserts the configuration if
+            # someone changes it in the UI. Every command here is idempotent:
+            # app:install is a no-op once installed, and user_oidc:provider
+            # updates the provider of that name rather than adding a second.
+            hooks:
+              before-starting: |
+                #!/bin/sh
+                set -eu
+                php occ app:install user_oidc || php occ app:enable user_oidc
 
-            # Behind the apps-gateway: Nextcloud generates absolute URLs from
-            # what it thinks the request scheme was, and without these it
-            # builds http:// links on an https:// site and the login redirect
-            # loops.
-            configs:
-              proxy.config.php: |-
-                <?php
-                $CONFIG = array (
-                  'trusted_proxies' => array('10.244.0.0/16'),
-                  'overwriteprotocol' => 'https',
-                  'overwritehost' => 'cloud.k8s.wlkr.ch',
-                  'overwrite.cli.url' => 'https://cloud.k8s.wlkr.ch',
-                );
+                # Not fatal, deliberately. Authentik discovers the provider
+                # blueprint asynchronously -- on its worker's startup, hourly,
+                # or when the file watcher notices -- so on a first deploy this
+                # can run before the provider exists. A Nextcloud that will not
+                # start is a far worse outcome than one that is up with the
+                # local login still available, and this hook runs again on
+                # every start, so the next restart fixes it.
+                if php occ user_oidc:provider Authentik \
+                     --clientid="$NEXTCLOUD_OIDC_CLIENT_ID" \
+                     --clientsecret="$NEXTCLOUD_OIDC_CLIENT_SECRET" \
+                     --discoveryuri="https://auth.k8s.wlkr.ch/application/o/nextcloud/.well-known/openid-configuration" \
+                     --unique-uid=0 \
+                     --mapping-uid=preferred_username \
+                     --mapping-email=email \
+                     --mapping-display-name=name \
+                     --scope="openid email profile" \
+                     --check-bearer=0; then
+                  # Hides the username/password form, leaving the Authentik
+                  # button. It does not disable the local accounts: the admin
+                  # stays reachable at /login?direct=1 for the days when
+                  # Authentik is the thing that is broken.
+                  php occ config:system:set hide_login_form --type boolean --value true
+                else
+                  echo "WARNING: could not configure the Authentik provider." >&2
+                  echo "  Leaving the local login form visible rather than" >&2
+                  echo "  locking everyone out. Check that Authentik has" >&2
+                  echo "  discovered authentik-blueprint-nextcloud, then" >&2
+                  echo "  restart this deployment." >&2
+                fi
 
           internalDatabase:
             # Never the chart's own database. CloudNativePG runs it instead,

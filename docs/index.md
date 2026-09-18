@@ -13,10 +13,10 @@ only what runs on top.
 
 ## Applications
 
-| Application | URL | Storage | Database |
-| --- | --- | --- | --- |
-| [Home Assistant](home-assistant.md) | [home.k8s.wlkr.ch](https://home.k8s.wlkr.ch) | 5Gi for `/config` | CloudNativePG, for the recorder |
-| [Nextcloud](nextcloud.md) | [cloud.k8s.wlkr.ch](https://cloud.k8s.wlkr.ch) | 50Gi for files | CloudNativePG |
+| Application | URL | Storage | Database | Authentication |
+| --- | --- | --- | --- | --- |
+| [Home Assistant](home-assistant.md) | [home.k8s.wlkr.ch](https://home.k8s.wlkr.ch) | 5Gi for `/config` | CloudNativePG, for the recorder | Authentik proxy, in front of its own login |
+| [Nextcloud](nextcloud.md) | [cloud.k8s.wlkr.ch](https://cloud.k8s.wlkr.ch) | 50Gi for files | CloudNativePG | Authentik OIDC |
 
 ## How a directory becomes an application
 
@@ -62,19 +62,34 @@ is the full list; the short version:
 - **Proxy configuration.** Both sit behind the `apps-gateway`, which terminates
   TLS and forwards from inside the pod CIDR. An application that does not know
   this builds `http://` links on an `https://` site.
+- **Authentik, not their own accounts** — as far as each is capable of it.
 
-## What they deliberately do not share
+## Authentication
 
-Neither talks to the other, and neither is behind
-[Authentik](https://janwelker.github.io/homelab/platform/authentik/). Both ship
-their own account systems — Home Assistant's is tied to the mobile app's push
-tokens, Nextcloud's to its desktop and mobile clients — and putting a
-forward-auth proxy in front of either breaks those clients without making
-anything meaningfully safer. The platform UIs are a different case: they have
-no users of their own, which is exactly why they are behind SSO.
+Both go through
+[Authentik](https://janwelker.github.io/homelab/platform/authentik/), but not
+in the same way, and the difference is not a preference — it is what each
+application supports.
 
-That is a decision worth revisiting if either grows users who are not household
-members. It has not yet.
+**Nextcloud speaks OIDC.** The first-party `user_oidc` app is installed and
+configured by a startup hook, the login form is hidden, and the local admin
+survives only as break-glass at `/login?direct=1`. This is real single sign-on:
+one login, and revoking the Authentik account ends the access.
+
+**Home Assistant does not.** Upstream ships four auth providers —
+`homeassistant`, `command_line`, `trusted_networks` and an example marked
+insecure — and no OIDC among them. So the Authentik outpost sits *in front of*
+Home Assistant's login rather than replacing it, and browser users authenticate
+twice. That is defence in depth, not SSO.
+
+!!! warning "Home Assistant's API is not behind Authentik"
+    The companion apps and webhooks hold a long-lived token and cannot complete an interactive login, so `/api/` and `/auth/token` are excluded from the proxy. Home Assistant's own accounts are the only thing guarding them — revoking someone in Authentik does **not** revoke their Home Assistant token, which has to be done in Home Assistant.
+
+Both use `auth.k8s.wlkr.ch`, not the `auth.infra` name the platform UIs use:
+the `*.infra` zone resolves only on the local network, so an OIDC client
+reachable from outside it would send its users somewhere that does not exist
+for them. A client must never mix the two — see [Two
+hostnames](https://janwelker.github.io/homelab/platform/authentik/#two-hostnames).
 
 ## Adding one
 

@@ -8,11 +8,13 @@ metadata:
   namespace: home-assistant
 spec:
   description: >-
-    Default-deny ingress for Home Assistant. The UI arrives through the
-    Gateway, the recorder reaches its database inside the namespace, and the
-    node runs the health probes. Nothing else has a reason to connect --
-    including the rest of the cluster, which is the point: this namespace holds
-    a long-lived token for every device in the house.
+    Default-deny ingress for Home Assistant. The UI does NOT arrive from the
+    Gateway directly: home.k8s.wlkr.ch is routed to Authentik's embedded
+    outpost, which authenticates the request and only then connects here from
+    the authentik namespace. The recorder reaches its database inside the
+    namespace, and the node runs the health probes. Nothing else has a reason
+    to connect -- including the rest of the cluster, which is the point: this
+    namespace holds a long-lived token for every device in the house.
   endpointSelector: {}
   ingress:
     - fromEndpoints:
@@ -20,7 +22,16 @@ spec:
     - fromEntities:
         - host
         - remote-node
-        - ingress
+    # The outpost, and the only path to the web UI. Without this rule the
+    # hostname answers with a gateway error after a successful Authentik login,
+    # which is a confusing way to find out the policy is wrong.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: authentik
+      toPorts:
+        - ports:
+            - port: "8123"
+              protocol: TCP
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: monitoring

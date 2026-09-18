@@ -93,7 +93,45 @@ Not a plain `NetworkPolicy` — a plain one blocks the kubelet's health probes
 and the pods restart forever. Every policy here needs `fromEntities: [host,
 remote-node]` for those probes and `ingress` for Gateway traffic.
 
-### 6. Real secrets come from OpenBao
+### 6. Authentication is Authentik's, not the application's
+
+An application with its own user database is an application whose accounts
+nobody remembers to revoke. Which shape applies is decided by what the
+application supports, not by preference:
+
+- **It speaks OIDC** — configure it against Authentik, hide or disable the
+  local login form, and keep at most one local admin as break-glass. Nextcloud
+  is the worked example.
+- **It does not** — point its `HTTPRoute` at `authentik-server` in the
+  `authentik` namespace instead of at the application, so the outpost
+  authenticates in front of it. Home Assistant is the worked example, and also
+  the honest caveat: where the application has a login of its own, this is
+  defence in depth rather than single sign-on.
+
+An OIDC provider's blueprint belongs **here**, in the application's own
+directory, as a ConfigMap targeted at the `authentik` namespace — see
+`nextcloud/authentik-blueprint.yaml`. The key must end in `.yaml` or Authentik
+never discovers it, and the platform needs one projected-volume source added
+for the mount.
+
+What stays in the platform repository either way: the client credentials
+(`bao-secrets.sh`), the embedded outpost's provider list, and for a proxied
+application its `referencegrant.yaml` entry. A workload cannot mint its own
+client credentials, so going behind SSO is still deliberately two pull
+requests — a workload should not be able to take itself out from behind the
+authentication layer on its own.
+
+Because discovery is asynchronous, anything that configures itself *against* a
+provider has to tolerate the provider not existing yet. Fail soft and log it;
+do not make it the reason the pod will not start.
+
+**Use `auth.k8s.wlkr.ch`**, never `auth.infra.k8s.wlkr.ch`. The `*.infra` zone
+resolves only on the local network, so a client reachable from outside it would
+send its users to an authorize endpoint that does not exist for them. Never mix
+the two in one client: the `iss` claim must match the issuer that was
+discovered.
+
+### 7. Real secrets come from OpenBao
 
 An `ExternalSecret` reading `kv/<app>/config`, with the `bao kv put` command
 that seeds it written in a comment at the top of the file. Nothing sensitive is
@@ -101,7 +139,10 @@ committed, and the next person rebuilding the cluster can see what needs to
 exist.
 
 Database passwords are the exception, and only because CloudNativePG generates
-them — see rule 3.
+them — see rule 3. OIDC client credentials go in the application's own
+`kv/<app>/config`, never as extra keys under `kv/authentik/config`: that path
+is replaced wholesale on every write, so sharing it would make adding an
+application an Authentik outage.
 
 ## What you do not have to write
 
