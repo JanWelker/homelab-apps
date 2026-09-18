@@ -46,6 +46,37 @@ which has a health check for `postgresql.cnpg.io/Cluster` — waits for a workin
 database before it applies the chart, whose install job connects immediately
 and would otherwise fail the sync.
 
+### The operator needs ingress to the instance
+
+The default-deny policy has to allow the `cnpg-system` namespace to reach the
+database pod on port 8000. That is the instance manager's status endpoint, which
+the CloudNativePG operator polls to decide what the `Cluster` is doing.
+
+Miss it and nothing looks broken where you would look first. Postgres starts,
+accepts connections and serves the application; `kubectl get cluster` reports
+`1/1` ready and a healthy PVC. But the phase reads
+`Instance Status Extraction Error: HTTP communication issue`, so the `Cluster`
+never goes Healthy, so the sync operation started at wave `-1` never finishes:
+
+```text
+$ kubectl get application -n argocd nextcloud -o jsonpath='{.status.operationState.message}'
+waiting for healthy state of postgresql.cnpg.io/Cluster/nextcloud-db
+```
+
+The Application then sits at `Synced` with health `Unknown` and **every** resource
+in `status.resources` missing its health field, because the controller never got
+to assess them. Unknown-with-no-resource-health is the signature: a genuinely
+unhealthy workload names the resource that is failing.
+
+Confirm it from the node running the database, where the policy is enforced:
+
+```bash
+kubectl exec -n kube-system <cilium-pod-on-that-node> -c cilium-agent -- \
+  hubble observe --verdict DROPPED --from-namespace cnpg-system --last 20
+```
+
+A dropped `SYN` to `:8000` is the whole story.
+
 Redis is disabled for the same reason the database is: it is another Bitnami
 subchart, and the chart's values already point it at `bitnamilegacy`. A single
 replica does not need a shared cache, and the chart configures APCu for the
