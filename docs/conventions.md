@@ -1,9 +1,13 @@
+---
+description: "The rules every application directory in this repository follows, and the reasoning behind each one."
+---
+
 # Conventions
 
 Rules every directory in this repository follows. They are short because the
 platform does most of the work; the [Adding a
 Workload](https://janwelker.github.io/homelab/development/add-workload/) guide
-in the homelab documentation is the long version.
+in the platform documentation is the long version.
 
 ## Structure
 

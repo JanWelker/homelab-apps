@@ -1,5 +1,10 @@
 extends: default
 
+ignore: |
+  .venv/
+  site/
+  .cache/
+
 rules:
   # Renovate writes its version annotations as "@<sha> # v1", with a single
   # space. Matching that here keeps the pins lint-clean across bumps.

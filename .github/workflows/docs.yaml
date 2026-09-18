@@ -1,0 +1,53 @@
+---
+name: Publish Documentation
+
+"on":
+  push:
+    branches:
+      - "main"
+    paths:
+      - "docs/**"
+      - "zensical.toml"
+      - ".github/workflows/docs.yaml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: "0.12.16"
+
+      - name: Build site
+        run: |
+          uv python install
+          uv sync --locked --all-extras --dev
+          uv run zensical build --clean --strict
+
+      # Otherwise Pages runs Jekyll, which drops paths it considers private.
+      - name: Disable Jekyll
+        run: touch site/.nojekyll
+
+      - name: Deploy to gh-pages
+        uses: JamesIves/github-pages-deploy-action@fa24774553152dd7873cd16ebd8d959b010c5445 # v4.9.0
+        with:
+          folder: site
+          branch: gh-pages
+          clean: true
+          # Preserve the PR previews published by preview.yaml.
+          clean-exclude: |
+            pr-preview/**

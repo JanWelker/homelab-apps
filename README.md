@@ -4,18 +4,21 @@ The workloads running on the [homelab
 cluster](https://github.com/JanWelker/homelab) — one directory per application,
 deployed by ArgoCD.
 
+Documentation for these applications is published at
+**[janwelker.github.io/homelab-apps](https://janwelker.github.io/homelab-apps/)**,
+and built from `docs/` in this repository.
+
 This repository holds only the applications. The cluster they run on — Flatcar,
 Kubeadm, Cilium, Rook-Ceph, ArgoCD and everything under them — is in
-[JanWelker/homelab](https://github.com/JanWelker/homelab), and its
-documentation is published at
-**[janwelker.github.io/homelab](https://janwelker.github.io/homelab/)**.
+[JanWelker/homelab](https://github.com/JanWelker/homelab), documented at
+[janwelker.github.io/homelab](https://janwelker.github.io/homelab/).
 
 ## Applications
 
-| Application | URL | Storage | Database |
+| Application | URL | Manifests | Page |
 | --- | --- | --- | --- |
-| [home-assistant](home-assistant/) | `home.k8s.wlkr.ch` | 5Gi `/config` | CloudNativePG, for the recorder |
-| [nextcloud](nextcloud/) | `cloud.k8s.wlkr.ch` | 50Gi data | CloudNativePG |
+| Home Assistant | `home.k8s.wlkr.ch` | [`home-assistant/`](home-assistant/) | [docs](https://janwelker.github.io/homelab-apps/home-assistant/) |
+| Nextcloud | `cloud.k8s.wlkr.ch` | [`nextcloud/`](nextcloud/) | [docs](https://janwelker.github.io/homelab-apps/nextcloud/) |
 
 ## How it works
 
@@ -43,10 +46,14 @@ they keep `selfHeal`: a hand-edited Deployment here is reverted within minutes.
 
 ## Adding an application
 
-Read [CONVENTIONS.md](CONVENTIONS.md) first — it is short, and it is the
-difference between an application that works and one that loops on its login
-redirect. The step-by-step version is [Adding a
-Workload](https://janwelker.github.io/homelab/development/add-workload/).
+Read [the conventions](docs/conventions.md) first — they are short, and they
+are the difference between an application that works and one that loops on its
+login redirect. The step-by-step version is [Adding a
+Workload](https://janwelker.github.io/homelab/development/add-workload/) in the
+platform documentation.
+
+A new application needs a page in `docs/`, registered in `zensical.toml`. The
+site builds with `--strict`, so an unregistered page fails CI.
 
 The rules that catch people out:
 
@@ -60,9 +67,17 @@ The rules that catch people out:
 The same linters CI runs:
 
 ```bash
-yamllint .
-markdownlint-cli2 '**/*.md'
+uv sync                      # once
+uv run yamllint .
+uv run zensical build --clean --strict
+npx --package markdownlint-cli2 markdownlint-cli2 '**/*.md' '!**/.venv' '!site'
 npx --package renovate@latest renovate-config-validator
+```
+
+Previewing the docs site while writing:
+
+```bash
+uv run zensical serve
 ```
 
 Rendering an application the way ArgoCD will, before pushing it:

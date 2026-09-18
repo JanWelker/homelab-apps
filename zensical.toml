@@ -1,0 +1,89 @@
+[project]
+site_name = "Homelab Applications"
+site_url = "https://janwelker.github.io/homelab-apps/"
+site_description = "The applications running on the Flatcar homelab cluster: what they are, where their state lives, and the conventions every one of them follows."
+repo_name = "JanWelker/homelab-apps"
+repo_url = "https://github.com/JanWelker/homelab-apps"
+edit_uri = "edit/main/docs/"
+copyright = "Copyright &copy; 2026 Jan Welker"
+
+# Fail the build on the problems CI would fail on, so a local build and the
+# workflow agree.
+strict = true
+
+# Short enough not to need sections: the conventions, then one page per
+# application, alphabetical. A section appears when this list stops fitting on
+# one screen.
+nav = [
+  { "Home" = "index.md" },
+  { "Conventions" = "conventions.md" },
+  { "Home Assistant" = "home-assistant.md" },
+  { "Nextcloud" = "nextcloud.md" },
+]
+
+[project.theme]
+variant = "modern"
+# No webfonts at all. The platform site vendors Inter and JetBrains Mono to
+# avoid requests to fonts.googleapis.com; this one is small enough that the
+# system font stack is the better trade -- same privacy, no vendored binaries
+# and no update script to keep current.
+font = false
+features = [
+  "content.action.edit",
+  "content.action.view",
+  "content.code.copy",
+  "navigation.footer",
+  "navigation.indexes",
+  "navigation.instant",
+  "navigation.instant.prefetch",
+  "navigation.top",
+  "navigation.tracking",
+  "search.highlight",
+  "toc.follow",
+]
+
+# Three palettes, and the order matters: the first is the default for anyone
+# who has never touched the toggle, so it is the one that follows the browser.
+# With only the light and dark entries the toggle cycles between them forever,
+# which means one click opts out of "match my system" permanently and offers no
+# way back -- and nothing re-reads the media query while the page is open.
+
+# Follows the operating system. Resolved from prefers-color-scheme at load.
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Following your system theme -- switch to light"
+
+# Pinned light.
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+toggle.icon = "lucide/sun"
+toggle.name = "Pinned to light -- switch to dark"
+
+# Pinned dark.
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+toggle.icon = "lucide/moon"
+toggle.name = "Pinned to dark -- follow your system theme"
+
+[project.validation]
+invalid_links = true
+invalid_link_anchors = true
+unresolved_references = true
+
+[project.markdown_extensions]
+attr_list = {}
+md_in_html = {}
+admonition = {}
+toc.permalink = true
+pymdownx.details = {}
+pymdownx.inlinehilite = {}
+pymdownx.snippets = {}
+pymdownx.highlight.anchor_linenums = true
+pymdownx.highlight.line_spans = "__span"
+pymdownx.highlight.pygments_lang_class = true
+pymdownx.superfences.custom_fences = [
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+]
