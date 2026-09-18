@@ -77,7 +77,7 @@
   },
   "customManagers": [
     {
-      "description": "CloudNativePG names its operand image in `imageName`, which holds a complete image reference rather than a bare tag, so neither the kubernetes manager nor a tag-shaped comment manager reads it. `currentDigest` is what lets `config:best-practices` pin the digest; without that group the pin has nowhere to go and the whole pin branch errors.",
+      "description": "CloudNativePG names its operand image in `imageName`, which holds a complete image reference rather than a bare tag, so neither the kubernetes manager nor a tag-shaped comment manager reads it. `autoReplaceStringTemplate` is what lets `config:best-practices` write the digest: a custom manager rewrites the matched string verbatim, so without a template naming `newDigest` the pin has nowhere to go and fails the whole shared pin branch. `imageName: ` is part of the match, so the template has to rebuild it -- see docs/conventions.md",
       "customType": "regex",
       "managerFilePatterns": [
         "/^[^/]+/.+\\.yaml$/"
@@ -86,7 +86,8 @@
         "imageName:\\s*[\"']?(?<depName>[^\\s:\"']+):(?<currentValue>[^\\s\"'@]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?[\"']?"
       ],
       "datasourceTemplate": "docker",
-      "versioningTemplate": "docker"
+      "versioningTemplate": "docker",
+      "autoReplaceStringTemplate": "imageName: {{{depName}}}{{#if newValue}}:{{{newValue}}}{{/if}}{{#if newDigest}}@{{{newDigest}}}{{/if}}"
     },
     {
       "description": "Track versions annotated with a `# renovate:` comment. Needed for image tags written inline in a Helm `valuesObject:`, which the helm-values manager only reads from real values files.",
