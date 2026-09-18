@@ -15,10 +15,10 @@ Kubeadm, Cilium, Rook-Ceph, ArgoCD and everything under them — is in
 
 ## Applications
 
-| Application | URL | Manifests | Page |
-| --- | --- | --- | --- |
-| Home Assistant | `home.k8s.wlkr.ch` | [`home-assistant/`](home-assistant/) | [docs](https://janwelker.github.io/homelab-apps/home-assistant/) |
-| Nextcloud | `cloud.k8s.wlkr.ch` | [`nextcloud/`](nextcloud/) | [docs](https://janwelker.github.io/homelab-apps/nextcloud/) |
+| Application | URL | Auth | Manifests | Page |
+| --- | --- | --- | --- | --- |
+| Home Assistant | `home.k8s.wlkr.ch` | Authentik proxy | [`home-assistant/`](home-assistant/) | [docs](https://janwelker.github.io/homelab-apps/home-assistant/) |
+| Nextcloud | `cloud.k8s.wlkr.ch` | Authentik OIDC | [`nextcloud/`](nextcloud/) | [docs](https://janwelker.github.io/homelab-apps/nextcloud/) |
 
 ## How it works
 
@@ -61,6 +61,8 @@ The rules that catch people out:
 - Official upstream charts and images only, never a repackager's.
 - PostgreSQL is always a CloudNativePG `Cluster`, never the chart's bundled one.
 - Ship a `namespace.yaml` with Pod Security labels and a `CiliumNetworkPolicy`.
+- Authentication is Authentik's, on `auth.k8s.wlkr.ch` — never the `auth.infra`
+  name, which resolves only on the local network.
 
 ## Local checks
 

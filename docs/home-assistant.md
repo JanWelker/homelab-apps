@@ -63,10 +63,43 @@ kubectl -n home-assistant rollout restart deploy/home-assistant
 
 The UI's own "restart" button does the same thing from inside.
 
-## Behind the Gateway
+## Behind the Gateway, and behind Authentik
 
-Requests arrive from Cilium's Envoy, not from the client, so
-`configuration.yaml` sets `use_x_forwarded_for` with the pod CIDR in
+`home.k8s.wlkr.ch` does **not** route to Home Assistant. It routes to
+Authentik's embedded outpost, which authenticates the request and only then
+forwards it to `home-assistant.home-assistant.svc:8123`.
+
+This is the one proxied application in the cluster that has a login of its own.
+Everything else behind the outpost — Hubble, the Ceph dashboard, Prometheus,
+Alertmanager — has no authentication whatsoever, which is what makes the
+outpost *the* authentication rather than an extra one. Home Assistant is
+different because upstream ships no OIDC provider at all: the only auth
+providers in the codebase are `homeassistant`, `command_line`,
+`trusted_networks` and an example marked insecure.
+
+So browser users log in twice, deliberately. That is defence in depth, not
+single sign-on, and it is worth being clear about which one you are getting.
+
+!!! warning "The API is not behind Authentik"
+    The companion apps and every webhook authenticate with a long-lived token and cannot complete an interactive Authentik login, so `skip_path_regex` on the provider lets `/api/`, `/auth/token` and the external-auth callback through untouched. **Home Assistant's own accounts are the only thing guarding those paths.** Revoking someone's Authentik account does not revoke their Home Assistant token — that has to be done in Home Assistant, under Settings → People.
+
+Gating those paths was the alternative, and it would not have made the API
+safer. It would have stopped the phones working and pushed the whole thing
+towards being exposed some other way, which is how a security control becomes
+the reason for a worse setup.
+
+### Why the network policy mentions the authentik namespace
+
+Because that is where the traffic comes from. The `CiliumNetworkPolicy` admits
+port 8123 from the `authentik` namespace rather than from the Gateway, and
+`fromEntities: ingress` is deliberately absent — a request that reaches Home
+Assistant straight from the Gateway would have skipped the authentication
+layer entirely.
+
+### Trusted proxies
+
+Requests arrive from Cilium's Envoy and then the outpost, not from the client,
+so `configuration.yaml` sets `use_x_forwarded_for` with the pod CIDR in
 `trusted_proxies`. Without it, Home Assistant sees every request as coming from
 one address: the ban list becomes useless and rate limiting counts the whole
 household as one user.
