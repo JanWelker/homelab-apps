@@ -51,21 +51,36 @@ spec:
                 #!/bin/sh
                 set -eu
                 php occ app:install user_oidc || php occ app:enable user_oidc
-                php occ user_oidc:provider Authentik \
-                  --clientid="$NEXTCLOUD_OIDC_CLIENT_ID" \
-                  --clientsecret="$NEXTCLOUD_OIDC_CLIENT_SECRET" \
-                  --discoveryuri="https://auth.k8s.wlkr.ch/application/o/nextcloud/.well-known/openid-configuration" \
-                  --unique-uid=0 \
-                  --mapping-uid=preferred_username \
-                  --mapping-email=email \
-                  --mapping-display-name=name \
-                  --scope="openid email profile" \
-                  --check-bearer=0
-                # Hides the username/password form, leaving the Authentik
-                # button. It does not disable the local accounts: the admin
-                # stays reachable at /login?direct=1 for the days when
-                # Authentik is the thing that is broken.
-                php occ config:system:set hide_login_form --type boolean --value true
+
+                # Not fatal, deliberately. Authentik discovers the provider
+                # blueprint asynchronously -- on its worker's startup, hourly,
+                # or when the file watcher notices -- so on a first deploy this
+                # can run before the provider exists. A Nextcloud that will not
+                # start is a far worse outcome than one that is up with the
+                # local login still available, and this hook runs again on
+                # every start, so the next restart fixes it.
+                if php occ user_oidc:provider Authentik \
+                     --clientid="$NEXTCLOUD_OIDC_CLIENT_ID" \
+                     --clientsecret="$NEXTCLOUD_OIDC_CLIENT_SECRET" \
+                     --discoveryuri="https://auth.k8s.wlkr.ch/application/o/nextcloud/.well-known/openid-configuration" \
+                     --unique-uid=0 \
+                     --mapping-uid=preferred_username \
+                     --mapping-email=email \
+                     --mapping-display-name=name \
+                     --scope="openid email profile" \
+                     --check-bearer=0; then
+                  # Hides the username/password form, leaving the Authentik
+                  # button. It does not disable the local accounts: the admin
+                  # stays reachable at /login?direct=1 for the days when
+                  # Authentik is the thing that is broken.
+                  php occ config:system:set hide_login_form --type boolean --value true
+                else
+                  echo "WARNING: could not configure the Authentik provider." >&2
+                  echo "  Leaving the local login form visible rather than" >&2
+                  echo "  locking everyone out. Check that Authentik has" >&2
+                  echo "  discovered authentik-blueprint-nextcloud, then" >&2
+                  echo "  restart this deployment." >&2
+                fi
 
           internalDatabase:
             # Never the chart's own database. CloudNativePG runs it instead,

@@ -108,11 +108,22 @@ application supports, not by preference:
   the honest caveat: where the application has a login of its own, this is
   defence in depth rather than single sign-on.
 
-Either way the Authentik side is a change to the platform repository — a
-provider in its blueprints, client credentials in `bao-secrets.sh`, and for a
-proxied application an entry in its `referencegrant.yaml`. That makes going
-behind SSO two pull requests, deliberately: a workload should not be able to
-take itself out from behind the authentication layer on its own.
+An OIDC provider's blueprint belongs **here**, in the application's own
+directory, as a ConfigMap targeted at the `authentik` namespace — see
+`nextcloud/authentik-blueprint.yaml`. The key must end in `.yaml` or Authentik
+never discovers it, and the platform needs one projected-volume source added
+for the mount.
+
+What stays in the platform repository either way: the client credentials
+(`bao-secrets.sh`), the embedded outpost's provider list, and for a proxied
+application its `referencegrant.yaml` entry. A workload cannot mint its own
+client credentials, so going behind SSO is still deliberately two pull
+requests — a workload should not be able to take itself out from behind the
+authentication layer on its own.
+
+Because discovery is asynchronous, anything that configures itself *against* a
+provider has to tolerate the provider not existing yet. Fail soft and log it;
+do not make it the reason the pod will not start.
 
 **Use `auth.k8s.wlkr.ch`**, never `auth.infra.k8s.wlkr.ch`. The `*.infra` zone
 resolves only on the local network, so a client reachable from outside it would

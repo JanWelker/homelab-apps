@@ -101,10 +101,26 @@ command is idempotent: `app:install` is a no-op once installed, and
 `user_oidc:provider` updates the provider of that name rather than adding a
 second one.
 
-The client credentials come from `kv/nextcloud/config`, which **Authentik reads
-too** — its blueprint configures the provider from the same two values through
-its own `ExternalSecret`. Neither side is ever copied out of a UI, and a rebuilt
-cluster reproduces both from one path.
+### The provider is defined here too
+
+`nextcloud/authentik-blueprint.yaml` is a ConfigMap targeted at the `authentik`
+namespace, holding the `oauth2provider` and the Authentik application. So the
+provider and the client that authenticates against it change in one commit,
+rather than one commit per repository.
+
+The platform mounts it into Authentik's worker as an **optional** projected
+volume — optional because this arrives in `12-workloads`, four stages after
+Authentik has to be Healthy, and a required mount would have the worker waiting
+for a stage that is waiting for the worker.
+
+Two things stay in the platform repository, and both are deliberate: the client
+credentials, which `bao-secrets.sh` generates into `kv/nextcloud/config` — a
+workload cannot mint its own, which is what keeps SSO onboarding a two-repository
+act — and the embedded outpost's provider list, which is one global object that
+two repositories writing would overwrite.
+
+!!! warning "Discovery is asynchronous, so the hook tolerates its absence"
+    `blueprints_discovery` runs on the worker's startup, hourly, and on a file watcher — so on a first deploy the hook above can run before the provider exists. The `user_oidc:provider` call is therefore **not** fatal: if it fails, the login form stays visible, a warning goes to the pod log, and the next restart configures it. A Nextcloud that will not start is a much worse outcome than one that is up with the local login still working.
 
 !!! warning "The hostname is `auth.k8s.wlkr.ch`, not `auth.infra...`"
     The `*.infra` zone resolves only on the local network. A discovery URI pointing there would work from the sofa and hang from anywhere else, because the browser would be redirected to an authorize endpoint that does not resolve. Authentik answers on both names and builds every OIDC URL from the one the request arrived on — but a client must use one of them consistently, or the `iss` claim fails the check against the issuer it discovered.
