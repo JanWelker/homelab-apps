@@ -51,6 +51,9 @@ The two applications here are the two shapes this takes:
 
 Pin every version. No `latest`, no floating tags. Renovate moves them.
 
+!!! warning "A custom manager for an image field must capture `currentDigest`"
+    `config:best-practices` pins container images to digests as well as tags, and a custom regex manager that captures only `depName` and `currentValue` gives that pin nowhere to write. Renovate then builds an update it cannot apply and fails with `Error updating branch: update failure`, which takes down the whole shared `renovate/pin-dependencies` branch rather than the one dependency — while version bumps keep working, so the only visible symptom is the Repository Problems banner on the Dependency Dashboard. Add the group as an optional trailing match, `(?<currentValue>[^\s"'@]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?`, where excluding `@` from `currentValue` is what stops it swallowing the digest on the next run. A field holding a bare tag rather than a full image reference has no room for a digest at all; those need `pinDigests: false` instead. Upstream: [renovate#24942](https://github.com/renovatebot/renovate/issues/24942).
+
 ### 3. PostgreSQL is always a CloudNativePG `Cluster`
 
 Never the database a chart bundles — disable it (`internalDatabase.enabled:

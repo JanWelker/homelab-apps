@@ -77,13 +77,13 @@
   },
   "customManagers": [
     {
-      "description": "CloudNativePG names its operand image in `imageName`, which holds a complete image reference rather than a bare tag, so neither the kubernetes manager nor a tag-shaped comment manager reads it.",
+      "description": "CloudNativePG names its operand image in `imageName`, which holds a complete image reference rather than a bare tag, so neither the kubernetes manager nor a tag-shaped comment manager reads it. `currentDigest` is what lets `config:best-practices` pin the digest; without that group the pin has nowhere to go and the whole pin branch errors.",
       "customType": "regex",
       "managerFilePatterns": [
         "/^[^/]+/.+\\.yaml$/"
       ],
       "matchStrings": [
-        "imageName:\\s*[\"']?(?<depName>[^\\s:\"']+):(?<currentValue>[^\\s\"']+)[\"']?"
+        "imageName:\\s*[\"']?(?<depName>[^\\s:\"']+):(?<currentValue>[^\\s\"'@]+)(?:@(?<currentDigest>sha256:[a-f0-9]+))?[\"']?"
       ],
       "datasourceTemplate": "docker",
       "versioningTemplate": "docker"
