@@ -332,10 +332,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-they-deliberately-do-not-share" class="md-nav__link">
+  <a href="#authentication" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        What they deliberately do not share
+        Authentication
       </span>
     </span>
   </a>
@@ -513,10 +513,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-they-deliberately-do-not-share" class="md-nav__link">
+  <a href="#authentication" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        What they deliberately do not share
+        Authentication
       </span>
     </span>
   </a>
@@ -580,6 +580,7 @@ only what runs on top.</p>
 <th>URL</th>
 <th>Storage</th>
 <th>Database</th>
+<th>Authentication</th>
 </tr>
 </thead>
 <tbody>
@@ -588,12 +589,14 @@ only what runs on top.</p>
 <td><a href="https://home.k8s.wlkr.ch">home.k8s.wlkr.ch</a></td>
 <td>5Gi for <code>/config</code></td>
 <td>CloudNativePG, for the recorder</td>
+<td>Authentik proxy, in front of its own login</td>
 </tr>
 <tr>
 <td><a href="nextcloud/">Nextcloud</a></td>
 <td><a href="https://cloud.k8s.wlkr.ch">cloud.k8s.wlkr.ch</a></td>
 <td>50Gi for files</td>
 <td>CloudNativePG</td>
+<td>Authentik OIDC</td>
 </tr>
 </tbody>
 </table>
@@ -634,17 +637,31 @@ is the full list; the short version:</p>
 <li><strong>Proxy configuration.</strong> Both sit behind the <code>apps-gateway</code>, which terminates
   TLS and forwards from inside the pod CIDR. An application that does not know
   this builds <code>http://</code> links on an <code>https://</code> site.</li>
+<li><strong>Authentik, not their own accounts</strong> — as far as each is capable of it.</li>
 </ul>
-<h2 id="what-they-deliberately-do-not-share">What they deliberately do not share<a class="headerlink" href="#what-they-deliberately-do-not-share" title="Permanent link">&para;</a></h2>
-<p>Neither talks to the other, and neither is behind
-<a href="https://janwelker.github.io/homelab/platform/authentik/">Authentik</a>. Both ship
-their own account systems — Home Assistant's is tied to the mobile app's push
-tokens, Nextcloud's to its desktop and mobile clients — and putting a
-forward-auth proxy in front of either breaks those clients without making
-anything meaningfully safer. The platform UIs are a different case: they have
-no users of their own, which is exactly why they are behind SSO.</p>
-<p>That is a decision worth revisiting if either grows users who are not household
-members. It has not yet.</p>
+<h2 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h2>
+<p>Both go through
+<a href="https://janwelker.github.io/homelab/platform/authentik/">Authentik</a>, but not
+in the same way, and the difference is not a preference — it is what each
+application supports.</p>
+<p><strong>Nextcloud speaks OIDC.</strong> The first-party <code>user_oidc</code> app is installed and
+configured by a startup hook, the login form is hidden, and the local admin
+survives only as break-glass at <code>/login?direct=1</code>. This is real single sign-on:
+one login, and revoking the Authentik account ends the access.</p>
+<p><strong>Home Assistant does not.</strong> Upstream ships four auth providers —
+<code>homeassistant</code>, <code>command_line</code>, <code>trusted_networks</code> and an example marked
+insecure — and no OIDC among them. So the Authentik outpost sits <em>in front of</em>
+Home Assistant's login rather than replacing it, and browser users authenticate
+twice. That is defence in depth, not SSO.</p>
+<div class="admonition warning">
+<p class="admonition-title">Home Assistant's API is not behind Authentik</p>
+<p>The companion apps and webhooks hold a long-lived token and cannot complete an interactive login, so <code>/api/</code> and <code>/auth/token</code> are excluded from the proxy. Home Assistant's own accounts are the only thing guarding them — revoking someone in Authentik does <strong>not</strong> revoke their Home Assistant token, which has to be done in Home Assistant.</p>
+</div>
+<p>Both use <code>auth.k8s.wlkr.ch</code>, not the <code>auth.infra</code> name the platform UIs use:
+the <code>*.infra</code> zone resolves only on the local network, so an OIDC client
+reachable from outside it would send its users somewhere that does not exist
+for them. A client must never mix the two — see <a href="https://janwelker.github.io/homelab/platform/authentik/#two-hostnames">Two
+hostnames</a>.</p>
 <h2 id="adding-one">Adding one<a class="headerlink" href="#adding-one" title="Permanent link">&para;</a></h2>
 <p><a href="conventions/">Conventions</a> first — it is short, and it is the difference
 between an application that works and one that loops on its login redirect. The

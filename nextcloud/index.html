@@ -421,6 +421,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#authentik-not-nextclouds-own-accounts" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Authentik, not Nextcloud's own accounts
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Authentik, not Nextcloud&#x27;s own accounts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-provider-is-defined-here-too" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The provider is defined here too
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#break-glass" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Break-glass
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#one-replica-one-volume" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -432,10 +471,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-admin-account" class="md-nav__link">
+  <a href="#secrets" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        The admin account
+        Secrets
       </span>
     </span>
   </a>
@@ -546,6 +585,45 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#authentik-not-nextclouds-own-accounts" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Authentik, not Nextcloud's own accounts
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Authentik, not Nextcloud&#x27;s own accounts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-provider-is-defined-here-too" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The provider is defined here too
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#break-glass" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Break-glass
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#one-replica-one-volume" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -557,10 +635,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#the-admin-account" class="md-nav__link">
+  <a href="#secrets" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        The admin account
+        Secrets
       </span>
     </span>
   </a>
@@ -671,6 +749,55 @@ arrives and the source address is Cilium's Envoy, so without help it produces
 <p>A <code>proxy.config.php</code> in the chart's <code>configs</code> block sets <code>trusted_proxies</code>,
 <code>overwriteprotocol</code>, <code>overwritehost</code> and <code>overwrite.cli.url</code>. If the login page
 ever starts looping again, this file is where to look first.</p>
+<h2 id="authentik-not-nextclouds-own-accounts">Authentik, not Nextcloud's own accounts<a class="headerlink" href="#authentik-not-nextclouds-own-accounts" title="Permanent link">&para;</a></h2>
+<p>Nextcloud's <code>user_oidc</code> app is first-party — it is in the <code>nextcloud</code> GitHub
+organisation — so this is real single sign-on rather than a proxy bolted in
+front. A <code>before-starting</code> hook in the chart configures it:</p>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>php<span class="w"> </span>occ<span class="w"> </span>app:install<span class="w"> </span>user_oidc<span class="w"> </span><span class="o">||</span><span class="w"> </span>php<span class="w"> </span>occ<span class="w"> </span>app:enable<span class="w"> </span>user_oidc
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>php<span class="w"> </span>occ<span class="w"> </span>user_oidc:provider<span class="w"> </span>Authentik<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>--clientid<span class="o">=</span><span class="s2">"</span><span class="nv">$NEXTCLOUD_OIDC_CLIENT_ID</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>--clientsecret<span class="o">=</span><span class="s2">"</span><span class="nv">$NEXTCLOUD_OIDC_CLIENT_SECRET</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span>--discoveryuri<span class="o">=</span><span class="s2">"https://auth.k8s.wlkr.ch/application/o/nextcloud/.well-known/openid-configuration"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span>...
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>php<span class="w"> </span>occ<span class="w"> </span>config:system:set<span class="w"> </span>hide_login_form<span class="w"> </span>--type<span class="w"> </span>boolean<span class="w"> </span>--value<span class="w"> </span><span class="nb">true</span>
+</span></code></pre></div>
+<p><code>before-starting</code> is the last hook the image runs and it runs on <strong>every</strong>
+start, after an install or an upgrade has finished — so one hook covers both
+cases and re-asserts the configuration if somebody changes it in the UI. Every
+command is idempotent: <code>app:install</code> is a no-op once installed, and
+<code>user_oidc:provider</code> updates the provider of that name rather than adding a
+second one.</p>
+<h3 id="the-provider-is-defined-here-too">The provider is defined here too<a class="headerlink" href="#the-provider-is-defined-here-too" title="Permanent link">&para;</a></h3>
+<p><code>nextcloud/authentik-blueprint.yaml</code> is a ConfigMap targeted at the <code>authentik</code>
+namespace, holding the <code>oauth2provider</code> and the Authentik application. So the
+provider and the client that authenticates against it change in one commit,
+rather than one commit per repository.</p>
+<p>The platform mounts it into Authentik's worker as an <strong>optional</strong> projected
+volume — optional because this arrives in <code>12-workloads</code>, four stages after
+Authentik has to be Healthy, and a required mount would have the worker waiting
+for a stage that is waiting for the worker.</p>
+<p>Two things stay in the platform repository, and both are deliberate: the client
+credentials, which <code>bao-secrets.sh</code> generates into <code>kv/nextcloud/config</code> — a
+workload cannot mint its own, which is what keeps SSO onboarding a two-repository
+act — and the embedded outpost's provider list, which is one global object that
+two repositories writing would overwrite.</p>
+<div class="admonition warning">
+<p class="admonition-title">Discovery is asynchronous, so the hook tolerates its absence</p>
+<p><code>blueprints_discovery</code> runs on the worker's startup, hourly, and on a file watcher — so on a first deploy the hook above can run before the provider exists. The <code>user_oidc:provider</code> call is therefore <strong>not</strong> fatal: if it fails, the login form stays visible, a warning goes to the pod log, and the next restart configures it. A Nextcloud that will not start is a much worse outcome than one that is up with the local login still working.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">The hostname is <code>auth.k8s.wlkr.ch</code>, not <code>auth.infra...</code></p>
+<p>The <code>*.infra</code> zone resolves only on the local network. A discovery URI pointing there would work from the sofa and hang from anywhere else, because the browser would be redirected to an authorize endpoint that does not resolve. Authentik answers on both names and builds every OIDC URL from the one the request arrived on — but a client must use one of them consistently, or the <code>iss</code> claim fails the check against the issuer it discovered.</p>
+</div>
+<h3 id="break-glass">Break-glass<a class="headerlink" href="#break-glass" title="Permanent link">&para;</a></h3>
+<p><code>hide_login_form</code> hides the username and password fields; it does not disable
+the local accounts. The admin generated by <code>make bao-secrets</code> still works, at:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>https://cloud.k8s.wlkr.ch/login?direct=1
+</span></code></pre></div>
+<p>That is the way back in on the day Authentik is the thing that is broken. Same
+reasoning as <a href="https://janwelker.github.io/homelab/platform/authentik/#when-authentik-is-down">Grafana's break-glass
+admin</a>;
+ArgoCD takes the stricter line and disables its local admin outright.</p>
 <h2 id="one-replica-one-volume">One replica, one volume<a class="headerlink" href="#one-replica-one-volume" title="Permanent link">&para;</a></h2>
 <p>The data PVC is <code>ReadWriteOnce</code>, so the deployment strategy is <code>Recreate</code> and
 <code>replicaCount</code> is 1. A <code>RollingUpdate</code> would surge a second pod that cannot
@@ -682,19 +809,37 @@ volume, which only works while both happen to land on the same node.</p>
 <p>Upgrades run Nextcloud's database migrations at startup, which takes it well
 past a default liveness probe's patience — hence the startup probe with sixty
 attempts. A major Nextcloud upgrade is legitimately slow; let it finish.</p>
-<h2 id="the-admin-account">The admin account<a class="headerlink" href="#the-admin-account" title="Permanent link">&para;</a></h2>
-<p>The initial admin credentials come from
-<a href="https://janwelker.github.io/homelab/platform/openbao/">OpenBao</a> through an
-<code>ExternalSecret</code>, at <code>kv/nextcloud/config</code>. The <code>bao kv put</code> command that seeds
-it is in the comment at the top of <code>nextcloud/secrets.yaml</code>, so a rebuilt
-cluster does not require anyone to remember what the path was.</p>
-<p>The metrics exporter authenticates as the same account, which is why it reads
-the same Secret.</p>
+<h2 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h2>
+<p>All four values live in <code>kv/nextcloud/config</code> in
+<a href="https://janwelker.github.io/homelab/platform/openbao/">OpenBao</a>, generated by
+<code>make bao-secrets</code> in the platform repository:</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Read by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>username</code>, <code>password</code></td>
+<td>Nextcloud, as the break-glass admin; the metrics exporter authenticates as it too</td>
+</tr>
+<tr>
+<td><code>oidc-client-id</code>, <code>oidc-client-secret</code></td>
+<td>Nextcloud <strong>and</strong> Authentik, through two <code>ExternalSecret</code>s</td>
+</tr>
+</tbody>
+</table>
+<p>It is deliberately its own path rather than four more keys under
+<code>kv/authentik/config</code>. A <code>bao kv put</code> replaces a path wholesale, so every
+application keeping its client credentials there would make adding the next one
+an Authentik outage.</p>
 <h2 id="verifying">Verifying<a class="headerlink" href="#verifying" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>nextcloud<span class="w"> </span>get<span class="w"> </span>pods,pvc
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>nextcloud<span class="w"> </span>get<span class="w"> </span>cluster<span class="w"> </span>nextcloud-db
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>nextcloud<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>deploy/nextcloud<span class="w"> </span>-c<span class="w"> </span>nextcloud<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span>php<span class="w"> </span>occ<span class="w"> </span>status
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>nextcloud<span class="w"> </span>get<span class="w"> </span>pods,pvc
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>nextcloud<span class="w"> </span>get<span class="w"> </span>cluster<span class="w"> </span>nextcloud-db
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>nextcloud<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>deploy/nextcloud<span class="w"> </span>-c<span class="w"> </span>nextcloud<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>php<span class="w"> </span>occ<span class="w"> </span>status
 </span></code></pre></div>
 <p><code>occ</code> is the administrative CLI for everything the web UI does not expose —
 including <code>occ maintenance:repair</code> and <code>occ db:add-missing-indices</code>, which

@@ -403,13 +403,41 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#behind-the-gateway" class="md-nav__link">
+  <a href="#behind-the-gateway-and-behind-authentik" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Behind the Gateway
+        Behind the Gateway, and behind Authentik
       </span>
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Behind the Gateway, and behind Authentik">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-the-network-policy-mentions-the-authentik-namespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Why the network policy mentions the authentik namespace
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trusted-proxies" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Trusted proxies
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -560,13 +588,41 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#behind-the-gateway" class="md-nav__link">
+  <a href="#behind-the-gateway-and-behind-authentik" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Behind the Gateway
+        Behind the Gateway, and behind Authentik
       </span>
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Behind the Gateway, and behind Authentik">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-the-network-policy-mentions-the-authentik-namespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Why the network policy mentions the authentik namespace
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trusted-proxies" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Trusted proxies
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -689,9 +745,36 @@ the pod restarts:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>home-assistant<span class="w"> </span>rollout<span class="w"> </span>restart<span class="w"> </span>deploy/home-assistant
 </span></code></pre></div>
 <p>The UI's own "restart" button does the same thing from inside.</p>
-<h2 id="behind-the-gateway">Behind the Gateway<a class="headerlink" href="#behind-the-gateway" title="Permanent link">&para;</a></h2>
-<p>Requests arrive from Cilium's Envoy, not from the client, so
-<code>configuration.yaml</code> sets <code>use_x_forwarded_for</code> with the pod CIDR in
+<h2 id="behind-the-gateway-and-behind-authentik">Behind the Gateway, and behind Authentik<a class="headerlink" href="#behind-the-gateway-and-behind-authentik" title="Permanent link">&para;</a></h2>
+<p><code>home.k8s.wlkr.ch</code> does <strong>not</strong> route to Home Assistant. It routes to
+Authentik's embedded outpost, which authenticates the request and only then
+forwards it to <code>home-assistant.home-assistant.svc:8123</code>.</p>
+<p>This is the one proxied application in the cluster that has a login of its own.
+Everything else behind the outpost — Hubble, the Ceph dashboard, Prometheus,
+Alertmanager — has no authentication whatsoever, which is what makes the
+outpost <em>the</em> authentication rather than an extra one. Home Assistant is
+different because upstream ships no OIDC provider at all: the only auth
+providers in the codebase are <code>homeassistant</code>, <code>command_line</code>,
+<code>trusted_networks</code> and an example marked insecure.</p>
+<p>So browser users log in twice, deliberately. That is defence in depth, not
+single sign-on, and it is worth being clear about which one you are getting.</p>
+<div class="admonition warning">
+<p class="admonition-title">The API is not behind Authentik</p>
+<p>The companion apps and every webhook authenticate with a long-lived token and cannot complete an interactive Authentik login, so <code>skip_path_regex</code> on the provider lets <code>/api/</code>, <code>/auth/token</code> and the external-auth callback through untouched. <strong>Home Assistant's own accounts are the only thing guarding those paths.</strong> Revoking someone's Authentik account does not revoke their Home Assistant token — that has to be done in Home Assistant, under Settings → People.</p>
+</div>
+<p>Gating those paths was the alternative, and it would not have made the API
+safer. It would have stopped the phones working and pushed the whole thing
+towards being exposed some other way, which is how a security control becomes
+the reason for a worse setup.</p>
+<h3 id="why-the-network-policy-mentions-the-authentik-namespace">Why the network policy mentions the authentik namespace<a class="headerlink" href="#why-the-network-policy-mentions-the-authentik-namespace" title="Permanent link">&para;</a></h3>
+<p>Because that is where the traffic comes from. The <code>CiliumNetworkPolicy</code> admits
+port 8123 from the <code>authentik</code> namespace rather than from the Gateway, and
+<code>fromEntities: ingress</code> is deliberately absent — a request that reaches Home
+Assistant straight from the Gateway would have skipped the authentication
+layer entirely.</p>
+<h3 id="trusted-proxies">Trusted proxies<a class="headerlink" href="#trusted-proxies" title="Permanent link">&para;</a></h3>
+<p>Requests arrive from Cilium's Envoy and then the outpost, not from the client,
+so <code>configuration.yaml</code> sets <code>use_x_forwarded_for</code> with the pod CIDR in
 <code>trusted_proxies</code>. Without it, Home Assistant sees every request as coming from
 one address: the ban list becomes useless and rate limiting counts the whole
 household as one user.</p>
