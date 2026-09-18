@@ -1,0 +1,930 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="The rules every application directory in this repository follows, and the reasoning behind each one.">
+      
+      
+      
+        <link rel="canonical" href="https://janwelker.github.io/homelab-apps/conventions/">
+      
+      
+        <link rel="prev" href="./..">
+      
+      
+        <link rel="next" href="../home-assistant/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.62">
+    
+    
+      
+        <title>Conventions - Homelab Applications</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../assets/stylesheets/modern/main.ce62732f.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../assets/stylesheets/modern/palette.812a03bb.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#conventions" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="./.." title="Homelab Applications" class="md-header__button md-logo" aria-label="Homelab Applications" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Homelab Applications
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Conventions
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Following your system theme -- switch to light"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Following your system theme -- switch to light" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-sun-moon" viewBox="0 0 24 24"><path d="M12 2v2M14.837 16.385a6 6 0 1 1-7.223-7.222c.624-.147.97.66.715 1.248a4 4 0 0 0 5.26 5.259c.589-.255 1.396.09 1.248.715M16 12a4 4 0 0 0-4-4M19 5l-1.256 1.256M20 12h2"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Pinned to light -- switch to dark"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Pinned to light -- switch to dark" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Pinned to dark -- follow your system theme"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Pinned to dark -- follow your system theme" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/JanWelker/homelab-apps" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    JanWelker/homelab-apps
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="./.." title="Homelab Applications" class="md-nav__button md-logo" aria-label="Homelab Applications" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    Homelab Applications
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/JanWelker/homelab-apps" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    JanWelker/homelab-apps
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Conventions
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Conventions
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Structure
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The rules
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The rules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-project-apps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. <code>project: apps</code>
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-official-upstream-sources-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. Official upstream sources only
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-postgresql-is-always-a-cloudnativepg-cluster" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. PostgreSQL is always a CloudNativePG <code>Cluster</code>
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-own-your-namespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. Own your namespace
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-ship-a-ciliumnetworkpolicy" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. Ship a <code>CiliumNetworkPolicy</code>
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-real-secrets-come-from-openbao" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. Real secrets come from OpenBao
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-do-not-have-to-write" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What you do not have to write
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#behind-the-gateway" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Behind the Gateway
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../home-assistant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home Assistant
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../nextcloud/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Nextcloud
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Structure
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The rules
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The rules">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-project-apps" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        1. <code>project: apps</code>
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-official-upstream-sources-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        2. Official upstream sources only
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-postgresql-is-always-a-cloudnativepg-cluster" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        3. PostgreSQL is always a CloudNativePG <code>Cluster</code>
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-own-your-namespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        4. Own your namespace
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-ship-a-ciliumnetworkpolicy" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        5. Ship a <code>CiliumNetworkPolicy</code>
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#6-real-secrets-come-from-openbao" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        6. Real secrets come from OpenBao
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-you-do-not-have-to-write" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What you do not have to write
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#behind-the-gateway" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Behind the Gateway
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+    <a href="https://github.com/JanWelker/homelab-apps/edit/main/docs/conventions.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/JanWelker/homelab-apps/raw/main/docs/conventions.md" title="View source of this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-code-2" viewBox="0 0 24 24"><path d="M4 12.15V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2h-3.35"/><path d="M14 2v5a1 1 0 0 0 1 1h5M5 16l-3 3 3 3M9 22l3-3-3-3"/></svg>
+    </a>
+  
+
+
+<h1 id="conventions">Conventions<a class="headerlink" href="#conventions" title="Permanent link">&para;</a></h1>
+<p>Rules every directory in this repository follows. They are short because the
+platform does most of the work; the <a href="https://janwelker.github.io/homelab/development/add-workload/">Adding a
+Workload</a> guide
+in the platform documentation is the long version.</p>
+<h2 id="structure">Structure<a class="headerlink" href="#structure" title="Permanent link">&para;</a></h2>
+<p>One directory per application, named after it, containing exactly one
+<code>application.yaml</code> — a complete ArgoCD <code>Application</code>, not a fragment. The <code>apps</code>
+ApplicationSet in the <a href="https://github.com/JanWelker/homelab">homelab</a>
+repository generates one Application per <code>*/application.yaml</code> it finds here.</p>
+<p>Adding a directory adds an application. There is no list to register it in, and
+nothing in the homelab repository needs to change.</p>
+<p>Everything beside <code>application.yaml</code> is what that Application deploys, which is
+why every Application excludes it from its own source:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="w">    </span><span class="nt">directory</span><span class="p">:</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">      </span><span class="nt">exclude</span><span class="p">:</span><span class="w"> </span><span class="s">"application.yaml"</span>
+</span></code></pre></div>
+<h2 id="the-rules">The rules<a class="headerlink" href="#the-rules" title="Permanent link">&para;</a></h2>
+<h3 id="1-project-apps">1. <code>project: apps</code><a class="headerlink" href="#1-project-apps" title="Permanent link">&para;</a></h3>
+<p>The ApplicationSet fails the whole set rather than generate a workload in the
+<code>infra</code> or <code>system</code> project. Those are authorised against destinations a
+workload has no business reaching.</p>
+<h3 id="2-official-upstream-sources-only">2. Official upstream sources only<a class="headerlink" href="#2-official-upstream-sources-only" title="Permanent link">&para;</a></h3>
+<p>The vendor's own Helm chart, or the vendor's own container image. Not a
+repackager's chart, however much more convenient it is.</p>
+<p>The two applications here are the two shapes this takes:</p>
+<ul>
+<li><strong>Nextcloud</strong> publishes its own chart, at <code>https://nextcloud.github.io/helm/</code>
+  from the Nextcloud organisation. Use it.</li>
+<li><strong>Home Assistant</strong> publishes no chart at all. The popular community charts
+  are third-party repackagers, so this is plain manifests around the official
+  <code>ghcr.io/home-assistant/home-assistant</code> image instead. Writing a Deployment
+  is less work than auditing somebody else's chart on every bump.</li>
+</ul>
+<p>Pin every version. No <code>latest</code>, no floating tags. Renovate moves them.</p>
+<h3 id="3-postgresql-is-always-a-cloudnativepg-cluster">3. PostgreSQL is always a CloudNativePG <code>Cluster</code><a class="headerlink" href="#3-postgresql-is-always-a-cloudnativepg-cluster" title="Permanent link">&para;</a></h3>
+<p>Never the database a chart bundles — disable it (<code>internalDatabase.enabled:
+false</code>, <code>postgresql.enabled: false</code>) and point the chart at a <code>Cluster</code> in the
+same namespace through its external-database settings.</p>
+<p>The operator writes a <code>&lt;cluster-name&gt;-app</code> Secret with <code>username</code>, <code>password</code>,
+<code>host</code>, <code>port</code>, <code>dbname</code> and a ready-assembled <code>uri</code>. Consume those keys; never
+copy the value into Git, and never put it in OpenBao either — nothing outside
+the cluster needs it.</p>
+<p>Give the <code>Cluster</code> an earlier sync wave than the application in front of it.
+ArgoCD has a built-in health check for <code>postgresql.cnpg.io/Cluster</code>, so the
+wave genuinely waits for a working database rather than merely a created one:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="nt">argocd.argoproj.io/sync-wave</span><span class="p">:</span><span class="w"> </span><span class="s">"-1"</span>
+</span></code></pre></div>
+<p>The reasoning is in <a href="https://janwelker.github.io/homelab/platform/cloudnative-pg/#the-contract">CloudNativePG &rarr; The
+contract</a>.</p>
+<h3 id="4-own-your-namespace">4. Own your namespace<a class="headerlink" href="#4-own-your-namespace" title="Permanent link">&para;</a></h3>
+<p>Ship a <code>namespace.yaml</code> at sync wave <code>-2</code> carrying the three Pod Security
+Admission labels. A namespace nobody labelled runs at <code>privileged</code>, which
+enforces nothing — <code>CreateNamespace=true</code> alone leaves exactly that.</p>
+<p>Set <code>enforce</code> to what the application demonstrably needs and <code>audit</code>/<code>warn</code>
+stricter, so the violations a tighter level would catch stay visible.</p>
+<p>Annotate it <code>Prune=false</code>. Pruning a <code>Namespace</code> deletes every PVC inside it,
+and a misplaced deletion in Git should not become permanent data loss three
+minutes later.</p>
+<h3 id="5-ship-a-ciliumnetworkpolicy">5. Ship a <code>CiliumNetworkPolicy</code><a class="headerlink" href="#5-ship-a-ciliumnetworkpolicy" title="Permanent link">&para;</a></h3>
+<p>Not a plain <code>NetworkPolicy</code> — a plain one blocks the kubelet's health probes
+and the pods restart forever. Every policy here needs <code>fromEntities: [host,
+remote-node]</code> for those probes and <code>ingress</code> for Gateway traffic.</p>
+<h3 id="6-real-secrets-come-from-openbao">6. Real secrets come from OpenBao<a class="headerlink" href="#6-real-secrets-come-from-openbao" title="Permanent link">&para;</a></h3>
+<p>An <code>ExternalSecret</code> reading <code>kv/&lt;app&gt;/config</code>, with the <code>bao kv put</code> command
+that seeds it written in a comment at the top of the file. Nothing sensitive is
+committed, and the next person rebuilding the cluster can see what needs to
+exist.</p>
+<p>Database passwords are the exception, and only because CloudNativePG generates
+them — see rule 3.</p>
+<h2 id="what-you-do-not-have-to-write">What you do not have to write<a class="headerlink" href="#what-you-do-not-have-to-write" title="Permanent link">&para;</a></h2>
+<p>The platform handles all of this; adding your own is the usual mistake:</p>
+<table>
+<thead>
+<tr>
+<th>You want</th>
+<th>You write</th>
+<th>The platform does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A hostname</td>
+<td>An <code>HTTPRoute</code> on <code>apps-gateway</code></td>
+<td>external-dns publishes the Route53 record</td>
+</tr>
+<tr>
+<td>HTTPS</td>
+<td>Nothing</td>
+<td>The Gateway holds a <code>*.k8s.wlkr.ch</code> wildcard</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td><code>storageClassName: rook-ceph-block</code></td>
+<td>Rook-Ceph replicates it three ways</td>
+</tr>
+<tr>
+<td>Logs</td>
+<td>Nothing</td>
+<td>Alloy ships stdout to Loki</td>
+</tr>
+<tr>
+<td>Backups of a PVC</td>
+<td>Nothing</td>
+<td>Velero snapshots it on the cluster schedule</td>
+</tr>
+<tr>
+<td>Metrics</td>
+<td>A <code>ServiceMonitor</code> or <code>PodMonitor</code></td>
+<td>Prometheus scrapes it</td>
+</tr>
+</tbody>
+</table>
+<h2 id="behind-the-gateway">Behind the Gateway<a class="headerlink" href="#behind-the-gateway" title="Permanent link">&para;</a></h2>
+<p>Both applications here needed proxy configuration, and it is the single most
+common thing to get wrong. Traffic arrives from Cilium's Envoy inside the pod
+CIDR (<code>10.244.0.0/16</code>), not from the client, and TLS is terminated at the
+Gateway — so an application that trusts <code>REMOTE_ADDR</code> sees the proxy, and one
+that builds absolute URLs from the request scheme builds <code>http://</code> links on an
+<code>https://</code> site.</p>
+<p>Look for a trusted-proxies setting and an "overwrite protocol" setting in
+whatever you are deploying. If the login redirect loops, this is why.</p>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="./.." class="md-footer__link md-footer__link--prev" aria-label="Previous: Home">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Home
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../home-assistant/" class="md-footer__link md-footer__link--next" aria-label="Next: Home Assistant">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Home Assistant
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Jan Welker
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      
+      
+        
+        
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["content.action.edit","content.action.view","content.code.copy","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.prefetch","navigation.top","navigation.tracking","search.highlight","toc.follow"],"redirect":null,"search":"../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.8dcc8e9c.min.js"></script>
+      
+    
+  </body>
+</html>
