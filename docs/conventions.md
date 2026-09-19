@@ -96,6 +96,25 @@ Not a plain `NetworkPolicy` — a plain one blocks the kubelet's health probes
 and the pods restart forever. Every policy here needs `fromEntities: [host,
 remote-node]` for those probes and `ingress` for Gateway traffic.
 
+Put it at sync wave `-2`, with the namespace:
+
+```yaml
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+```
+
+At the default wave it lands *after* the `Cluster` from rule 3, and a wave that
+waits on a resource cannot be unblocked by a policy a later wave has yet to
+apply. Leave the policy at `0` while it carries the rule the operator needs to
+reach Postgres and the sync deadlocks: wave `-1` waits forever for a `Cluster`
+whose fix is sitting in wave `0` behind it. [Nextcloud &rarr; The operator needs
+ingress to the instance](nextcloud.md#the-operator-needs-ingress-to-the-instance)
+has the whole failure.
+
+Wave `-2` is also the right answer on its own terms — it puts the policy in
+force before the first pod starts, instead of leaving a window where the
+workload runs unprotected.
+
 ### 6. Authentication is Authentik's, not the application's
 
 An application with its own user database is an application whose accounts

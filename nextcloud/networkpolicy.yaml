@@ -6,6 +6,11 @@ kind: CiliumNetworkPolicy
 metadata:
   name: default-ingress
   namespace: nextcloud
+  annotations:
+    # With the namespace, ahead of the Cluster at -1: the cnpg-system rule below
+    # is what lets that Cluster go Healthy, and a wave cannot wait on a policy
+    # it has not applied yet. See the docs page.
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   description: >-
     Default-deny ingress for Nextcloud. The UI arrives through the Gateway, the

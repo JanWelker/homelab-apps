@@ -77,6 +77,29 @@ kubectl exec -n kube-system <cilium-pod-on-that-node> -c cilium-agent -- \
 
 A dropped `SYN` to `:8000` is the whole story.
 
+### The policy has to land before the database
+
+Adding that rule is not enough on its own. The policy sits at sync wave `-2`,
+with the namespace, and it has to: at the default wave it would be applied
+*after* the `Cluster` at `-1`, and wave `-1` never finishes, so wave `0` never
+runs, so the rule that would end the wait never reaches the cluster. The repair
+commits itself to Git and then sits there, correct and unapplied, while
+`argocd app get nextcloud` keeps reporting the same stuck operation.
+
+The tell is the applied-resource list. A sync parked at wave `-1` shows only the
+waves that ran:
+
+```bash
+kubectl get application -n argocd nextcloud \
+  -o jsonpath='{range .status.operationState.syncResult.resources[*]}{.kind}{"\t"}{.hookPhase}{"\n"}{end}'
+```
+
+If the `CiliumNetworkPolicy` is missing from that list while `Cluster` reads
+`Running`, the policy is behind the thing it is meant to unblock — no amount of
+re-syncing fixes it, because every attempt stops at the same wave. Terminate the
+stuck operation once the wave is corrected; the next sync applies the policy
+first and the `Cluster` goes Healthy on its own.
+
 Redis is disabled for the same reason the database is: it is another Bitnami
 subchart, and the chart's values already point it at `bitnamilegacy`. A single
 replica does not need a shared cache, and the chart configures APCu for the
