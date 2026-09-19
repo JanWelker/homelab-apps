@@ -77,6 +77,16 @@
   },
   "customManagers": [
     {
+      "description": "Webfont releases vendored into docs/assets/fonts by scripts/update-fonts.sh. Renovate moves the pins in that script; the woff2 files are binaries it cannot write, so run `make fonts` on the branch it opens and commit the result -- `make fonts-check` fails the PR otherwise.",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^scripts/update-fonts\\.sh$/"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)\\s+packageName=(?<packageName>\\S+)\\s+versioning=(?<versioning>\\S+)[^\\n]*\\n\\s*\\w+=\"(?<currentValue>[^\"]+)\""
+      ]
+    },
+    {
       "description": "CloudNativePG names its operand image in `imageName`, which holds a complete image reference rather than a bare tag, so neither the kubernetes manager nor a tag-shaped comment manager reads it. `autoReplaceStringTemplate` is what lets `config:best-practices` write the digest: a custom manager rewrites the matched string verbatim, so without a template naming `newDigest` the pin has nowhere to go and fails the whole shared pin branch. `imageName: ` is part of the match, so the template has to rebuild it -- see docs/conventions.md",
       "customType": "regex",
       "managerFilePatterns": [

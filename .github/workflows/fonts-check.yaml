@@ -1,0 +1,33 @@
+---
+name: Fonts
+
+permissions:
+  contents: read
+
+"on":
+  push:
+    branches:
+      - "main"
+    paths:
+      - "scripts/update-fonts.sh"
+      - "docs/assets/fonts/**"
+      - ".github/workflows/fonts-check.yaml"
+  pull_request:
+    paths:
+      - "scripts/update-fonts.sh"
+      - "docs/assets/fonts/**"
+      - ".github/workflows/fonts-check.yaml"
+  workflow_dispatch:
+
+jobs:
+  fonts-check:
+    name: Fonts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      # Renovate bumps the pins, not the woff2 files; the binaries come from
+      # running `make fonts` on the branch it opens.
+      - name: Check vendored fonts match the pinned releases
+        run: make fonts-check
