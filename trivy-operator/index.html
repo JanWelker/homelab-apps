@@ -6,17 +6,15 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Home Assistant on the cluster: why it is plain manifests rather than a chart, where its two kinds of state live, and what home automation gives up by running in Kubernetes.">
+        <meta name="description" content="Continuous vulnerability, misconfiguration, secret, RBAC and CIS compliance scanning, and why every finding is a CRD rather than a row in a database.">
       
       
       
-        <link rel="canonical" href="https://janwelker.github.io/homelab-apps/home-assistant/">
+        <link rel="canonical" href="https://janwelker.github.io/homelab-apps/trivy-operator/">
       
       
-        <link rel="prev" href="../conventions/">
+        <link rel="prev" href="../nextcloud/">
       
-      
-        <link rel="next" href="../nextcloud/">
       
       
         
@@ -27,7 +25,7 @@
     
     
       
-        <title>Home Assistant - Homelab Applications</title>
+        <title>Trivy Operator - Homelab Applications</title>
       
     
     
@@ -77,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#home-assistant" class="md-skip">
+        <a href="#trivy-operator" class="md-skip">
           Skip to content
         </a>
       
@@ -113,7 +111,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Home Assistant
+              Trivy Operator
             
           </span>
         </div>
@@ -291,36 +289,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Home Assistant
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="././" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../home-assistant/" class="md-nav__link">
         
   
   
@@ -335,149 +307,6 @@
   
 
       </a>
-      
-        
-
-
-<nav class="md-nav md-nav--secondary" aria-label="On this page">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      On this page
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#plain-manifests-not-a-chart" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Plain manifests, not a chart
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#two-kinds-of-state-in-two-places" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Two kinds of state, in two places
-      </span>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Two kinds of state, in two places">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-recorder-is-not-sqlite" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        The recorder is not SQLite
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#restarting-after-a-config-change" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Restarting after a config change
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#behind-the-gateway-and-behind-authentik" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Behind the Gateway, and behind Authentik
-      </span>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Behind the Gateway, and behind Authentik">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#why-the-network-policy-mentions-the-cnpg-system-namespace" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Why the network policy mentions the cnpg-system namespace
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-the-network-policy-mentions-the-authentik-namespace" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Why the network policy mentions the authentik namespace
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trusted-proxies" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Trusted proxies
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-this-costs" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        What this costs
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#verifying" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Verifying
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -512,10 +341,36 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../trivy-operator/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Trivy Operator
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
         
   
   
@@ -530,6 +385,137 @@
   
 
       </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        At a glance
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-scans" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What it scans
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reports-are-crds" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Reports are CRDs
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#one-trivy-server-not-one-download-per-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        One Trivy server, not one download per scan
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unfixed-vulnerabilities-stay-in-the-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Unfixed vulnerabilities stay in the report
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metrics-and-the-one-that-is-switched-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Metrics, and the one that is switched off
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#on-the-control-plane-too" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        On the control plane too
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reading-results-without-grafana" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Reading results without Grafana
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-it-replaced-kubescape" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Why it replaced Kubescape
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Directory Structure
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -575,10 +561,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#plain-manifests-not-a-chart" class="md-nav__link">
+  <a href="#at-a-glance" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Plain manifests, not a chart
+        At a glance
       </span>
     </span>
   </a>
@@ -586,99 +572,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#two-kinds-of-state-in-two-places" class="md-nav__link">
+  <a href="#what-it-scans" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Two kinds of state, in two places
-      </span>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Two kinds of state, in two places">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-recorder-is-not-sqlite" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        The recorder is not SQLite
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#restarting-after-a-config-change" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Restarting after a config change
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#behind-the-gateway-and-behind-authentik" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Behind the Gateway, and behind Authentik
-      </span>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Behind the Gateway, and behind Authentik">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#why-the-network-policy-mentions-the-cnpg-system-namespace" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Why the network policy mentions the cnpg-system namespace
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-the-network-policy-mentions-the-authentik-namespace" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Why the network policy mentions the authentik namespace
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trusted-proxies" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Trusted proxies
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-this-costs" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        What this costs
+        What it scans
       </span>
     </span>
   </a>
@@ -686,10 +583,87 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#verifying" class="md-nav__link">
+  <a href="#reports-are-crds" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Verifying
+        Reports are CRDs
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#one-trivy-server-not-one-download-per-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        One Trivy server, not one download per scan
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#unfixed-vulnerabilities-stay-in-the-report" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Unfixed vulnerabilities stay in the report
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#metrics-and-the-one-that-is-switched-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Metrics, and the one that is switched off
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#on-the-control-plane-too" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        On the control plane too
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reading-results-without-grafana" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Reading results without Grafana
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-it-replaced-kubescape" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Why it replaced Kubescape
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#directory-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Directory Structure
       </span>
     </span>
   </a>
@@ -711,7 +685,7 @@
                 
                   
   
-    <a href="https://github.com/JanWelker/homelab-apps/edit/main/docs/home-assistant.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/JanWelker/homelab-apps/edit/main/docs/trivy-operator.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
     </a>
@@ -720,150 +694,242 @@
     
       
     
-    <a href="https://github.com/JanWelker/homelab-apps/raw/main/docs/home-assistant.md" title="View source of this page" class="md-content__button md-icon">
+    <a href="https://github.com/JanWelker/homelab-apps/raw/main/docs/trivy-operator.md" title="View source of this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-code-2" viewBox="0 0 24 24"><path d="M4 12.15V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2h-3.35"/><path d="M14 2v5a1 1 0 0 0 1 1h5M5 16l-3 3 3 3M9 22l3-3-3-3"/></svg>
     </a>
   
 
 
-<h1 id="home-assistant">Home Assistant<a class="headerlink" href="#home-assistant" title="Permanent link">&para;</a></h1>
-<p><a href="https://www.home-assistant.io/">Home Assistant</a> runs the house — lights,
-sensors, climate, and whatever else has been added since this page was written.
-It answers on <a href="https://home.k8s.wlkr.ch">home.k8s.wlkr.ch</a>, and its manifests
-are in <a href="https://github.com/JanWelker/homelab-apps/tree/main/home-assistant"><code>home-assistant/</code></a>.</p>
-<h2 id="plain-manifests-not-a-chart">Plain manifests, not a chart<a class="headerlink" href="#plain-manifests-not-a-chart" title="Permanent link">&para;</a></h2>
-<p>Home Assistant publishes no official Helm chart. The community ones are
-third-party repackagers, and the rule here is that a version pin is only worth
-having when you know who published the thing you pinned — so this is a
-Deployment, a Service, a PVC and a ConfigMap, written out. See
-<a href="../conventions/#2-official-upstream-sources-only">Conventions &rarr; Official upstream sources only</a>.</p>
-<p>That turned out to be the smaller amount of work. Home Assistant is a single
-stateful process with one volume and one port; almost everything a chart would
-parameterise has exactly one correct value here.</p>
-<h2 id="two-kinds-of-state-in-two-places">Two kinds of state, in two places<a class="headerlink" href="#two-kinds-of-state-in-two-places" title="Permanent link">&para;</a></h2>
-<p>This is the part worth understanding before touching anything:</p>
+<h1 id="trivy-operator">Trivy Operator<a class="headerlink" href="#trivy-operator" title="Permanent link">&para;</a></h1>
+<p>Aqua Security's <a href="https://aquasecurity.github.io/trivy-operator/latest/">Trivy Operator</a>
+scans everything the cluster runs — container images for CVEs, workloads for
+misconfiguration, images for committed credentials, roles for excessive
+permissions, and the nodes themselves against CIS — and writes every result back
+into the cluster as a Kubernetes object.</p>
+<p>It replaced Kubescape, which was removed from the platform repository. The two
+overlap almost completely in what they check; what decided it is below.</p>
+<h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>State</th>
-<th>Where</th>
-<th>Rebuildable?</th>
+<th></th>
+<th></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Registries, users, tokens, integration config (<code>/config/.storage</code>)</td>
-<td>The <code>home-assistant-config</code> PVC</td>
-<td><strong>No.</strong> Losing it means re-pairing every device</td>
+<td>Namespace</td>
+<td><code>trivy-system</code></td>
 </tr>
 <tr>
-<td>History and long-term statistics</td>
-<td>PostgreSQL, via CloudNativePG</td>
-<td>Only from a backup; losing it loses your graphs</td>
+<td>Chart</td>
+<td><code>trivy-operator</code>, from <code>aquasecurity.github.io/helm-charts</code></td>
 </tr>
 <tr>
-<td><code>configuration.yaml</code></td>
-<td>A ConfigMap, in Git</td>
-<td>Yes, it is the file in the repository</td>
+<td>Project</td>
+<td><code>apps</code></td>
+</tr>
+<tr>
+<td>URL</td>
+<td>None. It has no user interface at all</td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td><a href="https://monitoring.infra.k8s.wlkr.ch/d/trivy-operator-overview">Trivy Operator</a></td>
+</tr>
+<tr>
+<td>Database</td>
+<td>None — see <a href="#reports-are-crds">Reports are CRDs</a></td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>5Gi <code>rook-ceph-block</code>, for the Trivy server's vulnerability database</td>
+</tr>
+<tr>
+<td>Depends on</td>
+<td>Monitoring (the <code>ServiceMonitor</code>), Rook-Ceph (the PVC)</td>
 </tr>
 </tbody>
 </table>
-<p>The split matters because the recorder database is the part that grows without
-bound and the <code>/config</code> volume is the part that cannot be reconstructed. They
-are sized and backed up accordingly, and 5Gi of <code>/config</code> is generous for what
-is mostly JSON.</p>
-<h3 id="the-recorder-is-not-sqlite">The recorder is not SQLite<a class="headerlink" href="#the-recorder-is-not-sqlite" title="Permanent link">&para;</a></h3>
-<p>Home Assistant's default recorder is SQLite in a file on <code>/config</code>. On a
-network block device — which is what every PVC here is — SQLite's locking
-behaviour is the single most common cause of a Home Assistant that feels slow
-for no visible reason.</p>
-<p>So the recorder points at a CloudNativePG <code>Cluster</code> instead, per <a href="https://janwelker.github.io/homelab/platform/cloudnative-pg/#the-contract">the
-contract</a>.
-<code>purge_keep_days</code> is set to 42; the default of 10 is reliably shorter than the
-moment you go looking for a graph.</p>
-<div class="admonition warning">
-<p class="admonition-title"><code>secrets.yaml</code> is generated, not yours</p>
-<p>Home Assistant removed its <code>!env_var</code> YAML tag years ago, so there is no way to put an environment variable into <code>configuration.yaml</code>. The database URL reaches it through <code>!secret</code> instead, and an init container writes <code>/config/secrets.yaml</code> from CloudNativePG's Secret on <strong>every</strong> start — so anything added to that file by hand is lost at the next restart. A secret a workload needs belongs in <a href="https://janwelker.github.io/homelab/platform/openbao/">OpenBao</a> and reaches the pod as an environment variable or a mounted file.</p>
-</div>
-<h3 id="restarting-after-a-config-change">Restarting after a config change<a class="headerlink" href="#restarting-after-a-config-change" title="Permanent link">&para;</a></h3>
-<p>The ConfigMap is mounted over <code>/config/configuration.yaml</code>, and Home Assistant
-reads it once, at startup. Merging a change to it does nothing visible until
-the pod restarts:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>home-assistant<span class="w"> </span>rollout<span class="w"> </span>restart<span class="w"> </span>deploy/home-assistant
-</span></code></pre></div>
-<p>The UI's own "restart" button does the same thing from inside.</p>
-<h2 id="behind-the-gateway-and-behind-authentik">Behind the Gateway, and behind Authentik<a class="headerlink" href="#behind-the-gateway-and-behind-authentik" title="Permanent link">&para;</a></h2>
-<p><code>home.k8s.wlkr.ch</code> does <strong>not</strong> route to Home Assistant. It routes to
-Authentik's embedded outpost, which authenticates the request and only then
-forwards it to <code>home-assistant.home-assistant.svc:8123</code>.</p>
-<p>This is the one proxied application in the cluster that has a login of its own.
-Everything else behind the outpost — Hubble, the Ceph dashboard, Prometheus,
-Alertmanager — has no authentication whatsoever, which is what makes the
-outpost <em>the</em> authentication rather than an extra one. Home Assistant is
-different because upstream ships no OIDC provider at all: the only auth
-providers in the codebase are <code>homeassistant</code>, <code>command_line</code>,
-<code>trusted_networks</code> and an example marked insecure.</p>
-<p>So browser users log in twice, deliberately. That is defence in depth, not
-single sign-on, and it is worth being clear about which one you are getting.</p>
-<div class="admonition warning">
-<p class="admonition-title">The API is not behind Authentik</p>
-<p>The companion apps and every webhook authenticate with a long-lived token and cannot complete an interactive Authentik login, so <code>skip_path_regex</code> on the provider lets <code>/api/</code>, <code>/auth/token</code> and the external-auth callback through untouched. <strong>Home Assistant's own accounts are the only thing guarding those paths.</strong> Revoking someone's Authentik account does not revoke their Home Assistant token — that has to be done in Home Assistant, under Settings → People.</p>
-</div>
-<p>Gating those paths was the alternative, and it would not have made the API
-safer. It would have stopped the phones working and pushed the whole thing
-towards being exposed some other way, which is how a security control becomes
-the reason for a worse setup.</p>
-<h3 id="why-the-network-policy-mentions-the-cnpg-system-namespace">Why the network policy mentions the cnpg-system namespace<a class="headerlink" href="#why-the-network-policy-mentions-the-cnpg-system-namespace" title="Permanent link">&para;</a></h3>
-<p>The policy allows <code>cnpg-system</code> to reach the database pod on port 8000, the
-instance manager's status endpoint that the CloudNativePG operator polls.</p>
-<p>Without that rule the failure is quiet in the worst way. Postgres runs, the
-recorder writes to it, and <code>kubectl get cluster</code> says <code>1/1</code> ready — but the phase
-reads <code>Instance Status Extraction Error: HTTP communication issue</code>, the <code>Cluster</code>
-never goes Healthy, and the sync operation waiting on it at wave <code>-1</code> never
-completes. The Application reports <code>Synced</code> with health <code>Unknown</code>, and every
-entry in <code>status.resources</code> is missing its health field because the controller
-never assessed them. That combination — Unknown with no resource naming itself —
-is what distinguishes this from an actually unhealthy workload.</p>
-<p>The same rule is on the Nextcloud policy for the same reason; <a href="../nextcloud/#the-operator-needs-ingress-to-the-instance">that page has the
-hubble command</a> for
-confirming the drop.</p>
-<h3 id="why-the-network-policy-mentions-the-authentik-namespace">Why the network policy mentions the authentik namespace<a class="headerlink" href="#why-the-network-policy-mentions-the-authentik-namespace" title="Permanent link">&para;</a></h3>
-<p>Because that is where the traffic comes from. The <code>CiliumNetworkPolicy</code> admits
-port 8123 from the <code>authentik</code> namespace rather than from the Gateway, and
-<code>fromEntities: ingress</code> is deliberately absent — a request that reaches Home
-Assistant straight from the Gateway would have skipped the authentication
-layer entirely.</p>
-<h3 id="trusted-proxies">Trusted proxies<a class="headerlink" href="#trusted-proxies" title="Permanent link">&para;</a></h3>
-<p>Requests arrive from Cilium's Envoy and then the outpost, not from the client,
-so <code>configuration.yaml</code> sets <code>use_x_forwarded_for</code> with the pod CIDR in
-<code>trusted_proxies</code>. Without it, Home Assistant sees every request as coming from
-one address: the ban list becomes useless and rate limiting counts the whole
-household as one user.</p>
-<h2 id="what-this-costs">What this costs<a class="headerlink" href="#what-this-costs" title="Permanent link">&para;</a></h2>
-<p>Running home automation on a Kubernetes cluster has two real drawbacks, and
-both are accepted rather than solved:</p>
+<h2 id="what-it-scans">What it scans<a class="headerlink" href="#what-it-scans" title="Permanent link">&para;</a></h2>
+<p>Six scanners, all enabled. Each writes its own kind of report:</p>
+<table>
+<thead>
+<tr>
+<th>Scanner</th>
+<th>Produces</th>
+<th>Answers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Vulnerability</td>
+<td><code>VulnerabilityReport</code></td>
+<td>Which CVEs are in the images we run</td>
+</tr>
+<tr>
+<td>Exposed secret</td>
+<td><code>ExposedSecretReport</code></td>
+<td>Which images have credentials baked in</td>
+</tr>
+<tr>
+<td>Config audit</td>
+<td><code>ConfigAuditReport</code></td>
+<td>Which workloads are misconfigured</td>
+</tr>
+<tr>
+<td>RBAC assessment</td>
+<td><code>RbacAssessmentReport</code></td>
+<td>Which roles grant too much</td>
+</tr>
+<tr>
+<td>Infra assessment</td>
+<td><code>InfraAssessmentReport</code></td>
+<td>Whether the nodes pass CIS</td>
+</tr>
+<tr>
+<td>Compliance</td>
+<td><code>ClusterComplianceReport</code></td>
+<td>CIS 1.23, NSA/CISA 1.0, PSS baseline and restricted</td>
+</tr>
+</tbody>
+</table>
+<p>The compliance specs are the four the chart ships that apply to a kubeadm
+cluster. The <code>eks-</code> and <code>rke2-</code> specs are for other distributions and are left
+out rather than reported as failing.</p>
+<h2 id="reports-are-crds">Reports are CRDs<a class="headerlink" href="#reports-are-crds" title="Permanent link">&para;</a></h2>
+<p>There is no database here, and that is not an omission. Trivy Operator's only
+storage backend is the Kubernetes API: every finding is a custom resource in the
+namespace of the workload it describes. The one alternative the chart offers —
+<code>alternateReportStorage</code> — writes the same objects as JSON files onto a PVC, and
+is meant for clusters whose etcd cannot take the volume. Neither option is
+PostgreSQL, so the repository's <a href="../conventions/#3-postgresql-is-always-a-cloudnativepg-cluster">CloudNativePG
+rule</a> does not
+apply: there is no database to move out of a chart.</p>
+<p>What that does mean is that reports cost etcd space, and they are bounded
+deliberately:</p>
 <ul>
-<li><strong>No local device discovery.</strong> mDNS and SSDP need host networking, which
-  needs a <code>privileged</code> namespace, and that is a bad trade for a convenience.
-  Devices that cannot be added by IP address have to be added through an
-  integration that does not rely on broadcast discovery.</li>
-<li><strong>No USB devices.</strong> A Zigbee or Z-Wave stick is plugged into one specific
-  machine, and a pod that requires that machine is a pod that cannot be
-  rescheduled. Anything of that kind belongs on a network-attached coordinator
-  the pod can reach over IP.</li>
+<li><code>scannerReportTTL: 24h</code> — a report older than a day is deleted and rebuilt.
+  Reports are derived from the cluster, so a stale one is worse than a missing
+  one.</li>
+<li><code>scanOnlyCurrentRevisions</code> — only the live ReplicaSet of a Deployment is
+  scanned, not every superseded one.</li>
+<li><code>scanJobTTL: 10m</code> — finished scan jobs and their secrets do not accumulate.</li>
 </ul>
-<p>There is also a third, less obvious one: the cluster is now a dependency of the
-lights working. A Ceph rebalance that pauses I/O pauses Home Assistant with it.
-That is the trade for having it backed up, monitored and reproducible, and it
-is worth knowing before the first time it happens.</p>
-<h2 id="verifying">Verifying<a class="headerlink" href="#verifying" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>home-assistant<span class="w"> </span>get<span class="w"> </span>pods,pvc
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>home-assistant<span class="w"> </span>get<span class="w"> </span>cluster<span class="w"> </span>home-assistant-db
+<h2 id="one-trivy-server-not-one-download-per-scan">One Trivy server, not one download per scan<a class="headerlink" href="#one-trivy-server-not-one-download-per-scan" title="Permanent link">&para;</a></h2>
+<p><code>builtInTrivyServer: true</code> puts the operator into <code>ClientServer</code> mode: a single
+<code>trivy-server</code> StatefulSet holds the vulnerability database on a 5Gi
+<code>rook-ceph-block</code> PVC, and scan jobs query it over <code>trivy-service:4954</code> instead
+of each fetching the database for itself.</p>
+<p>Standalone mode is the chart's default and it works, but every scan job then
+downloads several hundred megabytes of <code>trivy-db</code> and <code>trivy-java-db</code>. Across
+six nodes and every workload in the cluster that is both a lot of egress and a
+good way to meet a registry rate limit — which a scanner reports as zero
+findings, not as an error.</p>
+<h2 id="unfixed-vulnerabilities-stay-in-the-report">Unfixed vulnerabilities stay in the report<a class="headerlink" href="#unfixed-vulnerabilities-stay-in-the-report" title="Permanent link">&para;</a></h2>
+<p><code>ignoreUnfixed</code> is left <code>false</code>, against the recommendation in Aqua's own
+Grafana tutorial. A finding with no available fix is not noise: it is usually
+the signal that a <strong>base image</strong> is the wrong one, and dropping those hides the
+single most actionable class of result. Severity is likewise unfiltered —
+<code>UNKNOWN</code> through <code>CRITICAL</code> — because a finding the scanner could not grade is
+exactly the one worth reading.</p>
+<p><code>additionalVulnerabilityReportFields</code> adds the description, links, CVSS score,
+target, class and package path to each entry, so a report can be triaged
+without going back to the registry to work out what a package even is.</p>
+<h2 id="metrics-and-the-one-that-is-switched-off">Metrics, and the one that is switched off<a class="headerlink" href="#metrics-and-the-one-that-is-switched-off" title="Permanent link">&para;</a></h2>
+<p>The operator exports counts per severity per workload, plus a per-finding
+"info" series for each scanner. All of those are on, and the dashboard's tables
+are built on them.</p>
+<p><code>metricsVulnIdEnabled</code> is the exception and is deliberately <strong>off</strong>. It emits
+one series per CVE per container, labelled with the package, version, score and
+publication date. On a cluster this size that is a six-figure series count on
+its own, and every one of those labels is already in the <code>VulnerabilityReport</code>
+that the metric was derived from. <code>kubectl</code> is the right tool for that question.</p>
+<div class="admonition warning">
+<p class="admonition-title"><code>reportType: summary</code>, or the compliance metric disappears</p>
+<p>The collector skips any <code>ClusterComplianceReport</code> whose format is <code>all</code>,
+so setting the intuitive-looking <code>compliance.reportType: all</code> silently
+stops <code>trivy_compliance_info</code> being emitted and empties the dashboard's
+failing-controls table. <code>summary</code> keeps the metric; the per-control detail
+is still in the report object either way. The <code>status</code> label on both
+compliance metrics is title-cased — <code>Fail</code> and <code>Pass</code>, not <code>FAIL</code>.</p>
+</div>
+<h2 id="on-the-control-plane-too">On the control plane too<a class="headerlink" href="#on-the-control-plane-too" title="Permanent link">&para;</a></h2>
+<p>Both <code>nodeCollector.tolerations</code> and <code>trivyOperator.scanJobTolerations</code> carry
+the <code>node-role.kubernetes.io/control-plane</code> toleration. Without it,
+node-collector never lands on <code>loki</code>, <code>odin</code> or <code>thor</code>, and the CIS infra
+assessment silently covers only the three worker nodes — reporting a clean
+result for a control plane it never looked at.</p>
+<p>node-collector is also why the namespace runs at <code>privileged</code>: it hostPath-mounts
+<code>/var/lib/etcd</code>, <code>/var/lib/kubelet</code>, <code>/etc/kubernetes</code> and <code>/etc/cni/net.d</code> to
+read the file modes and flags those checks are about, and <code>baseline</code> forbids
+hostPath outright. The scan jobs themselves are not privileged — the chart gives
+them <code>drop: [ALL]</code>, no privilege escalation and a read-only root filesystem —
+and <code>audit</code>/<code>warn</code> stay at <code>restricted</code> so that stays visible.</p>
+<h2 id="reading-results-without-grafana">Reading results without Grafana<a class="headerlink" href="#reading-results-without-grafana" title="Permanent link">&para;</a></h2>
+<p>The dashboard is a summary; the objects have the detail.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># What has been scanned, worst first</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kubectl<span class="w"> </span>get<span class="w"> </span>vulnerabilityreports<span class="w"> </span>-A<span class="w"> </span>--sort-by<span class="o">=</span><span class="s1">'.report.summary.criticalCount'</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># The findings themselves, for one workload</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>kubectl<span class="w"> </span>get<span class="w"> </span>vulnerabilityreports<span class="w"> </span>-n<span class="w"> </span>&lt;ns&gt;<span class="w"> </span>&lt;name&gt;<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.report.vulnerabilities[]</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">        | select(.severity=="CRITICAL")</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">        | {id: .vulnerabilityID, pkg: .resource,</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">           installed: .installedVersion, fixed: .fixedVersion}'</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># Misconfiguration, RBAC and node checks</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>kubectl<span class="w"> </span>get<span class="w"> </span>configauditreports<span class="w"> </span>-A
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>kubectl<span class="w"> </span>get<span class="w"> </span>rbacassessmentreports,clusterrbacassessmentreports<span class="w"> </span>-A
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>kubectl<span class="w"> </span>get<span class="w"> </span>infraassessmentreports<span class="w"> </span>-A
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1"># Which compliance controls are failing</span>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>kubectl<span class="w"> </span>get<span class="w"> </span>clustercompliancereports<span class="w"> </span>k8s-cis-1.23<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.status.summary, (.status.summaryReport.controlCheck[]</span>
+</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="s1">        | select(.totalFail &gt; 0))'</span>
 </span></code></pre></div>
-<p>The database should report <code>Cluster in healthy state</code>. If the application pod
-is in <code>Init</code>, it is waiting on that: the init container cannot write
-<code>secrets.yaml</code> until CloudNativePG has produced the Secret it reads.</p>
+<div class="admonition danger">
+<p class="admonition-title">Zero is not the same as clean</p>
+<p>A report that reads zero may be a clean image or a scan that failed — a
+rate-limited registry pull, a timeout, an image the operator could not
+resolve. Check the object exists and carries a real digest before believing
+a zero, and look at <code>kubectl -n trivy-system get jobs</code> when one never
+appears at all. This is the failure mode the
+<a href="https://github.com/JanWelker/homelab">vulnerability-triage</a> skill opens
+with, and it costs a triage pass every time it is forgotten.</p>
+</div>
+<h2 id="why-it-replaced-kubescape">Why it replaced Kubescape<a class="headerlink" href="#why-it-replaced-kubescape" title="Permanent link">&para;</a></h2>
+<p>Kubescape covered the same ground and was removed rather than run alongside.
+What actually decided it:</p>
+<ul>
+<li><strong>The scan pipeline was fragile in ways that were invisible.</strong> An image whose
+  SBOM exceeded a size ceiling was not scanned at all and reported zero
+  findings; raising the ceiling did not help, because the operator lacked the
+  RBAC to delete the oversized SBOM it had already stored, so the too-large
+  record was never replaced.</li>
+<li><strong>Results lived behind an aggregated API server</strong> backed by its own PVC, which
+  made "is this number real" a question about the storage layer rather than
+  about the image.</li>
+<li><strong>The scanner image had to be pinned ahead of the chart</strong> to work around
+  scheduled scans that failed outright in the version the chart shipped.</li>
+</ul>
+<p>Trivy Operator keeps its reports in ordinary CRDs, ships no aggregated API
+server, and its scanner is the same Trivy already familiar from CI. What is
+genuinely lost is <strong>relevancy</strong> — Kubescape's eBPF node-agent could mark a
+finding as relevant when the vulnerable binary was actually loaded at runtime,
+and Trivy Operator has no equivalent. Reachability is now an argument to be made
+from the workload's configuration rather than a column to sort on.</p>
+<p>The runtime-detection half of Kubescape — the eBPF sensor, network-policy
+generation and seccomp profiling — has no replacement here and was not carried
+over.</p>
+<h2 id="directory-structure">Directory Structure<a class="headerlink" href="#directory-structure" title="Permanent link">&para;</a></h2>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>trivy-operator/
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>├── application.yaml        # the chart, with every scanner enabled
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>├── namespace.yaml          # privileged, for node-collector's hostPaths
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>├── networkpolicy.yaml      # default-deny ingress; Prometheus on 8080
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>└── grafana-dashboard.yaml  # written for this cluster, not vendored
+</span></code></pre></div>
 
 
 
@@ -904,7 +970,7 @@ is in <code>Init</code>, it is waiting on that: the init container cannot write
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../conventions/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Conventions">
+          <a href="../nextcloud/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Nextcloud">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
@@ -914,27 +980,11 @@ is in <code>Init</code>, it is waiting on that: the init container cannot write
                 Previous
               </span>
               <div class="md-ellipsis">
-                Conventions
-              </div>
-            </div>
-          </a>
-        
-        
-          
-          <a href="../nextcloud/" class="md-footer__link md-footer__link--next" aria-label="Next: Nextcloud">
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              <div class="md-ellipsis">
                 Nextcloud
               </div>
             </div>
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </div>
           </a>
+        
         
       </nav>
     

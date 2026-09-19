@@ -12,4 +12,7 @@
       <url>
         <loc>https://janwelker.github.io/homelab-apps/nextcloud/</loc>
       </url>
+      <url>
+        <loc>https://janwelker.github.io/homelab-apps/trivy-operator/</loc>
+      </url>
 </urlset>
