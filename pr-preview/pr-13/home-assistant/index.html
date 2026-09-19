@@ -1,0 +1,987 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Home Assistant on the cluster: why it is plain manifests rather than a chart, where its two kinds of state live, and what home automation gives up by running in Kubernetes.">
+      
+      
+      
+        <link rel="canonical" href="https://janwelker.github.io/homelab-apps/home-assistant/">
+      
+      
+        <link rel="prev" href="../conventions/">
+      
+      
+        <link rel="next" href="../nextcloud/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="zensical-0.0.62">
+    
+    
+      
+        <title>Home Assistant - Homelab Applications</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../assets/stylesheets/modern/main.ce62732f.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../assets/stylesheets/modern/palette.812a03bb.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#home-assistant" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="./.." title="Homelab Applications" class="md-header__button md-logo" aria-label="Homelab Applications" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Homelab Applications
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Home Assistant
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Following your system theme -- switch to light"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Following your system theme -- switch to light" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-sun-moon" viewBox="0 0 24 24"><path d="M12 2v2M14.837 16.385a6 6 0 1 1-7.223-7.222c.624-.147.97.66.715 1.248a4 4 0 0 0 5.26 5.259c.589-.255 1.396.09 1.248.715M16 12a4 4 0 0 0-4-4M19 5l-1.256 1.256M20 12h2"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Pinned to light -- switch to dark"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Pinned to light -- switch to dark" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Pinned to dark -- follow your system theme"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Pinned to dark -- follow your system theme" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/JanWelker/homelab-apps" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    JanWelker/homelab-apps
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="./.." title="Homelab Applications" class="md-nav__button md-logo" aria-label="Homelab Applications" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-book-open" viewBox="0 0 24 24"><path d="M12 5v16M20.001 19A2 2 0 0 0 22 17V5a2 2 0 0 0-1.999-2L16 3.002A5 5 0 0 0 12 5a5 5 0 0 0-4-2H4a2 2 0 0 0-2 2v12a2 2 0 0 0 1.999 2H8a5 5 0 0 1 4 2 5 5 0 0 1 4-2z"/></svg>
+
+    </a>
+    Homelab Applications
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/JanWelker/homelab-apps" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    JanWelker/homelab-apps
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Conventions
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home Assistant
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home Assistant
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#plain-manifests-not-a-chart" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Plain manifests, not a chart
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#two-kinds-of-state-in-two-places" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Two kinds of state, in two places
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Two kinds of state, in two places">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-recorder-is-not-sqlite" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The recorder is not SQLite
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restarting-after-a-config-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Restarting after a config change
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#behind-the-gateway-and-behind-authentik" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Behind the Gateway, and behind Authentik
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Behind the Gateway, and behind Authentik">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-the-network-policy-mentions-the-cnpg-system-namespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Why the network policy mentions the cnpg-system namespace
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-the-network-policy-mentions-the-authentik-namespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Why the network policy mentions the authentik namespace
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trusted-proxies" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Trusted proxies
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-costs" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What this costs
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verifying" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Verifying
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../nextcloud/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Nextcloud
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trivy-operator/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Trivy Operator
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#plain-manifests-not-a-chart" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Plain manifests, not a chart
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#two-kinds-of-state-in-two-places" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Two kinds of state, in two places
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Two kinds of state, in two places">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-recorder-is-not-sqlite" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The recorder is not SQLite
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restarting-after-a-config-change" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Restarting after a config change
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#behind-the-gateway-and-behind-authentik" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Behind the Gateway, and behind Authentik
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Behind the Gateway, and behind Authentik">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-the-network-policy-mentions-the-cnpg-system-namespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Why the network policy mentions the cnpg-system namespace
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-the-network-policy-mentions-the-authentik-namespace" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Why the network policy mentions the authentik namespace
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#trusted-proxies" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Trusted proxies
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-costs" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        What this costs
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verifying" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Verifying
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+    <a href="https://github.com/JanWelker/homelab-apps/edit/main/docs/home-assistant.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/JanWelker/homelab-apps/raw/main/docs/home-assistant.md" title="View source of this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-code-2" viewBox="0 0 24 24"><path d="M4 12.15V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2h-3.35"/><path d="M14 2v5a1 1 0 0 0 1 1h5M5 16l-3 3 3 3M9 22l3-3-3-3"/></svg>
+    </a>
+  
+
+
+<h1 id="home-assistant">Home Assistant<a class="headerlink" href="#home-assistant" title="Permanent link">&para;</a></h1>
+<p><a href="https://www.home-assistant.io/">Home Assistant</a> runs the house — lights,
+sensors, climate, and whatever else has been added since this page was written.
+It answers on <a href="https://home.k8s.wlkr.ch">home.k8s.wlkr.ch</a>, and its manifests
+are in <a href="https://github.com/JanWelker/homelab-apps/tree/main/home-assistant"><code>home-assistant/</code></a>.</p>
+<h2 id="plain-manifests-not-a-chart">Plain manifests, not a chart<a class="headerlink" href="#plain-manifests-not-a-chart" title="Permanent link">&para;</a></h2>
+<p>Home Assistant publishes no official Helm chart. The community ones are
+third-party repackagers, and the rule here is that a version pin is only worth
+having when you know who published the thing you pinned — so this is a
+Deployment, a Service, a PVC and a ConfigMap, written out. See
+<a href="../conventions/#2-official-upstream-sources-only">Conventions &rarr; Official upstream sources only</a>.</p>
+<p>That turned out to be the smaller amount of work. Home Assistant is a single
+stateful process with one volume and one port; almost everything a chart would
+parameterise has exactly one correct value here.</p>
+<h2 id="two-kinds-of-state-in-two-places">Two kinds of state, in two places<a class="headerlink" href="#two-kinds-of-state-in-two-places" title="Permanent link">&para;</a></h2>
+<p>This is the part worth understanding before touching anything:</p>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Where</th>
+<th>Rebuildable?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Registries, users, tokens, integration config (<code>/config/.storage</code>)</td>
+<td>The <code>home-assistant-config</code> PVC</td>
+<td><strong>No.</strong> Losing it means re-pairing every device</td>
+</tr>
+<tr>
+<td>History and long-term statistics</td>
+<td>PostgreSQL, via CloudNativePG</td>
+<td>Only from a backup; losing it loses your graphs</td>
+</tr>
+<tr>
+<td><code>configuration.yaml</code></td>
+<td>A ConfigMap, in Git</td>
+<td>Yes, it is the file in the repository</td>
+</tr>
+</tbody>
+</table>
+<p>The split matters because the recorder database is the part that grows without
+bound and the <code>/config</code> volume is the part that cannot be reconstructed. They
+are sized and backed up accordingly, and 5Gi of <code>/config</code> is generous for what
+is mostly JSON.</p>
+<h3 id="the-recorder-is-not-sqlite">The recorder is not SQLite<a class="headerlink" href="#the-recorder-is-not-sqlite" title="Permanent link">&para;</a></h3>
+<p>Home Assistant's default recorder is SQLite in a file on <code>/config</code>. On a
+network block device — which is what every PVC here is — SQLite's locking
+behaviour is the single most common cause of a Home Assistant that feels slow
+for no visible reason.</p>
+<p>So the recorder points at a CloudNativePG <code>Cluster</code> instead, per <a href="https://janwelker.github.io/homelab/platform/cloudnative-pg/#the-contract">the
+contract</a>.
+<code>purge_keep_days</code> is set to 42; the default of 10 is reliably shorter than the
+moment you go looking for a graph.</p>
+<div class="admonition warning">
+<p class="admonition-title"><code>secrets.yaml</code> is generated, not yours</p>
+<p>Home Assistant removed its <code>!env_var</code> YAML tag years ago, so there is no way to put an environment variable into <code>configuration.yaml</code>. The database URL reaches it through <code>!secret</code> instead, and an init container writes <code>/config/secrets.yaml</code> from CloudNativePG's Secret on <strong>every</strong> start — so anything added to that file by hand is lost at the next restart. A secret a workload needs belongs in <a href="https://janwelker.github.io/homelab/platform/openbao/">OpenBao</a> and reaches the pod as an environment variable or a mounted file.</p>
+</div>
+<h3 id="restarting-after-a-config-change">Restarting after a config change<a class="headerlink" href="#restarting-after-a-config-change" title="Permanent link">&para;</a></h3>
+<p>The ConfigMap is mounted over <code>/config/configuration.yaml</code>, and Home Assistant
+reads it once, at startup. Merging a change to it does nothing visible until
+the pod restarts:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>home-assistant<span class="w"> </span>rollout<span class="w"> </span>restart<span class="w"> </span>deploy/home-assistant
+</span></code></pre></div>
+<p>The UI's own "restart" button does the same thing from inside.</p>
+<h2 id="behind-the-gateway-and-behind-authentik">Behind the Gateway, and behind Authentik<a class="headerlink" href="#behind-the-gateway-and-behind-authentik" title="Permanent link">&para;</a></h2>
+<p><code>home.k8s.wlkr.ch</code> does <strong>not</strong> route to Home Assistant. It routes to
+Authentik's embedded outpost, which authenticates the request and only then
+forwards it to <code>home-assistant.home-assistant.svc:8123</code>.</p>
+<p>This is the one proxied application in the cluster that has a login of its own.
+Everything else behind the outpost — Hubble, the Ceph dashboard, Prometheus,
+Alertmanager — has no authentication whatsoever, which is what makes the
+outpost <em>the</em> authentication rather than an extra one. Home Assistant is
+different because upstream ships no OIDC provider at all: the only auth
+providers in the codebase are <code>homeassistant</code>, <code>command_line</code>,
+<code>trusted_networks</code> and an example marked insecure.</p>
+<p>So browser users log in twice, deliberately. That is defence in depth, not
+single sign-on, and it is worth being clear about which one you are getting.</p>
+<div class="admonition warning">
+<p class="admonition-title">The API is not behind Authentik</p>
+<p>The companion apps and every webhook authenticate with a long-lived token and cannot complete an interactive Authentik login, so <code>skip_path_regex</code> on the provider lets <code>/api/</code>, <code>/auth/token</code> and the external-auth callback through untouched. <strong>Home Assistant's own accounts are the only thing guarding those paths.</strong> Revoking someone's Authentik account does not revoke their Home Assistant token — that has to be done in Home Assistant, under Settings → People.</p>
+</div>
+<p>Gating those paths was the alternative, and it would not have made the API
+safer. It would have stopped the phones working and pushed the whole thing
+towards being exposed some other way, which is how a security control becomes
+the reason for a worse setup.</p>
+<h3 id="why-the-network-policy-mentions-the-cnpg-system-namespace">Why the network policy mentions the cnpg-system namespace<a class="headerlink" href="#why-the-network-policy-mentions-the-cnpg-system-namespace" title="Permanent link">&para;</a></h3>
+<p>The policy allows <code>cnpg-system</code> to reach the database pod on port 8000, the
+instance manager's status endpoint that the CloudNativePG operator polls.</p>
+<p>Without that rule the failure is quiet in the worst way. Postgres runs, the
+recorder writes to it, and <code>kubectl get cluster</code> says <code>1/1</code> ready — but the phase
+reads <code>Instance Status Extraction Error: HTTP communication issue</code>, the <code>Cluster</code>
+never goes Healthy, and the sync operation waiting on it at wave <code>-1</code> never
+completes. The Application reports <code>Synced</code> with health <code>Unknown</code>, and every
+entry in <code>status.resources</code> is missing its health field because the controller
+never assessed them. That combination — Unknown with no resource naming itself —
+is what distinguishes this from an actually unhealthy workload.</p>
+<p>The policy therefore sits at sync wave <code>-2</code>, with the namespace. At the default
+wave it would be applied after the <code>Cluster</code> at <code>-1</code> — and that is exactly the
+wave stuck waiting, so the rule that would release it never gets applied.
+Writing the rule and leaving the wave alone changes nothing in the cluster.</p>
+<p>The same rule is on the Nextcloud policy for the same reason; that page has <a href="../nextcloud/#the-operator-needs-ingress-to-the-instance">the
+hubble command</a> for
+confirming the drop and <a href="../nextcloud/#the-policy-has-to-land-before-the-database">the wave
+trap</a> in full.</p>
+<h3 id="why-the-network-policy-mentions-the-authentik-namespace">Why the network policy mentions the authentik namespace<a class="headerlink" href="#why-the-network-policy-mentions-the-authentik-namespace" title="Permanent link">&para;</a></h3>
+<p>Because that is where the traffic comes from. The <code>CiliumNetworkPolicy</code> admits
+port 8123 from the <code>authentik</code> namespace rather than from the Gateway, and
+<code>fromEntities: ingress</code> is deliberately absent — a request that reaches Home
+Assistant straight from the Gateway would have skipped the authentication
+layer entirely.</p>
+<h3 id="trusted-proxies">Trusted proxies<a class="headerlink" href="#trusted-proxies" title="Permanent link">&para;</a></h3>
+<p>Requests arrive from Cilium's Envoy and then the outpost, not from the client,
+so <code>configuration.yaml</code> sets <code>use_x_forwarded_for</code> with the pod CIDR in
+<code>trusted_proxies</code>. Without it, Home Assistant sees every request as coming from
+one address: the ban list becomes useless and rate limiting counts the whole
+household as one user.</p>
+<h2 id="what-this-costs">What this costs<a class="headerlink" href="#what-this-costs" title="Permanent link">&para;</a></h2>
+<p>Running home automation on a Kubernetes cluster has two real drawbacks, and
+both are accepted rather than solved:</p>
+<ul>
+<li><strong>No local device discovery.</strong> mDNS and SSDP need host networking, which
+  needs a <code>privileged</code> namespace, and that is a bad trade for a convenience.
+  Devices that cannot be added by IP address have to be added through an
+  integration that does not rely on broadcast discovery.</li>
+<li><strong>No USB devices.</strong> A Zigbee or Z-Wave stick is plugged into one specific
+  machine, and a pod that requires that machine is a pod that cannot be
+  rescheduled. Anything of that kind belongs on a network-attached coordinator
+  the pod can reach over IP.</li>
+</ul>
+<p>There is also a third, less obvious one: the cluster is now a dependency of the
+lights working. A Ceph rebalance that pauses I/O pauses Home Assistant with it.
+That is the trade for having it backed up, monitored and reproducible, and it
+is worth knowing before the first time it happens.</p>
+<h2 id="verifying">Verifying<a class="headerlink" href="#verifying" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>home-assistant<span class="w"> </span>get<span class="w"> </span>pods,pvc
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>home-assistant<span class="w"> </span>get<span class="w"> </span>cluster<span class="w"> </span>home-assistant-db
+</span></code></pre></div>
+<p>The database should report <code>Cluster in healthy state</code>. If the application pod
+is in <code>Init</code>, it is waiting on that: the init container cannot write
+<code>secrets.yaml</code> until CloudNativePG has produced the Secret it reads.</p>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../conventions/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Conventions">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Conventions
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../nextcloud/" class="md-footer__link md-footer__link--next" aria-label="Next: Nextcloud">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Nextcloud
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Jan Welker
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      
+      
+        
+        
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["content.action.edit","content.action.view","content.code.copy","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.prefetch","navigation.top","navigation.tracking","search.highlight","toc.follow"],"redirect":null,"search":"../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.8dcc8e9c.min.js"></script>
+      
+    
+  </body>
+</html>
