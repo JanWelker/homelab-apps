@@ -1,0 +1,26 @@
+---
+# The workload owns its namespace so the Pod Security labels are declarative
+# rather than whatever CreateNamespace=true happened to leave behind. An
+# unlabelled namespace runs at `privileged`, which enforces nothing.
+#
+# privileged, and this one genuinely needs it: node-collector runs a job on
+# every node that hostPath-mounts /var/lib/etcd, /var/lib/kubelet,
+# /etc/kubernetes and /etc/cni/net.d to read the file modes and flags the CIS
+# node checks are about. baseline forbids hostPath outright, so anything
+# stricter silently turns the infra assessment off.
+#
+# The scan jobs in this namespace are not privileged -- the chart gives them
+# `drop: [ALL]`, no privilege escalation and a read-only root filesystem --
+# and audit/warn stay at restricted so that stays visible.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: trivy-system
+  labels:
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+  annotations:
+    # Pruning a Namespace deletes the PVCs inside it. Never available by accident.
+    argocd.argoproj.io/sync-options: Prune=false
+    argocd.argoproj.io/sync-wave: "-2"
