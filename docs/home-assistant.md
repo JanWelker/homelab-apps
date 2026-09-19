@@ -102,9 +102,15 @@ entry in `status.resources` is missing its health field because the controller
 never assessed them. That combination — Unknown with no resource naming itself —
 is what distinguishes this from an actually unhealthy workload.
 
-The same rule is on the Nextcloud policy for the same reason; [that page has the
+The policy therefore sits at sync wave `-2`, with the namespace. At the default
+wave it would be applied after the `Cluster` at `-1` — and that is exactly the
+wave stuck waiting, so the rule that would release it never gets applied.
+Writing the rule and leaving the wave alone changes nothing in the cluster.
+
+The same rule is on the Nextcloud policy for the same reason; that page has [the
 hubble command](nextcloud.md#the-operator-needs-ingress-to-the-instance) for
-confirming the drop.
+confirming the drop and [the wave
+trap](nextcloud.md#the-policy-has-to-land-before-the-database) in full.
 
 ### Why the network policy mentions the authentik namespace
 

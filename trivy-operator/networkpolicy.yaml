@@ -6,6 +6,10 @@ kind: CiliumNetworkPolicy
 metadata:
   name: default-ingress
   namespace: trivy-system
+  annotations:
+    # With the namespace: the policy is in force before the first pod starts,
+    # and never behind something an earlier wave waits on. See the conventions.
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   description: >-
     Default-deny ingress for Trivy Operator. Nothing here serves users: the
