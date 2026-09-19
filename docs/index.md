@@ -17,6 +17,13 @@ only what runs on top.
 | --- | --- | --- | --- | --- |
 | [Home Assistant](home-assistant.md) | [home.k8s.wlkr.ch](https://home.k8s.wlkr.ch) | 5Gi for `/config` | CloudNativePG, for the recorder | Authentik proxy, in front of its own login |
 | [Nextcloud](nextcloud.md) | [cloud.k8s.wlkr.ch](https://cloud.k8s.wlkr.ch) | 50Gi for files | CloudNativePG | Authentik OIDC |
+| [Trivy Operator](trivy-operator.md) | — | 5Gi for the vulnerability database | None — findings are CRDs | None; it has no interface |
+
+Two of those are user-facing and one is not. Trivy Operator has no URL, no
+accounts and nothing to log into: it scans what the cluster runs and writes the
+results back as Kubernetes objects. It is here rather than in the platform
+repository because it is a workload *on* the cluster, not a part of it —
+nothing the platform brings up depends on it.
 
 ## How a directory becomes an application
 
@@ -48,25 +55,28 @@ covers why the split exists and what it costs.
 
 ## What they have in common
 
-Both applications were deployed under the same constraints, and the shape they
-share is the one every later one is expected to take. [Conventions](conventions.md)
-is the full list; the short version:
+Everything here is deployed under the same constraints, and the shape they share
+is the one every later one is expected to take. [Conventions](conventions.md) is
+the full list; the short version:
 
-- **A CloudNativePG `Cluster` in their own namespace**, never the database
-  their chart would have bundled.
 - **A namespace they own**, carrying explicit Pod Security Admission labels.
   `CreateNamespace=true` on its own produces an unlabelled namespace, and an
-  unlabelled namespace runs at `privileged`.
+  unlabelled namespace runs at `privileged`. This one is universal.
 - **A `CiliumNetworkPolicy`** denying ingress by default, admitting the
-  Gateway, the node's health probes and Prometheus.
-- **Proxy configuration.** Both sit behind the `apps-gateway`, which terminates
-  TLS and forwards from inside the pod CIDR. An application that does not know
-  this builds `http://` links on an `https://` site.
-- **Authentik, not their own accounts** — as far as each is capable of it.
+  Gateway, the node's health probes and Prometheus. Also universal.
+- **A CloudNativePG `Cluster` in their own namespace**, never the database
+  their chart would have bundled — for the two that need a database. Trivy
+  Operator does not: its findings are Kubernetes objects.
+- **Proxy configuration.** The two user-facing applications sit behind the
+  `apps-gateway`, which terminates TLS and forwards from inside the pod CIDR.
+  An application that does not know this builds `http://` links on an `https://`
+  site.
+- **Authentik, not their own accounts** — as far as each is capable of it, and
+  only where there is a login at all.
 
 ## Authentication
 
-Both go through
+Both user-facing applications go through
 [Authentik](https://janwelker.github.io/homelab/platform/authentik/), but not
 in the same way, and the difference is not a preference — it is what each
 application supports.

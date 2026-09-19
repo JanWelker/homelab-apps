@@ -19,6 +19,7 @@ nav = [
   { "Conventions" = "conventions.md" },
   { "Home Assistant" = "home-assistant.md" },
   { "Nextcloud" = "nextcloud.md" },
+  { "Trivy Operator" = "trivy-operator.md" },
 ]
 
 [project.theme]
