@@ -412,6 +412,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#the-policy-has-to-land-before-the-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The policy has to land before the database
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -619,6 +630,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#the-policy-has-to-land-before-the-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The policy has to land before the database
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -804,6 +826,23 @@ unhealthy workload names the resource that is failing.</p>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>hubble<span class="w"> </span>observe<span class="w"> </span>--verdict<span class="w"> </span>DROPPED<span class="w"> </span>--from-namespace<span class="w"> </span>cnpg-system<span class="w"> </span>--last<span class="w"> </span><span class="m">20</span>
 </span></code></pre></div>
 <p>A dropped <code>SYN</code> to <code>:8000</code> is the whole story.</p>
+<h3 id="the-policy-has-to-land-before-the-database">The policy has to land before the database<a class="headerlink" href="#the-policy-has-to-land-before-the-database" title="Permanent link">&para;</a></h3>
+<p>Adding that rule is not enough on its own. The policy sits at sync wave <code>-2</code>,
+with the namespace, and it has to: at the default wave it would be applied
+<em>after</em> the <code>Cluster</code> at <code>-1</code>, and wave <code>-1</code> never finishes, so wave <code>0</code> never
+runs, so the rule that would end the wait never reaches the cluster. The repair
+commits itself to Git and then sits there, correct and unapplied, while
+<code>argocd app get nextcloud</code> keeps reporting the same stuck operation.</p>
+<p>The tell is the applied-resource list. A sync parked at wave <code>-1</code> shows only the
+waves that ran:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>application<span class="w"> </span>-n<span class="w"> </span>argocd<span class="w"> </span>nextcloud<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{range .status.operationState.syncResult.resources[*]}{.kind}{"\t"}{.hookPhase}{"\n"}{end}'</span>
+</span></code></pre></div>
+<p>If the <code>CiliumNetworkPolicy</code> is missing from that list while <code>Cluster</code> reads
+<code>Running</code>, the policy is behind the thing it is meant to unblock — no amount of
+re-syncing fixes it, because every attempt stops at the same wave. Terminate the
+stuck operation once the wave is corrected; the next sync applies the policy
+first and the <code>Cluster</code> goes Healthy on its own.</p>
 <p>Redis is disabled for the same reason the database is: it is another Bitnami
 subchart, and the chart's values already point it at <code>bitnamilegacy</code>. A single
 replica does not need a shared cache, and the chart configures APCu for the
@@ -836,13 +875,13 @@ ever starts looping again, this file is where to look first.</p>
 <p>Nextcloud's <code>user_oidc</code> app is first-party — it is in the <code>nextcloud</code> GitHub
 organisation — so this is real single sign-on rather than a proxy bolted in
 front. A <code>before-starting</code> hook in the chart configures it:</p>
-<div class="language-sh highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>php<span class="w"> </span>occ<span class="w"> </span>app:install<span class="w"> </span>user_oidc<span class="w"> </span><span class="o">||</span><span class="w"> </span>php<span class="w"> </span>occ<span class="w"> </span>app:enable<span class="w"> </span>user_oidc
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>php<span class="w"> </span>occ<span class="w"> </span>user_oidc:provider<span class="w"> </span>Authentik<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>--clientid<span class="o">=</span><span class="s2">"</span><span class="nv">$NEXTCLOUD_OIDC_CLIENT_ID</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>--clientsecret<span class="o">=</span><span class="s2">"</span><span class="nv">$NEXTCLOUD_OIDC_CLIENT_SECRET</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span>--discoveryuri<span class="o">=</span><span class="s2">"https://auth.k8s.wlkr.ch/application/o/nextcloud/.well-known/openid-configuration"</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span>...
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>php<span class="w"> </span>occ<span class="w"> </span>config:system:set<span class="w"> </span>hide_login_form<span class="w"> </span>--type<span class="w"> </span>boolean<span class="w"> </span>--value<span class="w"> </span><span class="nb">true</span>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>php<span class="w"> </span>occ<span class="w"> </span>app:install<span class="w"> </span>user_oidc<span class="w"> </span><span class="o">||</span><span class="w"> </span>php<span class="w"> </span>occ<span class="w"> </span>app:enable<span class="w"> </span>user_oidc
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>php<span class="w"> </span>occ<span class="w"> </span>user_oidc:provider<span class="w"> </span>Authentik<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>--clientid<span class="o">=</span><span class="s2">"</span><span class="nv">$NEXTCLOUD_OIDC_CLIENT_ID</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>--clientsecret<span class="o">=</span><span class="s2">"</span><span class="nv">$NEXTCLOUD_OIDC_CLIENT_SECRET</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span>--discoveryuri<span class="o">=</span><span class="s2">"https://auth.k8s.wlkr.ch/application/o/nextcloud/.well-known/openid-configuration"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span>...
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>php<span class="w"> </span>occ<span class="w"> </span>config:system:set<span class="w"> </span>hide_login_form<span class="w"> </span>--type<span class="w"> </span>boolean<span class="w"> </span>--value<span class="w"> </span><span class="nb">true</span>
 </span></code></pre></div>
 <p><code>before-starting</code> is the last hook the image runs and it runs on <strong>every</strong>
 start, after an install or an upgrade has finished — so one hook covers both
@@ -879,7 +918,7 @@ two repositories writing would overwrite.</p>
 <h3 id="break-glass">Break-glass<a class="headerlink" href="#break-glass" title="Permanent link">&para;</a></h3>
 <p><code>hide_login_form</code> hides the username and password fields; it does not disable
 the local accounts. The admin generated by <code>make bao-secrets</code> still works, at:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>https://cloud.k8s.wlkr.ch/login?direct=1
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>https://cloud.k8s.wlkr.ch/login?direct=1
 </span></code></pre></div>
 <p>That is the way back in on the day Authentik is the thing that is broken. Same
 reasoning as <a href="https://janwelker.github.io/homelab/platform/authentik/#when-authentik-is-down">Grafana's break-glass
@@ -923,10 +962,10 @@ attempts. A major Nextcloud upgrade is legitimately slow; let it finish.</p>
 application keeping its client credentials there would make adding the next one
 an Authentik outage.</p>
 <h2 id="verifying">Verifying<a class="headerlink" href="#verifying" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>nextcloud<span class="w"> </span>get<span class="w"> </span>pods,pvc
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>nextcloud<span class="w"> </span>get<span class="w"> </span>cluster<span class="w"> </span>nextcloud-db
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>nextcloud<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>deploy/nextcloud<span class="w"> </span>-c<span class="w"> </span>nextcloud<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span>php<span class="w"> </span>occ<span class="w"> </span>status
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>nextcloud<span class="w"> </span>get<span class="w"> </span>pods,pvc
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>nextcloud<span class="w"> </span>get<span class="w"> </span>cluster<span class="w"> </span>nextcloud-db
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>nextcloud<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>deploy/nextcloud<span class="w"> </span>-c<span class="w"> </span>nextcloud<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span>php<span class="w"> </span>occ<span class="w"> </span>status
 </span></code></pre></div>
 <p><code>occ</code> is the administrative CLI for everything the web UI does not expose —
 including <code>occ maintenance:repair</code> and <code>occ db:add-missing-indices</code>, which

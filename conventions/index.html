@@ -805,6 +805,20 @@ minutes later.</p>
 <p>Not a plain <code>NetworkPolicy</code> — a plain one blocks the kubelet's health probes
 and the pods restart forever. Every policy here needs <code>fromEntities: [host,
 remote-node]</code> for those probes and <code>ingress</code> for Gateway traffic.</p>
+<p>Put it at sync wave <code>-2</code>, with the namespace:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="nt">argocd.argoproj.io/sync-wave</span><span class="p">:</span><span class="w"> </span><span class="s">"-2"</span>
+</span></code></pre></div>
+<p>At the default wave it lands <em>after</em> the <code>Cluster</code> from rule 3, and a wave that
+waits on a resource cannot be unblocked by a policy a later wave has yet to
+apply. Leave the policy at <code>0</code> while it carries the rule the operator needs to
+reach Postgres and the sync deadlocks: wave <code>-1</code> waits forever for a <code>Cluster</code>
+whose fix is sitting in wave <code>0</code> behind it. <a href="../nextcloud/#the-operator-needs-ingress-to-the-instance">Nextcloud &rarr; The operator needs
+ingress to the instance</a>
+has the whole failure.</p>
+<p>Wave <code>-2</code> is also the right answer on its own terms — it puts the policy in
+force before the first pod starts, instead of leaving a window where the
+workload runs unprotected.</p>
 <h3 id="6-authentication-is-authentiks-not-the-applications">6. Authentication is Authentik's, not the application's<a class="headerlink" href="#6-authentication-is-authentiks-not-the-applications" title="Permanent link">&para;</a></h3>
 <p>An application with its own user database is an application whose accounts
 nobody remembers to revoke. Which shape applies is decided by what the

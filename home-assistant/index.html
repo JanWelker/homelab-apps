@@ -825,9 +825,14 @@ completes. The Application reports <code>Synced</code> with health <code>Unknown
 entry in <code>status.resources</code> is missing its health field because the controller
 never assessed them. That combination — Unknown with no resource naming itself —
 is what distinguishes this from an actually unhealthy workload.</p>
-<p>The same rule is on the Nextcloud policy for the same reason; <a href="../nextcloud/#the-operator-needs-ingress-to-the-instance">that page has the
+<p>The policy therefore sits at sync wave <code>-2</code>, with the namespace. At the default
+wave it would be applied after the <code>Cluster</code> at <code>-1</code> — and that is exactly the
+wave stuck waiting, so the rule that would release it never gets applied.
+Writing the rule and leaving the wave alone changes nothing in the cluster.</p>
+<p>The same rule is on the Nextcloud policy for the same reason; that page has <a href="../nextcloud/#the-operator-needs-ingress-to-the-instance">the
 hubble command</a> for
-confirming the drop.</p>
+confirming the drop and <a href="../nextcloud/#the-policy-has-to-land-before-the-database">the wave
+trap</a> in full.</p>
 <h3 id="why-the-network-policy-mentions-the-authentik-namespace">Why the network policy mentions the authentik namespace<a class="headerlink" href="#why-the-network-policy-mentions-the-authentik-namespace" title="Permanent link">&para;</a></h3>
 <p>Because that is where the traffic comes from. The <code>CiliumNetworkPolicy</code> admits
 port 8123 from the <code>authentik</code> namespace rather than from the Gateway, and
