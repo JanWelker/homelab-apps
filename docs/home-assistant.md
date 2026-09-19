@@ -88,6 +88,24 @@ safer. It would have stopped the phones working and pushed the whole thing
 towards being exposed some other way, which is how a security control becomes
 the reason for a worse setup.
 
+### Why the network policy mentions the cnpg-system namespace
+
+The policy allows `cnpg-system` to reach the database pod on port 8000, the
+instance manager's status endpoint that the CloudNativePG operator polls.
+
+Without that rule the failure is quiet in the worst way. Postgres runs, the
+recorder writes to it, and `kubectl get cluster` says `1/1` ready — but the phase
+reads `Instance Status Extraction Error: HTTP communication issue`, the `Cluster`
+never goes Healthy, and the sync operation waiting on it at wave `-1` never
+completes. The Application reports `Synced` with health `Unknown`, and every
+entry in `status.resources` is missing its health field because the controller
+never assessed them. That combination — Unknown with no resource naming itself —
+is what distinguishes this from an actually unhealthy workload.
+
+The same rule is on the Nextcloud policy for the same reason; [that page has the
+hubble command](nextcloud.md#the-operator-needs-ingress-to-the-instance) for
+confirming the drop.
+
 ### Why the network policy mentions the authentik namespace
 
 Because that is where the traffic comes from. The `CiliumNetworkPolicy` admits

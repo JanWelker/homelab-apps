@@ -12,8 +12,9 @@ spec:
     Gateway directly: home.k8s.wlkr.ch is routed to Authentik's embedded
     outpost, which authenticates the request and only then connects here from
     the authentik namespace. The recorder reaches its database inside the
-    namespace, and the node runs the health probes. Nothing else has a reason
-    to connect -- including the rest of the cluster, which is the point: this
+    namespace, the CloudNativePG operator polls that database's status
+    endpoint, and the node runs the health probes. Nothing else has a reason to
+    connect -- including the rest of the cluster, which is the point: this
     namespace holds a long-lived token for every device in the house.
   endpointSelector: {}
   ingress:
@@ -35,3 +36,13 @@ spec:
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: monitoring
+    # CloudNativePG's operator polls each instance's status endpoint from
+    # cnpg-system. Without it the Cluster is stuck reporting "Instance Status
+    # Extraction Error", which ArgoCD waits on forever -- see the docs page.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: cnpg-system
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP

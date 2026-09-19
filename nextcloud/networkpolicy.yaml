@@ -9,7 +9,8 @@ metadata:
 spec:
   description: >-
     Default-deny ingress for Nextcloud. The UI arrives through the Gateway, the
-    web pod and the cron job reach Postgres inside the namespace, Prometheus
+    web pod and the cron job reach Postgres inside the namespace, the
+    CloudNativePG operator polls that database's status endpoint, Prometheus
     scrapes the metrics exporter, and the node runs the health probes.
   endpointSelector: {}
   ingress:
@@ -22,3 +23,13 @@ spec:
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: monitoring
+    # CloudNativePG's operator polls each instance's status endpoint from
+    # cnpg-system. Without it the Cluster is stuck reporting "Instance Status
+    # Extraction Error", which ArgoCD waits on forever -- see the docs page.
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: cnpg-system
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
