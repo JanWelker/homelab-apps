@@ -586,6 +586,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#most-of-the-gap-is-a-scan-that-never-ran" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Most of the gap is a scan that never ran
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#metrics-and-the-one-that-is-switched-off" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -770,6 +781,17 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         Two different reasons a report goes missing
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#most-of-the-gap-is-a-scan-that-never-ran" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Most of the gap is a scan that never ran
       </span>
     </span>
   </a>
@@ -1164,6 +1186,31 @@ upstream in
 </div>
 <p>Nothing here is fixable in this repository either way. The alert is the
 response available to us: it makes the gap visible instead of silent.</p>
+<h2 id="most-of-the-gap-is-a-scan-that-never-ran">Most of the gap is a scan that never ran<a class="headerlink" href="#most-of-the-gap-is-a-scan-that-never-ran" title="Permanent link">&para;</a></h2>
+<p>The two failures above account for five containers. The other seventy-nine are
+not failures at all: <strong>no scan job is ever created for them.</strong> They have a
+<code>ConfigAuditReport</code>, which needs no scan job, and neither a
+<code>VulnerabilityReport</code> nor an <code>ExposedSecretReport</code>, which both do.</p>
+<p>Measured rather than assumed. Annotating <code>rook-ceph-osd-0</code>'s ReplicaSet to
+force a reconcile produced no scan job in two minutes, while the operator
+picked up an unrelated new workload and scanned it within ten seconds. Every
+Rook Deployment's <code>deployment.kubernetes.io/revision</code> matches its ReplicaSet,
+so the obvious candidate -- the operator failing to identify the current
+revision -- is ruled out.</p>
+<p>What is left is that <code>SubmitScanJob</code> gives up silently in five places: three
+sentinel errors (<code>ErrReplicaSetNotFound</code>, <code>ErrNoRunningPods</code>,
+<code>ErrUnSupportedKind</code>), a pod spec with no containers, and an earlier return
+when it believes reports already exist. All five log at <code>V(1)</code>, which is off by
+default, so a deliberately skipped workload and a healthy one look identical
+from outside.</p>
+<div class="admonition note">
+<p class="admonition-title"><code>logDevMode</code> is on, and is meant to come back off</p>
+<p><code>operator.logDevMode: true</code> turns those <code>V(1)</code> lines on, which is the only
+way to see which of the five reasons applies here. It also switches the
+operator from JSON to console encoding and makes it considerably chattier,
+so it is a diagnostic setting and not a resting state -- revert it once the
+question is answered.</p>
+</div>
 <h2 id="metrics-and-the-one-that-is-switched-off">Metrics, and the one that is switched off<a class="headerlink" href="#metrics-and-the-one-that-is-switched-off" title="Permanent link">&para;</a></h2>
 <p>The operator exports counts per severity per workload, plus a per-finding
 "info" series for each scanner. All of those are on, and the dashboard's tables
