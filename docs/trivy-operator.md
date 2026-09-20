@@ -186,11 +186,55 @@ Three details are load-bearing:
 !!! note "It found more than the manual pass did"
     The first thing this caught was five gaps the by-hand reconciliation had
     missed: `cilium-agent`, and Rook's `osd`, `mon`, `rgw` and `ceph-exporter`.
-    All five have `ConfigAuditReports` and no `VulnerabilityReport`, and the
-    containers beside them in the same pods are scanned normally -- so unlike
-    Nextcloud and Authentik, report size does not explain them. The cause is
-    still open. The alert is doing its job by making the question visible at
-    all.
+    The alert reports nine because it groups by container name; the real count
+    is 84 containers, since six OSDs all named `osd` collapse into one line.
+
+## Two different reasons a report goes missing
+
+They look identical from outside and are not the same problem.
+
+**The report was too large to store.** Authentik's server and worker, covered
+above. One container each, distinct images, rejected at the API server.
+
+**The scan itself failed.** Everything in Rook, and four of Cilium's seven
+containers. The scan job runs one container per scanned container, all at once
+in one pod, and these die partway through reading the image:
+
+```text
+FATAL  failed to analyze layer (sha256:4864939c...): walk error:
+       failed to analyze usr/bin/cilium-dbg: unable to read the file: unexpected EOF
+```
+
+Trivy Operator keeps only containers that exited `0`. A container that dies
+this way is logged and then produces no report, while the job as a whole
+reports success -- so the workload looks unscanned rather than failed.
+
+The rate tracks how many containers in a workload share one image:
+
+| containers sharing an image | workloads | missing reports |
+| ---: | ---: | ---: |
+| 1 | 30 | 6% |
+| 3 | 15 | 73% |
+| 4 | 3 | 100% |
+| 6 | 6 | 100% |
+
+`rook-ceph-mgr-b` shows it inside a single pod: three containers on
+`ceph:v20.2.4`, one of which failed, and `watch-active` on a different image,
+which never does. Every Rook OSD has six containers on the same Ceph image and
+loses all six.
+
+!!! warning "The cause is narrowed, not settled"
+    It is tempting to call this contention on the scan job's shared
+    `/tmp/trivy/.cache`. That explanation is wrong: trivy walks layers as a
+    stream, so a shared cache directory cannot truncate a layer read. A
+    truncated pull from the registry under concurrent same-image load fits the
+    evidence equally well, and would not be a Trivy Operator bug at all.
+    Distinguishing them needs an experiment, not more log reading. Tracked
+    upstream in
+    [trivy-operator#1668](https://github.com/aquasecurity/trivy-operator/issues/1668).
+
+Nothing here is fixable in this repository either way. The alert is the
+response available to us: it makes the gap visible instead of silent.
 
 ## Metrics, and the one that is switched off
 
