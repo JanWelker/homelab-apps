@@ -223,46 +223,62 @@ The rate tracks how many containers in a workload share one image:
 which never does. Every Rook OSD has six containers on the same Ceph image and
 loses all six.
 
-!!! warning "The cause is narrowed, not settled"
-    It is tempting to call this contention on the scan job's shared
-    `/tmp/trivy/.cache`. That explanation is wrong: trivy walks layers as a
-    stream, so a shared cache directory cannot truncate a layer read. A
-    truncated pull from the registry under concurrent same-image load fits the
-    evidence equally well, and would not be a Trivy Operator bug at all.
-    Distinguishing them needs an experiment, not more log reading. Tracked
-    upstream in
-    [trivy-operator#1668](https://github.com/aquasecurity/trivy-operator/issues/1668).
+!!! warning "The obvious explanation is the wrong one"
+    It is tempting to blame contention on the scan job's shared
+    `/tmp/trivy/.cache`. That is wrong, and worth stating because it is where
+    everyone goes first: trivy walks layers as a stream, so a shared cache
+    directory cannot truncate a layer read. Six concurrent scans of the same
+    1.3 GB image with a shared cache were run deliberately and all six passed.
 
-Nothing here is fixable in this repository either way. The alert is the
-response available to us: it makes the gap visible instead of silent.
+These EOF failures account for **five** containers. The other **eighty** are a
+different problem, and a larger one.
 
-## Most of the gap is a scan that never ran
+## Most of the gap is a scan that worked and was thrown away
 
-The two failures above account for five containers. The other seventy-nine are
-not failures at all: **no scan job is ever created for them.** They have a
-`ConfigAuditReport`, which needs no scan job, and neither a
-`VulnerabilityReport` nor an `ExposedSecretReport`, which both do.
+Eighty containers have an `SbomReport` and no `VulnerabilityReport`. The scan
+ran, and it succeeded -- the SBOM is the proof. Only the vulnerability report
+was never written.
 
-Measured rather than assumed. Annotating `rook-ceph-osd-0`'s ReplicaSet to
-force a reconcile produced no scan job in two minutes, while the operator
-picked up an unrelated new workload and scanned it within ten seconds. Every
-Rook Deployment's `deployment.kubernetes.io/revision` matches its ReplicaSet,
-so the obvious candidate -- the operator failing to identify the current
-revision -- is ruled out.
+The split is exact:
 
-What is left is that `SubmitScanJob` gives up silently in five places: three
-sentinel errors (`ErrReplicaSetNotFound`, `ErrNoRunningPods`,
-`ErrUnSupportedKind`), a pod spec with no containers, and an earlier return
-when it believes reports already exist. All five log at `V(1)`, which is off by
-default, so a deliberately skipped workload and a healthy one look identical
-from outside.
+| missing a `VulnerabilityReport` | count | what happened |
+| --- | ---: | --- |
+| has an `SbomReport` | 80 | scan succeeded, vulnerability report lost |
+| has neither | 4 | report too large to store -- Authentik and Nextcloud |
+
+The cause is the SBOM cache. When an image already has a `ClusterSbomReport`,
+the operator takes a reuse path instead of a normal scan:
+
+```go
+reportsData = getGlobalSbomReports(ctx, r.SbomReadWriter, containerImages, log)
+if len(reportsData) > 0 {
+    err = r.reuseSbomReport(ctx, workloadObj, reportsData)   // writes SbomReports now
+}
+r.SubmitScanJobChan <- ScanJobRequest{..., ClusterSbomReport: reportsData}
+```
+
+`reuseSbomReport` writes the namespaced `SbomReport`s immediately, and the scan
+job that follows runs `trivy sbom` rather than `trivy image` to derive
+vulnerabilities from them. That second step produces nothing here, so the
+SBOM survives and the CVE data does not.
+
+That is why the failures land on images shared by several workloads. The first
+workload to use an image does a real scan and gets its report; every workload
+after it finds a cached SBOM and takes the broken path. Both affected images,
+`ceph/ceph:v20.2.4` and `cilium/cilium:v1.20.2`, are in the cluster SBOM cache.
+
+So `clusterSbomCacheEnabled` is off. Scans of a repeated image are redundant
+and slower without it, which is much the cheaper mistake: the cache was saving
+work by discarding the result.
 
 !!! note "`logDevMode` is on, and is meant to come back off"
-    `operator.logDevMode: true` turns those `V(1)` lines on, which is the only
-    way to see which of the five reasons applies here. It also switches the
-    operator from JSON to console encoding and makes it considerably chattier,
-    so it is a diagnostic setting and not a resting state -- revert it once the
-    question is answered.
+    `operator.logDevMode: true` was set to read the operator's `V(1)` lines
+    while tracking this down. It also switches the operator from JSON to
+    console encoding and makes it considerably chattier, so it is a diagnostic
+    setting and not a resting state -- revert it once the reports are back.
+
+Tracked upstream in
+[trivy-operator#1668](https://github.com/aquasecurity/trivy-operator/issues/1668).
 
 ## Metrics, and the one that is switched off
 
