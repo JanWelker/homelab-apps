@@ -1,7 +1,7 @@
 ---
 # Home Assistant's recorder, which is SQLite by default. SQLite on a network
 # block device is the single most common cause of a slow Home Assistant, and
-# this cluster has an operator for the alternative. See CONVENTIONS.md.
+# this cluster has an operator for the alternative. See docs/conventions.md.
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
@@ -28,8 +28,9 @@ spec:
 
   postgresql:
     parameters:
-      # The recorder writes constantly and reads little; the default 128MB
-      # shared_buffers is more than this workload needs on a homelab node.
+      # The recorder writes constantly and reads little, so Postgres's own
+      # default of 128MB is plenty. Spelled out so the number is here rather
+      # than implied, next to the memory limit it has to fit under.
       shared_buffers: 128MB
       max_connections: "50"
 

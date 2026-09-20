@@ -10,7 +10,7 @@ metadata:
 spec:
   project: apps
   # Plain manifests, not a chart: Home Assistant publishes no official Helm
-  # chart, and the well-known community ones are repackagers. See CONVENTIONS.md
+  # chart, and the well-known community ones are repackagers. See docs/conventions.md
   source:
     repoURL: https://github.com/JanWelker/homelab-apps.git
     targetRevision: HEAD

@@ -1,5 +1,5 @@
 ---
-# Written for this cluster, not vendored; see docs/platform/trivy-operator.md
+# Written for this cluster, not vendored; see docs/trivy-operator.md
 apiVersion: v1
 kind: ConfigMap
 metadata:

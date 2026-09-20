@@ -25,7 +25,7 @@ metadata:
   annotations:
     # Ahead of the chart: the provider should exist before the hook that
     # configures Nextcloud against it runs. Discovery is asynchronous, so this
-    # is a head start rather than a guarantee -- see the note in README.md.
+    # is a head start rather than a guarantee -- see docs/nextcloud.md.
     argocd.argoproj.io/sync-wave: "-1"
 data:
   nextcloud.yaml: |
