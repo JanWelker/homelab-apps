@@ -109,7 +109,8 @@ the same whether an image is clean or was never scanned at all.
 
 It is not hypothetical. Nextcloud and Authentik -- the two most exposed
 applications here -- silently had no vulnerability data whatsoever, while their
-`ConfigAuditReports` existed and made them look covered.
+`ConfigAuditReports` existed and made them look covered. They were not the only
+ones, which is the point of [the alert below](#alerting-on-the-gap).
 
 `Description` and `Links` were the cause. Measured across the reports that did
 store:
@@ -145,6 +146,51 @@ kubectl get pods -A -o json \
 kubectl get vulnerabilityreports -A -o json \
   | jq -r '.items[].report.artifact.repository' | sort -u | wc -l
 ```
+
+## Alerting on the gap
+
+Doing that by hand only finds what you thought to look for. `prometheusrule.yaml`
+makes it continuous: `TrivyContainerNotScanned` compares every running container
+against the containers that have a `VulnerabilityReport`, and fires on the
+difference.
+
+It is a set difference rather than a count comparison, so it names what is
+missing instead of saying a number moved:
+
+```promql
+count by (namespace, container) (
+  kube_pod_container_info
+  * on (namespace, pod) group_left ()
+  (max by (namespace, pod) (kube_pod_status_phase{phase="Running"} == 1))
+)
+unless on (namespace, container)
+count by (namespace, container) (
+  label_replace(trivy_image_info, "container", "$1", "container_name", "(.+)")
+)
+```
+
+Three details are load-bearing:
+
+- **`(namespace, container)`, not the image digest.** The obvious key is the
+  digest, and it is wrong. `kube_pod_container_info` carries the
+  platform-specific digest containerd resolved, while the report carries
+  whatever the registry returned for the tag, and for an image pulled through a
+  mirror the two differ permanently. The HAProxy behind ArgoCD is scanned and
+  clean, and a digest join reports it missing forever.
+- **Restricted to `Running` pods.** Otherwise every completed `Job` -- the Rook
+  OSD prepare pods, most of all -- counts as an unscanned workload.
+- **`for: 2h`.** A full sweep after an operator restart clears in about thirty
+  minutes, and the 24h report TTL recycles every report in one window. Two
+  hours is several times either, so churn does not page.
+
+!!! note "It found more than the manual pass did"
+    The first thing this caught was five gaps the by-hand reconciliation had
+    missed: `cilium-agent`, and Rook's `osd`, `mon`, `rgw` and `ceph-exporter`.
+    All five have `ConfigAuditReports` and no `VulnerabilityReport`, and the
+    containers beside them in the same pods are scanned normally -- so unlike
+    Nextcloud and Authentik, report size does not explain them. The cause is
+    still open. The alert is doing its job by making the question visible at
+    all.
 
 ## Metrics, and the one that is switched off
 
@@ -250,5 +296,6 @@ trivy-operator/
 ├── application.yaml        # the chart, with every scanner enabled
 ├── namespace.yaml          # privileged, for node-collector's hostPaths
 ├── networkpolicy.yaml      # default-deny ingress; Prometheus on 8080
+├── prometheusrule.yaml     # alerts on containers with no report at all
 └── grafana-dashboard.yaml  # written for this cluster, not vendored
 ```
