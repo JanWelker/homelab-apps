@@ -564,6 +564,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#alerting-on-the-gap" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Alerting on the gap
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#metrics-and-the-one-that-is-switched-off" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -726,6 +737,17 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         A report too large to store is a report that never appears
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#alerting-on-the-gap" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Alerting on the gap
       </span>
     </span>
   </a>
@@ -968,7 +990,8 @@ exactly like a workload nobody asked about, and an empty dashboard row reads
 the same whether an image is clean or was never scanned at all.</p>
 <p>It is not hypothetical. Nextcloud and Authentik -- the two most exposed
 applications here -- silently had no vulnerability data whatsoever, while their
-<code>ConfigAuditReports</code> existed and made them look covered.</p>
+<code>ConfigAuditReports</code> existed and made them look covered. They were not the only
+ones, which is the point of <a href="#alerting-on-the-gap">the alert below</a>.</p>
 <p><code>Description</code> and <code>Links</code> were the cause. Measured across the reports that did
 store:</p>
 <table>
@@ -1019,6 +1042,47 @@ proven otherwise:</p>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kubectl<span class="w"> </span>get<span class="w"> </span>vulnerabilityreports<span class="w"> </span>-A<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
 </span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.items[].report.artifact.repository'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span>-u<span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
 </span></code></pre></div>
+<h2 id="alerting-on-the-gap">Alerting on the gap<a class="headerlink" href="#alerting-on-the-gap" title="Permanent link">&para;</a></h2>
+<p>Doing that by hand only finds what you thought to look for. <code>prometheusrule.yaml</code>
+makes it continuous: <code>TrivyContainerNotScanned</code> compares every running container
+against the containers that have a <code>VulnerabilityReport</code>, and fires on the
+difference.</p>
+<p>It is a set difference rather than a count comparison, so it names what is
+missing instead of saying a number moved:</p>
+<div class="language-promql highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">count</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="o">(</span><span class="nv">namespace</span><span class="p">,</span><span class="w"> </span><span class="nv">container</span><span class="o">)</span><span class="w"> </span><span class="o">(</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nv">kube_pod_container_info</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="o">*</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="o">(</span><span class="nv">namespace</span><span class="p">,</span><span class="w"> </span><span class="nv">pod</span><span class="o">)</span><span class="w"> </span><span class="k">group_left</span><span class="w"> </span><span class="o">()</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span><span class="o">(</span><span class="k">max</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="o">(</span><span class="nv">namespace</span><span class="p">,</span><span class="w"> </span><span class="nv">pod</span><span class="o">)</span><span class="w"> </span><span class="o">(</span><span class="nv">kube_pod_status_phase</span><span class="p">{</span><span class="nl">phase</span><span class="o">=</span><span class="p">"</span><span class="s">Running</span><span class="p">"}</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">1</span><span class="o">))</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="o">)</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="ow">unless</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="o">(</span><span class="nv">namespace</span><span class="p">,</span><span class="w"> </span><span class="nv">container</span><span class="o">)</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="k">count</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="o">(</span><span class="nv">namespace</span><span class="p">,</span><span class="w"> </span><span class="nv">container</span><span class="o">)</span><span class="w"> </span><span class="o">(</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">  </span><span class="kr">label_replace</span><span class="o">(</span><span class="nv">trivy_image_info</span><span class="p">,</span><span class="w"> </span><span class="p">"</span><span class="s">container</span><span class="p">",</span><span class="w"> </span><span class="p">"</span><span class="s">$1</span><span class="p">",</span><span class="w"> </span><span class="p">"</span><span class="s">container_name</span><span class="p">",</span><span class="w"> </span><span class="p">"</span><span class="s">(.+)</span><span class="p">"</span><span class="o">)</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="o">)</span>
+</span></code></pre></div>
+<p>Three details are load-bearing:</p>
+<ul>
+<li><strong><code>(namespace, container)</code>, not the image digest.</strong> The obvious key is the
+  digest, and it is wrong. <code>kube_pod_container_info</code> carries the
+  platform-specific digest containerd resolved, while the report carries
+  whatever the registry returned for the tag, and for an image pulled through a
+  mirror the two differ permanently. The HAProxy behind ArgoCD is scanned and
+  clean, and a digest join reports it missing forever.</li>
+<li><strong>Restricted to <code>Running</code> pods.</strong> Otherwise every completed <code>Job</code> -- the Rook
+  OSD prepare pods, most of all -- counts as an unscanned workload.</li>
+<li><strong><code>for: 2h</code>.</strong> A full sweep after an operator restart clears in about thirty
+  minutes, and the 24h report TTL recycles every report in one window. Two
+  hours is several times either, so churn does not page.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">It found more than the manual pass did</p>
+<p>The first thing this caught was five gaps the by-hand reconciliation had
+missed: <code>cilium-agent</code>, and Rook's <code>osd</code>, <code>mon</code>, <code>rgw</code> and <code>ceph-exporter</code>.
+All five have <code>ConfigAuditReports</code> and no <code>VulnerabilityReport</code>, and the
+containers beside them in the same pods are scanned normally -- so unlike
+Nextcloud and Authentik, report size does not explain them. The cause is
+still open. The alert is doing its job by making the question visible at
+all.</p>
+</div>
 <h2 id="metrics-and-the-one-that-is-switched-off">Metrics, and the one that is switched off<a class="headerlink" href="#metrics-and-the-one-that-is-switched-off" title="Permanent link">&para;</a></h2>
 <p>The operator exports counts per severity per workload, plus a per-finding
 "info" series for each scanner. All of those are on, and the dashboard's tables
@@ -1051,25 +1115,25 @@ them <code>drop: [ALL]</code>, no privilege escalation and a read-only root file
 and <code>audit</code>/<code>warn</code> stay at <code>restricted</code> so that stays visible.</p>
 <h2 id="reading-results-without-grafana">Reading results without Grafana<a class="headerlink" href="#reading-results-without-grafana" title="Permanent link">&para;</a></h2>
 <p>The dashboard is a summary; the objects have the detail.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># What has been scanned, worst first</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kubectl<span class="w"> </span>get<span class="w"> </span>vulnerabilityreports<span class="w"> </span>-A<span class="w"> </span>--sort-by<span class="o">=</span><span class="s1">'.report.summary.criticalCount'</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># The findings themselves, for one workload</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>kubectl<span class="w"> </span>get<span class="w"> </span>vulnerabilityreports<span class="w"> </span>-n<span class="w"> </span>&lt;ns&gt;<span class="w"> </span>&lt;name&gt;<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.report.vulnerabilities[]</span>
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s1">        | select(.severity=="CRITICAL")</span>
-</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="s1">        | {id: .vulnerabilityID, pkg: .resource,</span>
-</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="s1">           installed: .installedVersion, fixed: .fixedVersion}'</span>
-</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
-</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="c1"># Misconfiguration, RBAC and node checks</span>
-</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>kubectl<span class="w"> </span>get<span class="w"> </span>configauditreports<span class="w"> </span>-A
-</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>kubectl<span class="w"> </span>get<span class="w"> </span>rbacassessmentreports,clusterrbacassessmentreports<span class="w"> </span>-A
-</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>kubectl<span class="w"> </span>get<span class="w"> </span>infraassessmentreports<span class="w"> </span>-A
-</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
-</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="c1"># Which compliance controls are failing</span>
-</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>kubectl<span class="w"> </span>get<span class="w"> </span>clustercompliancereports<span class="w"> </span>k8s-cis-1.23<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.status.summary, (.status.summaryReport.controlCheck[]</span>
-</span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="s1">        | select(.totalFail &gt; 0))'</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># What has been scanned, worst first</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kubectl<span class="w"> </span>get<span class="w"> </span>vulnerabilityreports<span class="w"> </span>-A<span class="w"> </span>--sort-by<span class="o">=</span><span class="s1">'.report.summary.criticalCount'</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># The findings themselves, for one workload</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>kubectl<span class="w"> </span>get<span class="w"> </span>vulnerabilityreports<span class="w"> </span>-n<span class="w"> </span>&lt;ns&gt;<span class="w"> </span>&lt;name&gt;<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.report.vulnerabilities[]</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="s1">        | select(.severity=="CRITICAL")</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="s1">        | {id: .vulnerabilityID, pkg: .resource,</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="s1">           installed: .installedVersion, fixed: .fixedVersion}'</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="c1"># Misconfiguration, RBAC and node checks</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>kubectl<span class="w"> </span>get<span class="w"> </span>configauditreports<span class="w"> </span>-A
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>kubectl<span class="w"> </span>get<span class="w"> </span>rbacassessmentreports,clusterrbacassessmentreports<span class="w"> </span>-A
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>kubectl<span class="w"> </span>get<span class="w"> </span>infraassessmentreports<span class="w"> </span>-A
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>
+</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="c1"># Which compliance controls are failing</span>
+</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>kubectl<span class="w"> </span>get<span class="w"> </span>clustercompliancereports<span class="w"> </span>k8s-cis-1.23<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.status.summary, (.status.summaryReport.controlCheck[]</span>
+</span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="s1">        | select(.totalFail &gt; 0))'</span>
 </span></code></pre></div>
 <div class="admonition danger">
 <p class="admonition-title">Zero is not the same as clean</p>
@@ -1106,11 +1170,12 @@ from the workload's configuration rather than a column to sort on.</p>
 generation and seccomp profiling — has no replacement here and was not carried
 over.</p>
 <h2 id="directory-structure">Directory Structure<a class="headerlink" href="#directory-structure" title="Permanent link">&para;</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>trivy-operator/
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>├── application.yaml        # the chart, with every scanner enabled
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>├── namespace.yaml          # privileged, for node-collector's hostPaths
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>├── networkpolicy.yaml      # default-deny ingress; Prometheus on 8080
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>└── grafana-dashboard.yaml  # written for this cluster, not vendored
+<div class="language-text highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>trivy-operator/
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>├── application.yaml        # the chart, with every scanner enabled
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>├── namespace.yaml          # privileged, for node-collector's hostPaths
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>├── networkpolicy.yaml      # default-deny ingress; Prometheus on 8080
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>├── prometheusrule.yaml     # alerts on containers with no report at all
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>└── grafana-dashboard.yaml  # written for this cluster, not vendored
 </span></code></pre></div>
 
 
