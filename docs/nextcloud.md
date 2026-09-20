@@ -117,9 +117,13 @@ failure mode a values file has.
     Nextcloud's built-in `/metrics` endpoint refuses clients outside
     `nextcloud.openmetrics.allowedClients`, and the chart's default is
     `10.42.0.0/16` and `10.43.0.0/16` — k3s's pod and service CIDRs. This
-    cluster uses `10.244.0.0/16` and `10.96.0.0/12`, so the default would have
-    rejected Prometheus while the ServiceMonitor reported itself perfectly
-    healthy.
+    cluster uses `10.244.0.0/16` and `10.96.0.0/12`, so the default rejects
+    Prometheus while the ServiceMonitor reports itself perfectly healthy. The
+    ServiceMonitor scrapes both the exporter and this endpoint, so the list is
+    set explicitly in the Application.
+
+!!! warning "The admin account is only yours if `existingSecret` says so"
+    The chart's values file defaults the admin to `admin` / `changeme` and, unless `nextcloud.existingSecret` is enabled, writes those into a Secret of its own and points the install *and* the metrics exporter at it. Nothing renders differently and nothing fails at sync time. The block that wires `nextcloud-admin` in was dropped once and went unnoticed until the exporter could not log in; treat its presence as part of the review of any change to the values.
 
 ## Behind the Gateway
 
@@ -128,9 +132,13 @@ host were. Behind the `apps-gateway`, TLS is terminated before the request
 arrives and the source address is Cilium's Envoy, so without help it produces
 `http://` links on an `https://` site and the login redirect loops forever.
 
-A `proxy.config.php` in the chart's `configs` block sets `trusted_proxies`,
-`overwriteprotocol`, `overwritehost` and `overwrite.cli.url`. If the login page
-ever starts looping again, this file is where to look first.
+Four environment variables in `nextcloud.extraEnv` -- `OVERWRITEPROTOCOL`,
+`OVERWRITEHOST`, `OVERWRITECLIURL` and `TRUSTED_PROXIES` -- set that. They are
+env vars rather than a `proxy.config.php` in the chart's `configs` block
+because the image already ships a `reverse-proxy.config.php` that reads exactly
+these, and config files load alphabetically: a `proxy.config.php` of our own
+would be overridden by the one the image already has. If the login page ever
+starts looping again, those four values are where to look first.
 
 ## Authentik, not Nextcloud's own accounts
 

@@ -24,6 +24,31 @@ spec:
           nextcloud:
             host: cloud.k8s.wlkr.ch
 
+            # The break-glass admin, from OpenBao through secrets.yaml. Without
+            # this block the chart writes a Secret of its own holding the
+            # values file's defaults -- admin / changeme -- and both the
+            # install and the metrics exporter read from that instead. It was
+            # dropped once by accident and nothing rendered any differently;
+            # the only sign was an exporter that could not log in.
+            existingSecret:
+              enabled: true
+              secretName: nextcloud-admin
+              usernameKey: username
+              passwordKey: password
+
+            # Nextcloud's own /metrics endpoint refuses clients outside this
+            # list, and the chart's default is k3s's CIDRs (10.42/16 and
+            # 10.43/16). The ServiceMonitor scrapes that endpoint on the app
+            # Service as well as the exporter, so without ours Prometheus is
+            # turned away with a 403 while the target still reports as up.
+            # Pod and service CIDRs from ansible/inventory.yaml in the homelab
+            # repository.
+            openmetrics:
+              allowedClients:
+                - "127.0.0.1"
+                - "10.244.0.0/16"
+                - "10.96.0.0/12"
+
             # user_oidc reads these; so does the hook below. The Secret is the
             # same one Authentik's blueprint reads the pair from, so the
             # provider and its client are configured from one place and
@@ -100,6 +125,10 @@ spec:
                 php occ config:system:set allow_local_remote_servers \
                   --type boolean --value true
 
+                # --unique-uid=0 makes the Nextcloud user ID the raw
+                # preferred_username claim, so an Authentik user named like
+                # the local admin logs in AS that admin. Acceptable only
+                # while Authentik usernames are handed out by one person.
                 php occ user_oidc:provider Authentik \
                   --clientid="$NEXTCLOUD_OIDC_CLIENT_ID" \
                   --clientsecret="$NEXTCLOUD_OIDC_CLIENT_SECRET" \
