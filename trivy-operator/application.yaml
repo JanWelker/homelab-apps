@@ -26,6 +26,13 @@ spec:
           operator:
             replicas: 1
 
+            # Temporary, to find out why 79 containers never get a scan job.
+            # The operator decides to skip a workload in five places and every
+            # one of them logs at V(1), which is off by default -- so a skipped
+            # workload looks exactly like a clean one. This turns those lines
+            # on. See docs/trivy-operator.md; revert once answered.
+            logDevMode: true
+
             # All six scanners. Between them they cover what kube-bench,
             # kubesec and a CVE scanner would each do separately.
             vulnerabilityScannerEnabled: true
