@@ -11,7 +11,12 @@ name: Preview Documentation
     # Keep in step with docs.yaml: this is the only strict build a PR gets.
     paths:
       - "docs/**"
+      - "overrides/**"
       - "zensical.toml"
+      # The build runs from the lockfile, so a zensical bump is a change to
+      # the site.
+      - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/preview.yaml"
 
 permissions:

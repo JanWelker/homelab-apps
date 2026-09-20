@@ -52,6 +52,33 @@
       ]
     },
     {
+      "description": "A minor bump of the Nextcloud chart carries a major bump of Nextcloud itself -- 9.1 shipped 33, 9.2 shipped 34 -- and Nextcloud refuses to upgrade across more than one major at a time. So chart minors wait for a human.",
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchPackageNames": [
+        "nextcloud"
+      ],
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "automerge": false,
+      "labels": [
+        "dependencies",
+        "app-major"
+      ]
+    },
+    {
+      "description": "One PR per Nextcloud chart minor, so 9.3 to 9.5 is visibly two steps to merge in order rather than one merge that crash-loops the pod on 'Updates between multiple major versions ... are unsupported'. Renovate does not allow this key alongside matchUpdateTypes, hence the separate rule.",
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchPackageNames": [
+        "nextcloud"
+      ],
+      "separateMultipleMinor": true
+    },
+    {
       "description": "Home Assistant versions its releases as calendar dates, which semver reads as a major bump every month. Without this every routine release would wait for a human and none of them would ever be automerged.",
       "matchDatasources": [
         "docker"
