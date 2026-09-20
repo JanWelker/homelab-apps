@@ -9,9 +9,10 @@ permissions:
       - "main"
     paths:
       - "**/*.yaml"
+  # No path filter on pull requests: this check is required by the ruleset
+  # on main, and a required check that never reports leaves the pull
+  # request waiting on it forever. It is seconds of work either way.
   pull_request:
-    paths:
-      - "**/*.yaml"
   workflow_dispatch:
 
 jobs:

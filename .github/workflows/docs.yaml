@@ -7,7 +7,12 @@ name: Publish Documentation
       - "main"
     paths:
       - "docs/**"
+      - "overrides/**"
       - "zensical.toml"
+      # The build runs from the lockfile, so a zensical bump is a change to
+      # the site.
+      - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/docs.yaml"
   workflow_dispatch:
 
