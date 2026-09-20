@@ -954,18 +954,27 @@ failure mode a values file has.</p>
 <p>Nextcloud's built-in <code>/metrics</code> endpoint refuses clients outside
 <code>nextcloud.openmetrics.allowedClients</code>, and the chart's default is
 <code>10.42.0.0/16</code> and <code>10.43.0.0/16</code> — k3s's pod and service CIDRs. This
-cluster uses <code>10.244.0.0/16</code> and <code>10.96.0.0/12</code>, so the default would have
-rejected Prometheus while the ServiceMonitor reported itself perfectly
-healthy.</p>
+cluster uses <code>10.244.0.0/16</code> and <code>10.96.0.0/12</code>, so the default rejects
+Prometheus while the ServiceMonitor reports itself perfectly healthy. The
+ServiceMonitor scrapes both the exporter and this endpoint, so the list is
+set explicitly in the Application.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">The admin account is only yours if <code>existingSecret</code> says so</p>
+<p>The chart's values file defaults the admin to <code>admin</code> / <code>changeme</code> and, unless <code>nextcloud.existingSecret</code> is enabled, writes those into a Secret of its own and points the install <em>and</em> the metrics exporter at it. Nothing renders differently and nothing fails at sync time. The block that wires <code>nextcloud-admin</code> in was dropped once and went unnoticed until the exporter could not log in; treat its presence as part of the review of any change to the values.</p>
 </div>
 <h2 id="behind-the-gateway">Behind the Gateway<a class="headerlink" href="#behind-the-gateway" title="Permanent link">&para;</a></h2>
 <p>Nextcloud builds absolute URLs from what it believes the request scheme and
 host were. Behind the <code>apps-gateway</code>, TLS is terminated before the request
 arrives and the source address is Cilium's Envoy, so without help it produces
 <code>http://</code> links on an <code>https://</code> site and the login redirect loops forever.</p>
-<p>A <code>proxy.config.php</code> in the chart's <code>configs</code> block sets <code>trusted_proxies</code>,
-<code>overwriteprotocol</code>, <code>overwritehost</code> and <code>overwrite.cli.url</code>. If the login page
-ever starts looping again, this file is where to look first.</p>
+<p>Four environment variables in <code>nextcloud.extraEnv</code> -- <code>OVERWRITEPROTOCOL</code>,
+<code>OVERWRITEHOST</code>, <code>OVERWRITECLIURL</code> and <code>TRUSTED_PROXIES</code> -- set that. They are
+env vars rather than a <code>proxy.config.php</code> in the chart's <code>configs</code> block
+because the image already ships a <code>reverse-proxy.config.php</code> that reads exactly
+these, and config files load alphabetically: a <code>proxy.config.php</code> of our own
+would be overridden by the one the image already has. If the login page ever
+starts looping again, those four values are where to look first.</p>
 <h2 id="authentik-not-nextclouds-own-accounts">Authentik, not Nextcloud's own accounts<a class="headerlink" href="#authentik-not-nextclouds-own-accounts" title="Permanent link">&para;</a></h2>
 <p>Nextcloud's <code>user_oidc</code> app is first-party — it is in the <code>nextcloud</code> GitHub
 organisation — so this is real single sign-on rather than a proxy bolted in
