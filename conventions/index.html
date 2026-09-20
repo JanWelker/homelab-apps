@@ -857,10 +857,11 @@ workload has no business reaching.</p>
 <h3 id="2-official-upstream-sources-only">2. Official upstream sources only<a class="headerlink" href="#2-official-upstream-sources-only" title="Permanent link">&para;</a></h3>
 <p>The vendor's own Helm chart, or the vendor's own container image. Not a
 repackager's chart, however much more convenient it is.</p>
-<p>The two applications here are the two shapes this takes:</p>
+<p>There are two shapes this takes, and every application here is one of them:</p>
 <ul>
 <li><strong>Nextcloud</strong> publishes its own chart, at <code>https://nextcloud.github.io/helm/</code>
-  from the Nextcloud organisation. Use it.</li>
+  from the Nextcloud organisation. Use it. <strong>Trivy Operator</strong> is the same
+  shape: Aqua Security's chart, from Aqua's own repository.</li>
 <li><strong>Home Assistant</strong> publishes no chart at all. The popular community charts
   are third-party repackagers, so this is plain manifests around the official
   <code>ghcr.io/home-assistant/home-assistant</code> image instead. Writing a Deployment
@@ -1008,7 +1009,7 @@ application an Authentik outage.</p>
 </tbody>
 </table>
 <h2 id="behind-the-gateway">Behind the Gateway<a class="headerlink" href="#behind-the-gateway" title="Permanent link">&para;</a></h2>
-<p>Both applications here needed proxy configuration, and it is the single most
+<p>Both user-facing applications here needed proxy configuration, and it is the single most
 common thing to get wrong. Traffic arrives from Cilium's Envoy inside the pod
 CIDR (<code>10.244.0.0/16</code>), not from the client, and TLS is terminated at the
 Gateway — so an application that trusts <code>REMOTE_ADDR</code> sees the proxy, and one
