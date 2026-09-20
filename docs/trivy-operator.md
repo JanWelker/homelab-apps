@@ -86,9 +86,65 @@ single most actionable class of result. Severity is likewise unfiltered —
 `UNKNOWN` through `CRITICAL` — because a finding the scanner could not grade is
 exactly the one worth reading.
 
-`additionalVulnerabilityReportFields` adds the description, links, CVSS score,
-target, class and package path to each entry, so a report can be triaged
-without going back to the registry to work out what a package even is.
+`additionalVulnerabilityReportFields` adds the CVSS score, target, class and
+package path to each entry, so a report can be triaged without going back to
+the registry to work out what a package even is. It does **not** add the
+description or the links, for the reason below.
+
+## A report too large to store is a report that never appears
+
+Every `VulnerabilityReport` is an ordinary object written through the API
+server, so it is subject to the 2 MiB gRPC write ceiling. Exceed it and the
+write is rejected:
+
+```text
+rpc error: code = ResourceExhausted desc =
+trying to send message larger than max (2601323 vs. 2097152)
+```
+
+That line in the operator log is the **only** evidence. No report is created,
+no partial object, no event on the workload. A workload with no report looks
+exactly like a workload nobody asked about, and an empty dashboard row reads
+the same whether an image is clean or was never scanned at all.
+
+It is not hypothetical. Nextcloud and Authentik -- the two most exposed
+applications here -- silently had no vulnerability data whatsoever, while their
+`ConfigAuditReports` existed and made them look covered.
+
+`Description` and `Links` were the cause. Measured across the reports that did
+store:
+
+| fields | all reports | largest one |
+| ------ | ----------- | ----------- |
+| with `Description,Links` | 17.8 MB | 1.07 MB |
+| without `Links` | 8.1 MB | 0.57 MB |
+| without either | 4.8 MB | 0.35 MB |
+
+`Links` alone is 55% of the payload -- it is a long list of URLs per finding.
+Dropping both leaves 21% of the original, which puts the 2.60 MB report that
+failed at roughly 0.7 MB.
+
+The trade is worth naming rather than hiding. The description is the field that
+most helps judge whether a finding is *reachable* -- it is why a CoreDNS CVE
+could be dismissed as DoH-only without leaving the cluster. But it is one
+lookup away from any CVE ID, whereas an absent report tells you nothing at all.
+Availability of the data beats richness of the data.
+
+!!! warning "The ceiling is closer than it looks"
+    The largest report that still stored was 1.07 MB against a 2 MiB limit --
+    half the budget, before this change. Findings only accumulate, so the next
+    image to cross the line does so in silence too.
+
+Which means the count of reports is not a check. Reconcile running images
+against scanned ones instead, and treat a difference as a missing scan until
+proven otherwise:
+
+```bash
+kubectl get pods -A -o json \
+  | jq -r '.items[].spec.containers[].image' | sort -u | wc -l
+kubectl get vulnerabilityreports -A -o json \
+  | jq -r '.items[].report.artifact.repository' | sort -u | wc -l
+```
 
 ## Metrics, and the one that is switched off
 
