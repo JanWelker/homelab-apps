@@ -1228,13 +1228,21 @@ after it finds a cached SBOM and takes the broken path. Both affected images,
 <p>So <code>clusterSbomCacheEnabled</code> is off. Scans of a repeated image are redundant
 and slower without it, which is much the cheaper mistake: the cache was saving
 work by discarding the result.</p>
-<div class="admonition note">
-<p class="admonition-title"><code>logDevMode</code> is on, and is meant to come back off</p>
-<p><code>operator.logDevMode: true</code> was set to read the operator's <code>V(1)</code> lines
-while tracking this down. It also switches the operator from JSON to
-console encoding and makes it considerably chattier, so it is a diagnostic
-setting and not a resting state -- revert it once the reports are back.</p>
+<p>Turning the cache off restored them. The operator began logging <code>Submitting a
+scan for the workload</code> for the Rook ReplicaSets, which it had not done once in
+the preceding day, and the reports followed.</p>
+<div class="admonition tip">
+<p class="admonition-title">Reports return in batches of ten, not continuously</p>
+<p>A completed scan job still counts against <code>concurrentScanJobsLimit</code> until
+<code>scanJobTTL</code> deletes it, so the operator logs <code>Pushing back scan job</code> and
+waits. With the values here that is ten workloads per ten minutes, while
+the scans themselves finish in seconds. A backlog draining in visible steps
+is the expected shape, not a stall.</p>
 </div>
+<p><code>logDevMode</code> was on while this was tracked down and is off again. It reads the
+operator's <code>V(1)</code> lines, which is the only way to see a decision it makes
+silently, but it also switches the operator from JSON to console encoding and
+makes it considerably chattier -- a diagnostic setting, not a resting state.</p>
 <p>Tracked upstream in
 <a href="https://github.com/aquasecurity/trivy-operator/issues/1668">trivy-operator#1668</a>.</p>
 <h2 id="metrics-and-the-one-that-is-switched-off">Metrics, and the one that is switched off<a class="headerlink" href="#metrics-and-the-one-that-is-switched-off" title="Permanent link">&para;</a></h2>
