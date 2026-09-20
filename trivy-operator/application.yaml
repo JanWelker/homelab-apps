@@ -42,11 +42,14 @@ spec:
             infraAssessmentScannerEnabled: true
             clusterComplianceEnabled: true
 
-            # SBOMs are what make ClusterVulnerabilityReports possible; the
-            # cache stops an unchanged image being decomposed again every
-            # cycle.
+            # SBOMs are what make ClusterVulnerabilityReports possible.
             sbomGenerationEnabled: true
-            clusterSbomCacheEnabled: true
+
+            # The cache is off: reusing a cached SBOM writes the SbomReport
+            # and then loses the VulnerabilityReport, which cost 80 containers
+            # their CVE data. Redundant scans are the cheaper mistake. See
+            # docs/trivy-operator.md.
+            clusterSbomCacheEnabled: false
             cacheReportTTL: "120h"
 
             # Reports are rebuilt from the cluster, so a stale one is worse
