@@ -100,7 +100,7 @@ spec:
 
             # CVSS and the package path, so a report can be triaged without
             # going back to the registry for context. Description and Links
-            # are deliberately absent -- they were 79% of the payload and
+            # are deliberately absent -- they were 73% of the payload and
             # cost two workloads their reports entirely. See
             # docs/trivy-operator.md.
             additionalVulnerabilityReportFields: CVSS,Target,Class,PackagePath,PackageType

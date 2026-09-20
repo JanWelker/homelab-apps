@@ -121,7 +121,7 @@ store:
 | without either | 4.8 MB | 0.35 MB |
 
 `Links` alone is 55% of the payload -- it is a long list of URLs per finding.
-Dropping both leaves 21% of the original, which puts the 2.60 MB report that
+Dropping both leaves 27% of the original, which puts the 2.60 MB report that
 failed at roughly 0.7 MB.
 
 The trade is worth naming rather than hiding. The description is the field that
