@@ -575,6 +575,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-job-deadline-not-the-trivy-timeout-is-what-ends-a-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The Job deadline, not the Trivy timeout, is what ends a scan
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#two-different-reasons-a-report-goes-missing" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -770,6 +781,17 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         Alerting on the gap
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-job-deadline-not-the-trivy-timeout-is-what-ends-a-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        The Job deadline, not the Trivy timeout, is what ends a scan
       </span>
     </span>
   </a>
@@ -1124,6 +1146,29 @@ missed: <code>cilium-agent</code>, and Rook's <code>osd</code>, <code>mon</code>
 The alert reports nine because it groups by container name; the real count
 is 84 containers, since six OSDs all named <code>osd</code> collapse into one line.</p>
 </div>
+<h2 id="the-job-deadline-not-the-trivy-timeout-is-what-ends-a-scan">The Job deadline, not the Trivy timeout, is what ends a scan<a class="headerlink" href="#the-job-deadline-not-the-trivy-timeout-is-what-ends-a-scan" title="Permanent link">&para;</a></h2>
+<p>Two limits bound a scan and they are not the same setting. <code>trivy.timeout</code> is
+the <code>--timeout</code> flag Trivy itself gets. <code>operator.scanJobTimeout</code> becomes the
+scan Job's <code>activeDeadlineSeconds</code>, and Kubernetes kills the pod when it
+elapses, whatever Trivy is doing. The chart defaults the first to <code>5m0s</code> and
+the second to <code>5m</code>; this repository raised only the first, to ten minutes, so
+the Job deadline was still five and the Trivy flag could never fire.</p>
+<p>Nextcloud and Authentik are where it showed. Both images are over a gigabyte,
+the scan job is capped at half a CPU and runs in <code>--slow</code> mode, and every scan
+of either ended the same way:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>Warning  DeadlineExceeded  job/scan-vulnerabilityreport-7d57fbbdb
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  Job was active longer than specified deadline
+</span></code></pre></div>
+<p>Trivy Operator then retries and the retry dies at the same mark, so the two
+most exposed applications had no <code>VulnerabilityReport</code> for a second, different
+reason, after the <a href="#a-report-too-large-to-store-is-a-report-that-never-appears">oversized-report one</a>
+was fixed. The <code>TrivyContainerNotScanned</code> alert is what surfaced it.</p>
+<p>Both settings are now twenty minutes, and set together, since the shorter one
+is the one that applies. The failed Job is the only evidence, and it is deleted
+after <code>scanJobTTL</code>, so look while it is there:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>trivy-system<span class="w"> </span>get<span class="w"> </span><span class="nb">jobs</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-v<span class="w"> </span>Complete
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>trivy-system<span class="w"> </span>get<span class="w"> </span>events<span class="w"> </span>--field-selector<span class="w"> </span><span class="nv">reason</span><span class="o">=</span>DeadlineExceeded
+</span></code></pre></div>
 <h2 id="two-different-reasons-a-report-goes-missing">Two different reasons a report goes missing<a class="headerlink" href="#two-different-reasons-a-report-goes-missing" title="Permanent link">&para;</a></h2>
 <p>They look identical from outside and are not the same problem.</p>
 <p><strong>The report was too large to store.</strong> Authentik's server and worker, covered
@@ -1131,8 +1176,8 @@ above. One container each, distinct images, rejected at the API server.</p>
 <p><strong>The scan itself failed.</strong> Everything in Rook, and four of Cilium's seven
 containers. The scan job runs one container per scanned container, all at once
 in one pod, and these die partway through reading the image:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>FATAL  failed to analyze layer (sha256:4864939c...): walk error:
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>       failed to analyze usr/bin/cilium-dbg: unable to read the file: unexpected EOF
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>FATAL  failed to analyze layer (sha256:4864939c...): walk error:
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>       failed to analyze usr/bin/cilium-dbg: unable to read the file: unexpected EOF
 </span></code></pre></div>
 <p>Trivy Operator keeps only containers that exited <code>0</code>. A container that dies
 this way is logged and then produces no report, while the job as a whole
@@ -1211,11 +1256,11 @@ was never written.</p>
 </table>
 <p>The cause is the SBOM cache. When an image already has a <code>ClusterSbomReport</code>,
 the operator takes a reuse path instead of a normal scan:</p>
-<div class="language-go highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nx">reportsData</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getGlobalSbomReports</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">SbomReadWriter</span><span class="p">,</span><span class="w"> </span><span class="nx">containerImages</span><span class="p">,</span><span class="w"> </span><span class="nx">log</span><span class="p">)</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="nx">reportsData</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="nx">err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">reuseSbomReport</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">workloadObj</span><span class="p">,</span><span class="w"> </span><span class="nx">reportsData</span><span class="p">)</span><span class="w">   </span><span class="c1">// writes SbomReports now</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="p">}</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nx">r</span><span class="p">.</span><span class="nx">SubmitScanJobChan</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nx">ScanJobRequest</span><span class="p">{...,</span><span class="w"> </span><span class="nx">ClusterSbomReport</span><span class="p">:</span><span class="w"> </span><span class="nx">reportsData</span><span class="p">}</span>
+<div class="language-go highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nx">reportsData</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getGlobalSbomReports</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">SbomReadWriter</span><span class="p">,</span><span class="w"> </span><span class="nx">containerImages</span><span class="p">,</span><span class="w"> </span><span class="nx">log</span><span class="p">)</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">if</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="nx">reportsData</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="nx">err</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">reuseSbomReport</span><span class="p">(</span><span class="nx">ctx</span><span class="p">,</span><span class="w"> </span><span class="nx">workloadObj</span><span class="p">,</span><span class="w"> </span><span class="nx">reportsData</span><span class="p">)</span><span class="w">   </span><span class="c1">// writes SbomReports now</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="p">}</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="nx">r</span><span class="p">.</span><span class="nx">SubmitScanJobChan</span><span class="w"> </span><span class="o">&lt;-</span><span class="w"> </span><span class="nx">ScanJobRequest</span><span class="p">{...,</span><span class="w"> </span><span class="nx">ClusterSbomReport</span><span class="p">:</span><span class="w"> </span><span class="nx">reportsData</span><span class="p">}</span>
 </span></code></pre></div>
 <p><code>reuseSbomReport</code> writes the namespaced <code>SbomReport</code>s immediately, and the scan
 job that follows runs <code>trivy sbom</code> rather than <code>trivy image</code> to derive
@@ -1277,25 +1322,25 @@ them <code>drop: [ALL]</code>, no privilege escalation and a read-only root file
 and <code>audit</code>/<code>warn</code> stay at <code>restricted</code> so that stays visible.</p>
 <h2 id="reading-results-without-grafana">Reading results without Grafana<a class="headerlink" href="#reading-results-without-grafana" title="Permanent link">&para;</a></h2>
 <p>The dashboard is a summary; the objects have the detail.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># What has been scanned, worst first</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>kubectl<span class="w"> </span>get<span class="w"> </span>vulnerabilityreports<span class="w"> </span>-A<span class="w"> </span>--sort-by<span class="o">=</span><span class="s1">'.report.summary.criticalCount'</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># The findings themselves, for one workload</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>kubectl<span class="w"> </span>get<span class="w"> </span>vulnerabilityreports<span class="w"> </span>-n<span class="w"> </span>&lt;ns&gt;<span class="w"> </span>&lt;name&gt;<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.report.vulnerabilities[]</span>
-</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="s1">        | select(.severity=="CRITICAL")</span>
-</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="s1">        | {id: .vulnerabilityID, pkg: .resource,</span>
-</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="s1">           installed: .installedVersion, fixed: .fixedVersion}'</span>
-</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>
-</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="c1"># Misconfiguration, RBAC and node checks</span>
-</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>kubectl<span class="w"> </span>get<span class="w"> </span>configauditreports<span class="w"> </span>-A
-</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>kubectl<span class="w"> </span>get<span class="w"> </span>rbacassessmentreports,clusterrbacassessmentreports<span class="w"> </span>-A
-</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>kubectl<span class="w"> </span>get<span class="w"> </span>infraassessmentreports<span class="w"> </span>-A
-</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>
-</span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="c1"># Which compliance controls are failing</span>
-</span><span id="__span-5-17"><a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a>kubectl<span class="w"> </span>get<span class="w"> </span>clustercompliancereports<span class="w"> </span>k8s-cis-1.23<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.status.summary, (.status.summaryReport.controlCheck[]</span>
-</span><span id="__span-5-19"><a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="s1">        | select(.totalFail &gt; 0))'</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># What has been scanned, worst first</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>kubectl<span class="w"> </span>get<span class="w"> </span>vulnerabilityreports<span class="w"> </span>-A<span class="w"> </span>--sort-by<span class="o">=</span><span class="s1">'.report.summary.criticalCount'</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># The findings themselves, for one workload</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>kubectl<span class="w"> </span>get<span class="w"> </span>vulnerabilityreports<span class="w"> </span>-n<span class="w"> </span>&lt;ns&gt;<span class="w"> </span>&lt;name&gt;<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.report.vulnerabilities[]</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="s1">        | select(.severity=="CRITICAL")</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="s1">        | {id: .vulnerabilityID, pkg: .resource,</span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="s1">           installed: .installedVersion, fixed: .fixedVersion}'</span>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="c1"># Misconfiguration, RBAC and node checks</span>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>kubectl<span class="w"> </span>get<span class="w"> </span>configauditreports<span class="w"> </span>-A
+</span><span id="__span-7-13"><a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>kubectl<span class="w"> </span>get<span class="w"> </span>rbacassessmentreports,clusterrbacassessmentreports<span class="w"> </span>-A
+</span><span id="__span-7-14"><a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a>kubectl<span class="w"> </span>get<span class="w"> </span>infraassessmentreports<span class="w"> </span>-A
+</span><span id="__span-7-15"><a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a>
+</span><span id="__span-7-16"><a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a><span class="c1"># Which compliance controls are failing</span>
+</span><span id="__span-7-17"><a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>kubectl<span class="w"> </span>get<span class="w"> </span>clustercompliancereports<span class="w"> </span>k8s-cis-1.23<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-7-18"><a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.status.summary, (.status.summaryReport.controlCheck[]</span>
+</span><span id="__span-7-19"><a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a><span class="s1">        | select(.totalFail &gt; 0))'</span>
 </span></code></pre></div>
 <div class="admonition danger">
 <p class="admonition-title">Zero is not the same as clean</p>
@@ -1332,12 +1377,12 @@ from the workload's configuration rather than a column to sort on.</p>
 generation and seccomp profiling — has no replacement here and was not carried
 over.</p>
 <h2 id="directory-structure">Directory Structure<a class="headerlink" href="#directory-structure" title="Permanent link">&para;</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>trivy-operator/
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>├── application.yaml        # the chart, with every scanner enabled
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>├── namespace.yaml          # privileged, for node-collector's hostPaths
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>├── networkpolicy.yaml      # default-deny ingress; Prometheus on 8080
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>├── prometheusrule.yaml     # alerts on containers with no report at all
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>└── grafana-dashboard.yaml  # written for this cluster, not vendored
+<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>trivy-operator/
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>├── application.yaml        # the chart, with every scanner enabled
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>├── namespace.yaml          # privileged, for node-collector's hostPaths
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>├── networkpolicy.yaml      # default-deny ingress; Prometheus on 8080
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>├── prometheusrule.yaml     # alerts on containers with no report at all
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>└── grafana-dashboard.yaml  # written for this cluster, not vendored
 </span></code></pre></div>
 
 
