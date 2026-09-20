@@ -236,6 +236,34 @@ loses all six.
 Nothing here is fixable in this repository either way. The alert is the
 response available to us: it makes the gap visible instead of silent.
 
+## Most of the gap is a scan that never ran
+
+The two failures above account for five containers. The other seventy-nine are
+not failures at all: **no scan job is ever created for them.** They have a
+`ConfigAuditReport`, which needs no scan job, and neither a
+`VulnerabilityReport` nor an `ExposedSecretReport`, which both do.
+
+Measured rather than assumed. Annotating `rook-ceph-osd-0`'s ReplicaSet to
+force a reconcile produced no scan job in two minutes, while the operator
+picked up an unrelated new workload and scanned it within ten seconds. Every
+Rook Deployment's `deployment.kubernetes.io/revision` matches its ReplicaSet,
+so the obvious candidate -- the operator failing to identify the current
+revision -- is ruled out.
+
+What is left is that `SubmitScanJob` gives up silently in five places: three
+sentinel errors (`ErrReplicaSetNotFound`, `ErrNoRunningPods`,
+`ErrUnSupportedKind`), a pod spec with no containers, and an earlier return
+when it believes reports already exist. All five log at `V(1)`, which is off by
+default, so a deliberately skipped workload and a healthy one look identical
+from outside.
+
+!!! note "`logDevMode` is on, and is meant to come back off"
+    `operator.logDevMode: true` turns those `V(1)` lines on, which is the only
+    way to see which of the five reasons applies here. It also switches the
+    operator from JSON to console encoding and makes it considerably chattier,
+    so it is a diagnostic setting and not a resting state -- revert it once the
+    question is answered.
+
 ## Metrics, and the one that is switched off
 
 The operator exports counts per severity per workload, plus a per-finding
