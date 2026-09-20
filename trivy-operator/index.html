@@ -553,6 +553,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#a-report-too-large-to-store-is-a-report-that-never-appears" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        A report too large to store is a report that never appears
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#metrics-and-the-one-that-is-switched-off" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -704,6 +715,17 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         Unfixed vulnerabilities stay in the report
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-report-too-large-to-store-is-a-report-that-never-appears" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        A report too large to store is a report that never appears
       </span>
     </span>
   </a>
@@ -929,9 +951,74 @@ the signal that a <strong>base image</strong> is the wrong one, and dropping tho
 single most actionable class of result. Severity is likewise unfiltered —
 <code>UNKNOWN</code> through <code>CRITICAL</code> — because a finding the scanner could not grade is
 exactly the one worth reading.</p>
-<p><code>additionalVulnerabilityReportFields</code> adds the description, links, CVSS score,
-target, class and package path to each entry, so a report can be triaged
-without going back to the registry to work out what a package even is.</p>
+<p><code>additionalVulnerabilityReportFields</code> adds the CVSS score, target, class and
+package path to each entry, so a report can be triaged without going back to
+the registry to work out what a package even is. It does <strong>not</strong> add the
+description or the links, for the reason below.</p>
+<h2 id="a-report-too-large-to-store-is-a-report-that-never-appears">A report too large to store is a report that never appears<a class="headerlink" href="#a-report-too-large-to-store-is-a-report-that-never-appears" title="Permanent link">&para;</a></h2>
+<p>Every <code>VulnerabilityReport</code> is an ordinary object written through the API
+server, so it is subject to the 2 MiB gRPC write ceiling. Exceed it and the
+write is rejected:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>rpc error: code = ResourceExhausted desc =
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>trying to send message larger than max (2601323 vs. 2097152)
+</span></code></pre></div>
+<p>That line in the operator log is the <strong>only</strong> evidence. No report is created,
+no partial object, no event on the workload. A workload with no report looks
+exactly like a workload nobody asked about, and an empty dashboard row reads
+the same whether an image is clean or was never scanned at all.</p>
+<p>It is not hypothetical. Nextcloud and Authentik -- the two most exposed
+applications here -- silently had no vulnerability data whatsoever, while their
+<code>ConfigAuditReports</code> existed and made them look covered.</p>
+<p><code>Description</code> and <code>Links</code> were the cause. Measured across the reports that did
+store:</p>
+<table>
+<thead>
+<tr>
+<th>fields</th>
+<th>all reports</th>
+<th>largest one</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>with <code>Description,Links</code></td>
+<td>17.8 MB</td>
+<td>1.07 MB</td>
+</tr>
+<tr>
+<td>without <code>Links</code></td>
+<td>8.1 MB</td>
+<td>0.57 MB</td>
+</tr>
+<tr>
+<td>without either</td>
+<td>4.8 MB</td>
+<td>0.35 MB</td>
+</tr>
+</tbody>
+</table>
+<p><code>Links</code> alone is 55% of the payload -- it is a long list of URLs per finding.
+Dropping both leaves 21% of the original, which puts the 2.60 MB report that
+failed at roughly 0.7 MB.</p>
+<p>The trade is worth naming rather than hiding. The description is the field that
+most helps judge whether a finding is <em>reachable</em> -- it is why a CoreDNS CVE
+could be dismissed as DoH-only without leaving the cluster. But it is one
+lookup away from any CVE ID, whereas an absent report tells you nothing at all.
+Availability of the data beats richness of the data.</p>
+<div class="admonition warning">
+<p class="admonition-title">The ceiling is closer than it looks</p>
+<p>The largest report that still stored was 1.07 MB against a 2 MiB limit --
+half the budget, before this change. Findings only accumulate, so the next
+image to cross the line does so in silence too.</p>
+</div>
+<p>Which means the count of reports is not a check. Reconcile running images
+against scanned ones instead, and treat a difference as a missing scan until
+proven otherwise:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>pods<span class="w"> </span>-A<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.items[].spec.containers[].image'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span>-u<span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kubectl<span class="w"> </span>get<span class="w"> </span>vulnerabilityreports<span class="w"> </span>-A<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.items[].report.artifact.repository'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span>-u<span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
+</span></code></pre></div>
 <h2 id="metrics-and-the-one-that-is-switched-off">Metrics, and the one that is switched off<a class="headerlink" href="#metrics-and-the-one-that-is-switched-off" title="Permanent link">&para;</a></h2>
 <p>The operator exports counts per severity per workload, plus a per-finding
 "info" series for each scanner. All of those are on, and the dashboard's tables
@@ -964,25 +1051,25 @@ them <code>drop: [ALL]</code>, no privilege escalation and a read-only root file
 and <code>audit</code>/<code>warn</code> stay at <code>restricted</code> so that stays visible.</p>
 <h2 id="reading-results-without-grafana">Reading results without Grafana<a class="headerlink" href="#reading-results-without-grafana" title="Permanent link">&para;</a></h2>
 <p>The dashboard is a summary; the objects have the detail.</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># What has been scanned, worst first</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kubectl<span class="w"> </span>get<span class="w"> </span>vulnerabilityreports<span class="w"> </span>-A<span class="w"> </span>--sort-by<span class="o">=</span><span class="s1">'.report.summary.criticalCount'</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># The findings themselves, for one workload</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>kubectl<span class="w"> </span>get<span class="w"> </span>vulnerabilityreports<span class="w"> </span>-n<span class="w"> </span>&lt;ns&gt;<span class="w"> </span>&lt;name&gt;<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.report.vulnerabilities[]</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="s1">        | select(.severity=="CRITICAL")</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="s1">        | {id: .vulnerabilityID, pkg: .resource,</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="s1">           installed: .installedVersion, fixed: .fixedVersion}'</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># Misconfiguration, RBAC and node checks</span>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>kubectl<span class="w"> </span>get<span class="w"> </span>configauditreports<span class="w"> </span>-A
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>kubectl<span class="w"> </span>get<span class="w"> </span>rbacassessmentreports,clusterrbacassessmentreports<span class="w"> </span>-A
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>kubectl<span class="w"> </span>get<span class="w"> </span>infraassessmentreports<span class="w"> </span>-A
-</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
-</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1"># Which compliance controls are failing</span>
-</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>kubectl<span class="w"> </span>get<span class="w"> </span>clustercompliancereports<span class="w"> </span>k8s-cis-1.23<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.status.summary, (.status.summaryReport.controlCheck[]</span>
-</span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="s1">        | select(.totalFail &gt; 0))'</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># What has been scanned, worst first</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kubectl<span class="w"> </span>get<span class="w"> </span>vulnerabilityreports<span class="w"> </span>-A<span class="w"> </span>--sort-by<span class="o">=</span><span class="s1">'.report.summary.criticalCount'</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="c1"># The findings themselves, for one workload</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>kubectl<span class="w"> </span>get<span class="w"> </span>vulnerabilityreports<span class="w"> </span>-n<span class="w"> </span>&lt;ns&gt;<span class="w"> </span>&lt;name&gt;<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.report.vulnerabilities[]</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s1">        | select(.severity=="CRITICAL")</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="s1">        | {id: .vulnerabilityID, pkg: .resource,</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="s1">           installed: .installedVersion, fixed: .fixedVersion}'</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="c1"># Misconfiguration, RBAC and node checks</span>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>kubectl<span class="w"> </span>get<span class="w"> </span>configauditreports<span class="w"> </span>-A
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>kubectl<span class="w"> </span>get<span class="w"> </span>rbacassessmentreports,clusterrbacassessmentreports<span class="w"> </span>-A
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>kubectl<span class="w"> </span>get<span class="w"> </span>infraassessmentreports<span class="w"> </span>-A
+</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
+</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="c1"># Which compliance controls are failing</span>
+</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>kubectl<span class="w"> </span>get<span class="w"> </span>clustercompliancereports<span class="w"> </span>k8s-cis-1.23<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">'.status.summary, (.status.summaryReport.controlCheck[]</span>
+</span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="s1">        | select(.totalFail &gt; 0))'</span>
 </span></code></pre></div>
 <div class="admonition danger">
 <p class="admonition-title">Zero is not the same as clean</p>
@@ -1019,11 +1106,11 @@ from the workload's configuration rather than a column to sort on.</p>
 generation and seccomp profiling — has no replacement here and was not carried
 over.</p>
 <h2 id="directory-structure">Directory Structure<a class="headerlink" href="#directory-structure" title="Permanent link">&para;</a></h2>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>trivy-operator/
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>├── application.yaml        # the chart, with every scanner enabled
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>├── namespace.yaml          # privileged, for node-collector's hostPaths
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>├── networkpolicy.yaml      # default-deny ingress; Prometheus on 8080
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>└── grafana-dashboard.yaml  # written for this cluster, not vendored
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>trivy-operator/
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>├── application.yaml        # the chart, with every scanner enabled
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>├── namespace.yaml          # privileged, for node-collector's hostPaths
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>├── networkpolicy.yaml      # default-deny ingress; Prometheus on 8080
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>└── grafana-dashboard.yaml  # written for this cluster, not vendored
 </span></code></pre></div>
 
 
