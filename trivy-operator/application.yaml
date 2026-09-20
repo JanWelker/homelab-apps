@@ -51,6 +51,12 @@ spec:
             scanJobTTL: "10m"
             scanSecretTTL: "10m"
 
+            # The Job's activeDeadlineSeconds. It is the outer limit, so the
+            # trivy.timeout below is only reachable when this is at least as
+            # long. The chart's 5m killed every Nextcloud and Authentik scan.
+            # See docs/trivy-operator.md.
+            scanJobTimeout: "20m"
+
             # Only the live ReplicaSet of a Deployment, not every old one.
             vulnerabilityScannerScanOnlyCurrentRevisions: true
             configAuditScannerScanOnlyCurrentRevisions: true
@@ -109,7 +115,8 @@ spec:
 
             # Trades scan wall-clock for a smaller resident set.
             slow: true
-            timeout: "10m0s"
+            # Kept equal to operator.scanJobTimeout above.
+            timeout: "20m0s"
 
           nodeCollector:
             # One job per node, control plane included, so the CIS node checks

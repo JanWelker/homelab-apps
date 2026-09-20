@@ -189,6 +189,38 @@ Three details are load-bearing:
     The alert reports nine because it groups by container name; the real count
     is 84 containers, since six OSDs all named `osd` collapse into one line.
 
+## The Job deadline, not the Trivy timeout, is what ends a scan
+
+Two limits bound a scan and they are not the same setting. `trivy.timeout` is
+the `--timeout` flag Trivy itself gets. `operator.scanJobTimeout` becomes the
+scan Job's `activeDeadlineSeconds`, and Kubernetes kills the pod when it
+elapses, whatever Trivy is doing. The chart defaults the first to `5m0s` and
+the second to `5m`; this repository raised only the first, to ten minutes, so
+the Job deadline was still five and the Trivy flag could never fire.
+
+Nextcloud and Authentik are where it showed. Both images are over a gigabyte,
+the scan job is capped at half a CPU and runs in `--slow` mode, and every scan
+of either ended the same way:
+
+```text
+Warning  DeadlineExceeded  job/scan-vulnerabilityreport-7d57fbbdb
+  Job was active longer than specified deadline
+```
+
+Trivy Operator then retries and the retry dies at the same mark, so the two
+most exposed applications had no `VulnerabilityReport` for a second, different
+reason, after the [oversized-report one](#a-report-too-large-to-store-is-a-report-that-never-appears)
+was fixed. The `TrivyContainerNotScanned` alert is what surfaced it.
+
+Both settings are now twenty minutes, and set together, since the shorter one
+is the one that applies. The failed Job is the only evidence, and it is deleted
+after `scanJobTTL`, so look while it is there:
+
+```bash
+kubectl -n trivy-system get jobs | grep -v Complete
+kubectl -n trivy-system get events --field-selector reason=DeadlineExceeded
+```
+
 ## Two different reasons a report goes missing
 
 They look identical from outside and are not the same problem.
