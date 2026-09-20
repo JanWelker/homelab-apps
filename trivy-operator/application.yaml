@@ -113,6 +113,36 @@ spec:
             # docs/trivy-operator.md.
             additionalVulnerabilityReportFields: CVSS,Target,Class,PackagePath,PackageType
 
+            # Per-namespace Rego, evaluated by Trivy as Rego v0. Only for the
+            # two Debian-based application images whose full report exceeds
+            # the etcd request limit; see docs/trivy-operator.md.
+            ignorePolicy.nextcloud: |
+              package trivy
+
+              default ignore = false
+
+              # Debian has no fix for almost every finding in this image, and
+              # a report that lists them all is too large for etcd. Keep every
+              # HIGH and CRITICAL, and everything that has a fix.
+              ignore {
+                object.get(input, "FixedVersion", "") == ""
+                input.Severity != "HIGH"
+                input.Severity != "CRITICAL"
+              }
+            ignorePolicy.authentik: |
+              package trivy
+
+              default ignore = false
+
+              # Debian has no fix for almost every finding in this image, and
+              # a report that lists them all is too large for etcd. Keep every
+              # HIGH and CRITICAL, and everything that has a fix.
+              ignore {
+                object.get(input, "FixedVersion", "") == ""
+                input.Severity != "HIGH"
+                input.Severity != "CRITICAL"
+              }
+
             # Trades scan wall-clock for a smaller resident set.
             slow: true
             # Kept equal to operator.scanJobTimeout above.
