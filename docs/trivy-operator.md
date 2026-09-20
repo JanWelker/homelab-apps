@@ -271,11 +271,21 @@ So `clusterSbomCacheEnabled` is off. Scans of a repeated image are redundant
 and slower without it, which is much the cheaper mistake: the cache was saving
 work by discarding the result.
 
-!!! note "`logDevMode` is on, and is meant to come back off"
-    `operator.logDevMode: true` was set to read the operator's `V(1)` lines
-    while tracking this down. It also switches the operator from JSON to
-    console encoding and makes it considerably chattier, so it is a diagnostic
-    setting and not a resting state -- revert it once the reports are back.
+Turning the cache off restored them. The operator began logging `Submitting a
+scan for the workload` for the Rook ReplicaSets, which it had not done once in
+the preceding day, and the reports followed.
+
+!!! tip "Reports return in batches of ten, not continuously"
+    A completed scan job still counts against `concurrentScanJobsLimit` until
+    `scanJobTTL` deletes it, so the operator logs `Pushing back scan job` and
+    waits. With the values here that is ten workloads per ten minutes, while
+    the scans themselves finish in seconds. A backlog draining in visible steps
+    is the expected shape, not a stall.
+
+`logDevMode` was on while this was tracked down and is off again. It reads the
+operator's `V(1)` lines, which is the only way to see a decision it makes
+silently, but it also switches the operator from JSON to console encoding and
+makes it considerably chattier -- a diagnostic setting, not a resting state.
 
 Tracked upstream in
 [trivy-operator#1668](https://github.com/aquasecurity/trivy-operator/issues/1668).
