@@ -43,7 +43,6 @@ spec:
             # their CVE data. Redundant scans are the cheaper mistake. See
             # docs/trivy-operator.md.
             clusterSbomCacheEnabled: false
-            cacheReportTTL: "120h"
 
             # Reports are rebuilt from the cluster, so a stale one is worse
             # than a missing one. This also bounds what etcd has to hold:

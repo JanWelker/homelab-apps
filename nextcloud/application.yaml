@@ -11,7 +11,7 @@ spec:
   project: apps
   sources:
     # The Nextcloud organisation's own chart, from the repository Nextcloud
-    # publishes. Not a repackager's. See CONVENTIONS.md.
+    # publishes. Not a repackager's. See docs/conventions.md.
     - repoURL: https://nextcloud.github.io/helm/
       chart: nextcloud
       targetRevision: 9.3.0

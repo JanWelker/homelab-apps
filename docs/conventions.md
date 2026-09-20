@@ -40,10 +40,11 @@ workload has no business reaching.
 The vendor's own Helm chart, or the vendor's own container image. Not a
 repackager's chart, however much more convenient it is.
 
-The two applications here are the two shapes this takes:
+There are two shapes this takes, and every application here is one of them:
 
 - **Nextcloud** publishes its own chart, at `https://nextcloud.github.io/helm/`
-  from the Nextcloud organisation. Use it.
+  from the Nextcloud organisation. Use it. **Trivy Operator** is the same
+  shape: Aqua Security's chart, from Aqua's own repository.
 - **Home Assistant** publishes no chart at all. The popular community charts
   are third-party repackagers, so this is plain manifests around the official
   `ghcr.io/home-assistant/home-assistant` image instead. Writing a Deployment
@@ -189,7 +190,7 @@ The platform handles all of this; adding your own is the usual mistake:
 
 ## Behind the Gateway
 
-Both applications here needed proxy configuration, and it is the single most
+Both user-facing applications here needed proxy configuration, and it is the single most
 common thing to get wrong. Traffic arrives from Cilium's Envoy inside the pod
 CIDR (`10.244.0.0/16`), not from the client, and TLS is terminated at the
 Gateway — so an application that trusts `REMOTE_ADDR` sees the proxy, and one
