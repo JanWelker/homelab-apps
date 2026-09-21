@@ -236,6 +236,17 @@ spec:
               runAsNonRoot: true
               seccompProfile:
                 type: RuntimeDefault
+            # A static Go binary configured by flags and environment; it
+            # writes nothing, so a read-only root costs it nothing.
+            securityContext:
+              runAsUser: 1000
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              readOnlyRootFilesystem: true
+              capabilities:
+                drop: ["ALL"]
+              seccompProfile:
+                type: RuntimeDefault
 
           prometheus:
             # Note the key: the chart's ServiceMonitor reads `prometheus.`,

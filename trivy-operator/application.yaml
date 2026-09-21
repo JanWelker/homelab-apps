@@ -137,6 +137,13 @@ spec:
                 input.Severity != "HIGH"
                 input.Severity != "CRITICAL"
               }
+
+              # The Azurite development key shipped in every copy of
+              # azure-storage-common, matched by the secret scanner as a real
+              # Azure account key. It is public, and it is not ours.
+              ignore {
+                input.RuleID == "azure-storage-account-key"
+              }
             ignorePolicy.authentik: |
               package trivy
 
