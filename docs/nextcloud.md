@@ -37,7 +37,7 @@ The values in `nextcloud/application.yaml` that are not self-explanatory:
 | `prometheus.serviceMonitor`, not `metrics.serviceMonitor` | The chart's values file documents the latter; the template reads the former. The wrong key renders nothing, silently. `metrics.enabled` does control the exporter |
 | `nextcloud.openmetrics.allowedClients` | The default is k3s's CIDRs, which reject Prometheus while the ServiceMonitor looks healthy |
 | `nextcloud.existingSecret` | Without it the chart writes `admin` / `changeme` into its own Secret and points the install and the exporter at it. Nothing fails at sync time; check the block is present on every values change |
-| `allow_local_remote_servers`, set by the startup hook | `auth.k8s.wlkr.ch` resolves to the Gateway's private address and Nextcloud's SSRF guard rejects it (`violates local access rules`) while `curl` from the same container works. Lifting it applies to every outbound request; the compensating controls are the network policy and that federation and external storage are off. Pointing at the in-cluster Service instead would break the `iss` check |
+| `allow_local_remote_servers`, set by the startup hook | `auth.k8s.wlkr.ch` resolves to the Gateway's private address and Nextcloud's SSRF guard rejects it (`violates local access rules`) while `curl` from the same container works. Lifting it applies to every outbound request; the compensating controls are the egress half of `networkpolicy.yaml`, which names the only hosts the web pod may reach, and that federation and external storage are off. Pointing at the in-cluster Service instead would break the `iss` check |
 
 The database wiring, the same for every application here:
 

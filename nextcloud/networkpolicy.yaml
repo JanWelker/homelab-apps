@@ -13,10 +13,12 @@ metadata:
     argocd.argoproj.io/sync-wave: "-2"
 spec:
   description: >-
-    Default-deny ingress for Nextcloud. The UI arrives through the Gateway, the
-    web pod and the cron job reach Postgres inside the namespace, the
-    CloudNativePG operator polls that database's status endpoint, Prometheus
-    scrapes the metrics exporter, and the node runs the health probes.
+    Default-deny ingress for Nextcloud. The UI arrives through the Gateway,
+    the web pod, its cron sidecar and the metrics exporter reach Postgres
+    and each other inside the namespace, the CloudNativePG operator polls
+    that database's status endpoint, Prometheus scrapes the exporter, the
+    database and Nextcloud's own metrics page, and the node runs the health
+    probes.
   endpointSelector: {}
   ingress:
     - fromEndpoints:
@@ -24,10 +26,27 @@ spec:
     - fromEntities:
         - host
         - remote-node
+    - fromEntities:
         - ingress
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: monitoring
+            k8s:app.kubernetes.io/name: prometheus
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+            - port: "9205"
+              protocol: TCP
+            - port: "9187"
+              protocol: TCP
+          rules:
+            http:
+              - {}
     # CloudNativePG's operator polls each instance's status endpoint from
     # cnpg-system. Without it the Cluster is stuck reporting "Instance Status
     # Extraction Error", which ArgoCD waits on forever -- see the docs page.
@@ -38,3 +57,78 @@ spec:
         - ports:
             - port: "8000"
               protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-egress
+  namespace: nextcloud
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    Default-deny egress for Nextcloud. Postgres and the exporter's scrape of
+    the web pod stay inside the namespace. What leaves the cluster is per
+    workload below; the exporter and the database have nothing to say
+    outside.
+  endpointSelector: {}
+  egress:
+    - toEndpoints:
+        - {}
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: ANY
+          rules:
+            dns:
+              - matchPattern: "*"
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: nextcloud
+  namespace: nextcloud
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    The web pod and its cron sidecar log users in at Authentik through the
+    public name, which resolves to the apps Gateway's own address and is
+    world to Cilium, and call the Nextcloud project's hosts for the app
+    store, update notifications and the announcement feed. This is the
+    control allow_local_remote_servers gives up: the SSRF guard is off, the
+    policy is what says where a request may go.
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: nextcloud
+      app.kubernetes.io/component: app
+  egress:
+    - toFQDNs:
+        - matchName: auth.k8s.wlkr.ch
+        - matchPattern: "*.nextcloud.com"
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: database
+  namespace: nextcloud
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    The CloudNativePG instance manager reports its status to the API
+    server; its liveness check fails without it.
+  endpointSelector:
+    matchLabels:
+      cnpg.io/podRole: instance
+  egress:
+    - toEntities:
+        - kube-apiserver
