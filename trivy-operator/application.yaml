@@ -85,6 +85,14 @@ spec:
           serviceMonitor:
             enabled: true
 
+          # Pod-level, for the operator itself. The image runs as uid 10000
+          # and the chart's container context drops the rest; the pod-level
+          # field is the one the config audit keys on (KSV-0118).
+          podSecurityContext:
+            runAsNonRoot: true
+            seccompProfile:
+              type: RuntimeDefault
+
           trivyOperator:
             # Scan jobs may land on a control-plane node like anything else.
             scanJobTolerations:
