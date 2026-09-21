@@ -25,6 +25,11 @@ spec:
 
           operator:
             replicas: 1
+            # A superseded ReplicaSet keeps its ConfigAuditReport until the
+            # ReplicaSet itself is garbage-collected (trivy-operator#3069),
+            # and this Deployment rolls on every values change. One old
+            # revision is enough to roll back to.
+            revisionHistoryLimit: 1
 
             # All six scanners. Between them they cover what kube-bench,
             # kubesec and a CVE scanner would each do separately.
