@@ -84,7 +84,10 @@ Annotate it `Prune=false`: pruning a `Namespace` deletes every PVC inside it.
 
 Not a plain `NetworkPolicy`, which blocks the kubelet's health probes. Every
 policy needs `fromEntities: [host, remote-node]` for those probes and
-`ingress` for Gateway traffic.
+`ingress` for Gateway traffic, and an egress half: the namespace, DNS through
+the proxy, and every outside name as `toFQDNs`. The template and the reasons
+are in the platform's
+[Adding a Workload](https://homelab.wlkr.ch/development/add-workload/#the-network-policy).
 
 Put it at sync wave `-2`, with the namespace:
 
