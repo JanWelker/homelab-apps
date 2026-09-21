@@ -376,6 +376,36 @@ that the metric was derived from. `kubectl` is the right tool for that question.
     is still in the report object either way. The `status` label on both
     compliance metrics is title-cased — `Fail` and `Pass`, not `FAIL`.
 
+### What the dashboard counts
+
+The raw series is one row per container per workload revision. Summed as it
+comes, it measures how many places a finding is deployed, not how many
+findings there are, and it does not go down when a fix lands. Measured on
+2026-09-21, after a weekend of merged fixes:
+
+| Critical | count |
+| --- | ---: |
+| `sum(trivy_image_vulnerabilities{severity="Critical"})` | 75 |
+| of which on ReplicaSets that no longer had pods | 21 |
+| once per image, on workloads with pods | 22 |
+
+Three things inflate the plain sum. An image in two containers of one pod
+counts twice, and again for every workload that runs it: Home Assistant's six
+criticals were 24 on the dashboard. A superseded ReplicaSet keeps its
+`VulnerabilityReport` for the 24h TTL and its `ConfigAuditReport` until the
+ReplicaSet is garbage-collected, so every rollout adds the old revision to the
+total alongside the new one. And coverage moving up moves the number up: the
+first successful Nextcloud and Authentik scans added 16 criticals that had
+been there all along.
+
+The stat panels and the by-severity and by-namespace panels therefore take
+`max by (image_digest)` before summing, and every panel keyed on a workload
+joins ReplicaSets against `kube_replicaset_spec_replicas > 0` so that a
+revision drops out once it has no pods. The "Worst workloads" table stays per
+container on purpose; it answers where a finding runs, and the description
+says so. Compare the totals against `kubectl get vulnerabilityreports -A`
+with the same two rules and they reconcile.
+
 ## On the control plane too
 
 Both `nodeCollector.tolerations` and `trivyOperator.scanJobTolerations` carry

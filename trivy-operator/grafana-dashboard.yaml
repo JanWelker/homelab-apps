@@ -55,7 +55,7 @@ data:
           "id": 2,
           "type": "stat",
           "title": "Critical vulnerabilities",
-          "description": "Distinct vulnerability findings across all scanned container images. One CVE affecting three images counts three times.",
+          "description": "Vulnerabilities in the images that are running. Counted once per image, however many containers or workloads run it, and only on ReplicaSets that still have pods. One CVE in three different images counts three times.",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -73,7 +73,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum(trivy_image_vulnerabilities{severity=\"Critical\", namespace=~\"$namespace\"})",
+              "expr": "sum(max by (image_digest) ((trivy_image_vulnerabilities{severity=\"Critical\", namespace=~\"$namespace\", resource_kind!=\"ReplicaSet\"} or (trivy_image_vulnerabilities{severity=\"Critical\", namespace=~\"$namespace\", resource_kind=\"ReplicaSet\"} and on (namespace, resource_name) label_replace(kube_replicaset_spec_replicas > 0, \"resource_name\", \"$1\", \"replicaset\", \"(.*)\")))))",
               "refId": "A",
               "format": "time_series",
               "instant": true,
@@ -129,7 +129,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum(trivy_image_vulnerabilities{severity=\"High\", namespace=~\"$namespace\"})",
+              "expr": "sum(max by (image_digest) ((trivy_image_vulnerabilities{severity=\"High\", namespace=~\"$namespace\", resource_kind!=\"ReplicaSet\"} or (trivy_image_vulnerabilities{severity=\"High\", namespace=~\"$namespace\", resource_kind=\"ReplicaSet\"} and on (namespace, resource_name) label_replace(kube_replicaset_spec_replicas > 0, \"resource_name\", \"$1\", \"replicaset\", \"(.*)\")))))",
               "refId": "A",
               "format": "time_series",
               "instant": true,
@@ -185,7 +185,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum(trivy_image_exposedsecrets{severity=~\"Critical|High\", namespace=~\"$namespace\"})",
+              "expr": "sum(max by (image_digest) ((trivy_image_exposedsecrets{severity=~\"Critical|High\", namespace=~\"$namespace\", resource_kind!=\"ReplicaSet\"} or (trivy_image_exposedsecrets{severity=~\"Critical|High\", namespace=~\"$namespace\", resource_kind=\"ReplicaSet\"} and on (namespace, resource_name) label_replace(kube_replicaset_spec_replicas > 0, \"resource_name\", \"$1\", \"replicaset\", \"(.*)\")))))",
               "refId": "A",
               "format": "time_series",
               "instant": true,
@@ -223,7 +223,7 @@ data:
           "id": 5,
           "type": "stat",
           "title": "Failing config-audit checks",
-          "description": "Misconfigured workloads: missing resource limits, writable root filesystems, unset security contexts.",
+          "description": "Misconfigured workloads: missing resource limits, writable root filesystems, unset security contexts. ReplicaSets without pods are excluded; their reports outlive them.",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -241,7 +241,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum(trivy_resource_configaudits{severity=~\"Critical|High\", namespace=~\"$namespace\"})",
+              "expr": "sum((trivy_resource_configaudits{severity=~\"Critical|High\", namespace=~\"$namespace\", resource_kind!=\"ReplicaSet\"} or (trivy_resource_configaudits{severity=~\"Critical|High\", namespace=~\"$namespace\", resource_kind=\"ReplicaSet\"} and on (namespace, resource_name) label_replace(kube_replicaset_spec_replicas > 0, \"resource_name\", \"$1\", \"replicaset\", \"(.*)\"))))",
               "refId": "A",
               "format": "time_series",
               "instant": true,
@@ -720,7 +720,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum(trivy_image_vulnerabilities{severity=\"Critical\", namespace=~\"$namespace\"})",
+              "expr": "sum(max by (image_digest) ((trivy_image_vulnerabilities{severity=\"Critical\", namespace=~\"$namespace\", resource_kind!=\"ReplicaSet\"} or (trivy_image_vulnerabilities{severity=\"Critical\", namespace=~\"$namespace\", resource_kind=\"ReplicaSet\"} and on (namespace, resource_name) label_replace(kube_replicaset_spec_replicas > 0, \"resource_name\", \"$1\", \"replicaset\", \"(.*)\")))))",
               "refId": "A",
               "format": "time_series",
               "legendFormat": "Critical"
@@ -731,7 +731,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum(trivy_image_vulnerabilities{severity=\"High\", namespace=~\"$namespace\"})",
+              "expr": "sum(max by (image_digest) ((trivy_image_vulnerabilities{severity=\"High\", namespace=~\"$namespace\", resource_kind!=\"ReplicaSet\"} or (trivy_image_vulnerabilities{severity=\"High\", namespace=~\"$namespace\", resource_kind=\"ReplicaSet\"} and on (namespace, resource_name) label_replace(kube_replicaset_spec_replicas > 0, \"resource_name\", \"$1\", \"replicaset\", \"(.*)\")))))",
               "refId": "B",
               "format": "time_series",
               "legendFormat": "High"
@@ -742,7 +742,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum(trivy_image_vulnerabilities{severity=\"Medium\", namespace=~\"$namespace\"})",
+              "expr": "sum(max by (image_digest) ((trivy_image_vulnerabilities{severity=\"Medium\", namespace=~\"$namespace\", resource_kind!=\"ReplicaSet\"} or (trivy_image_vulnerabilities{severity=\"Medium\", namespace=~\"$namespace\", resource_kind=\"ReplicaSet\"} and on (namespace, resource_name) label_replace(kube_replicaset_spec_replicas > 0, \"resource_name\", \"$1\", \"replicaset\", \"(.*)\")))))",
               "refId": "C",
               "format": "time_series",
               "legendFormat": "Medium"
@@ -753,7 +753,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum(trivy_image_vulnerabilities{severity=\"Low\", namespace=~\"$namespace\"})",
+              "expr": "sum(max by (image_digest) ((trivy_image_vulnerabilities{severity=\"Low\", namespace=~\"$namespace\", resource_kind!=\"ReplicaSet\"} or (trivy_image_vulnerabilities{severity=\"Low\", namespace=~\"$namespace\", resource_kind=\"ReplicaSet\"} and on (namespace, resource_name) label_replace(kube_replicaset_spec_replicas > 0, \"resource_name\", \"$1\", \"replicaset\", \"(.*)\")))))",
               "refId": "D",
               "format": "time_series",
               "legendFormat": "Low"
@@ -764,7 +764,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum(trivy_image_vulnerabilities{severity=\"Unknown\", namespace=~\"$namespace\"})",
+              "expr": "sum(max by (image_digest) ((trivy_image_vulnerabilities{severity=\"Unknown\", namespace=~\"$namespace\", resource_kind!=\"ReplicaSet\"} or (trivy_image_vulnerabilities{severity=\"Unknown\", namespace=~\"$namespace\", resource_kind=\"ReplicaSet\"} and on (namespace, resource_name) label_replace(kube_replicaset_spec_replicas > 0, \"resource_name\", \"$1\", \"replicaset\", \"(.*)\")))))",
               "refId": "E",
               "format": "time_series",
               "legendFormat": "Unknown"
@@ -901,7 +901,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum by (namespace) (trivy_image_vulnerabilities{severity=~\"Critical|High\", namespace=~\"$namespace\"}) > 0",
+              "expr": "sum by (namespace) (max by (namespace, image_digest, severity) ((trivy_image_vulnerabilities{severity=~\"Critical|High\", namespace=~\"$namespace\", resource_kind!=\"ReplicaSet\"} or (trivy_image_vulnerabilities{severity=~\"Critical|High\", namespace=~\"$namespace\", resource_kind=\"ReplicaSet\"} and on (namespace, resource_name) label_replace(kube_replicaset_spec_replicas > 0, \"resource_name\", \"$1\", \"replicaset\", \"(.*)\"))))) > 0",
               "refId": "A",
               "format": "time_series",
               "legendFormat": "{{namespace}}"
@@ -944,7 +944,7 @@ data:
           "id": 15,
           "type": "table",
           "title": "Worst workloads",
-          "description": "Every scanned workload by severity. Filter the Severity column to Critical to get the list worth acting on.",
+          "description": "Every running workload by severity; a superseded ReplicaSet drops out once it has no pods. Counts are per container here, so an image in two containers shows twice. Filter the Severity column to Critical to get the list worth acting on.",
           "datasource": {
             "type": "prometheus",
             "uid": "${datasource}"
@@ -962,7 +962,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum by (namespace, resource_kind, resource_name, severity) (trivy_image_vulnerabilities{namespace=~\"$namespace\"}) > 0",
+              "expr": "sum by (namespace, resource_kind, resource_name, severity) ((trivy_image_vulnerabilities{namespace=~\"$namespace\", resource_kind!=\"ReplicaSet\"} or (trivy_image_vulnerabilities{namespace=~\"$namespace\", resource_kind=\"ReplicaSet\"} and on (namespace, resource_name) label_replace(kube_replicaset_spec_replicas > 0, \"resource_name\", \"$1\", \"replicaset\", \"(.*)\")))) > 0",
               "refId": "A",
               "format": "table",
               "instant": true,
@@ -1158,7 +1158,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "trivy_configaudits_info{severity=~\"Critical|High\", namespace=~\"$namespace\"}",
+              "expr": "(trivy_configaudits_info{severity=~\"Critical|High\", namespace=~\"$namespace\", resource_kind!=\"ReplicaSet\"} or (trivy_configaudits_info{severity=~\"Critical|High\", namespace=~\"$namespace\", resource_kind=\"ReplicaSet\"} and on (namespace, resource_name) label_replace(kube_replicaset_spec_replicas > 0, \"resource_name\", \"$1\", \"replicaset\", \"(.*)\")))",
               "refId": "A",
               "format": "table",
               "instant": true,
@@ -1482,7 +1482,7 @@ data:
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "trivy_exposedsecrets_info{namespace=~\"$namespace\"}",
+              "expr": "(trivy_exposedsecrets_info{namespace=~\"$namespace\", resource_kind!=\"ReplicaSet\"} or (trivy_exposedsecrets_info{namespace=~\"$namespace\", resource_kind=\"ReplicaSet\"} and on (namespace, resource_name) label_replace(kube_replicaset_spec_replicas > 0, \"resource_name\", \"$1\", \"replicaset\", \"(.*)\")))",
               "refId": "A",
               "format": "table",
               "instant": true,
