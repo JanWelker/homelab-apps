@@ -147,6 +147,40 @@ kubectl get vulnerabilityreports -A -o json \
   | jq -r '.items[].report.artifact.repository' | sort -u | wc -l
 ```
 
+### Nextcloud is too large even without them
+
+Dropping the two fields was not enough for the biggest image. Once the
+[Job deadline](#the-job-deadline-not-the-trivy-timeout-is-what-ends-a-scan)
+let a Nextcloud scan finish, the operator logged
+`etcdserver: request is too large` on every retry and no report appeared.
+Measured from the scan output:
+
+| Nextcloud 34, `-apache` | findings | with a fix |
+| --- | ---: | ---: |
+| all severities | 2887 | 1 |
+| Debian packages | 2886 | 0 |
+| HIGH and CRITICAL | 240 | 0 |
+
+That is one image on Debian 13.7 with no fix published for anything, and a
+report of it is 1.7 MB of "no fix" against a 1.5 MiB etcd request limit.
+Authentik's image is the same shape.
+
+`ignoreUnfixed` stays off cluster-wide; the reasoning
+[above](#unfixed-vulnerabilities-stay-in-the-report) holds. Instead the two
+namespaces get a Trivy ignore policy, `trivy.ignorePolicy.nextcloud` and
+`trivy.ignorePolicy.authentik`, which drops a finding only when it has no fix
+*and* is below HIGH. Everything with a fix and every HIGH or CRITICAL stays,
+which is what the base-image argument needs. It is Rego, evaluated by Trivy as
+Rego v0, so `ignore { ... }` rather than `ignore if { ... }`, and
+`FixedVersion` is absent rather than empty when there is no fix, hence
+`object.get`. Run against the captured Nextcloud output with
+`trivy convert --ignore-policy`, the policy keeps 241 findings: every HIGH and
+CRITICAL plus the single fixable one.
+
+The policy also applies to the Postgres pods in those two namespaces, which
+are Debian images with the same profile; their reports lose unfixed MEDIUM and
+LOW findings and nothing else.
+
 ## Alerting on the gap
 
 Doing that by hand only finds what you thought to look for. `prometheusrule.yaml`
