@@ -561,6 +561,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="A report too large to store is a report that never appears">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nextcloud-is-too-large-even-without-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Nextcloud is too large even without them
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -773,6 +790,23 @@
       </span>
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="A report too large to store is a report that never appears">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#nextcloud-is-too-large-even-without-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Nextcloud is too large even without them
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1108,6 +1142,55 @@ proven otherwise:</p>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>kubectl<span class="w"> </span>get<span class="w"> </span>vulnerabilityreports<span class="w"> </span>-A<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="se">\</span>
 </span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.items[].report.artifact.repository'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>sort<span class="w"> </span>-u<span class="w"> </span><span class="p">|</span><span class="w"> </span>wc<span class="w"> </span>-l
 </span></code></pre></div>
+<h3 id="nextcloud-is-too-large-even-without-them">Nextcloud is too large even without them<a class="headerlink" href="#nextcloud-is-too-large-even-without-them" title="Permanent link">&para;</a></h3>
+<p>Dropping the two fields was not enough for the biggest image. Once the
+<a href="#the-job-deadline-not-the-trivy-timeout-is-what-ends-a-scan">Job deadline</a>
+let a Nextcloud scan finish, the operator logged
+<code>etcdserver: request is too large</code> on every retry and no report appeared.
+Measured from the scan output:</p>
+<table>
+<thead>
+<tr>
+<th>Nextcloud 34, <code>-apache</code></th>
+<th style="text-align: right;">findings</th>
+<th style="text-align: right;">with a fix</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>all severities</td>
+<td style="text-align: right;">2887</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>Debian packages</td>
+<td style="text-align: right;">2886</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>HIGH and CRITICAL</td>
+<td style="text-align: right;">240</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+<p>That is one image on Debian 13.7 with no fix published for anything, and a
+report of it is 1.7 MB of "no fix" against a 1.5 MiB etcd request limit.
+Authentik's image is the same shape.</p>
+<p><code>ignoreUnfixed</code> stays off cluster-wide; the reasoning
+<a href="#unfixed-vulnerabilities-stay-in-the-report">above</a> holds. Instead the two
+namespaces get a Trivy ignore policy, <code>trivy.ignorePolicy.nextcloud</code> and
+<code>trivy.ignorePolicy.authentik</code>, which drops a finding only when it has no fix
+<em>and</em> is below HIGH. Everything with a fix and every HIGH or CRITICAL stays,
+which is what the base-image argument needs. It is Rego, evaluated by Trivy as
+Rego v0, so <code>ignore { ... }</code> rather than <code>ignore if { ... }</code>, and
+<code>FixedVersion</code> is absent rather than empty when there is no fix, hence
+<code>object.get</code>. Run against the captured Nextcloud output with
+<code>trivy convert --ignore-policy</code>, the policy keeps 241 findings: every HIGH and
+CRITICAL plus the single fixable one.</p>
+<p>The policy also applies to the Postgres pods in those two namespaces, which
+are Debian images with the same profile; their reports lose unfixed MEDIUM and
+LOW findings and nothing else.</p>
 <h2 id="alerting-on-the-gap">Alerting on the gap<a class="headerlink" href="#alerting-on-the-gap" title="Permanent link">&para;</a></h2>
 <p>Doing that by hand only finds what you thought to look for. <code>prometheusrule.yaml</code>
 makes it continuous: <code>TrivyContainerNotScanned</code> compares every running container
