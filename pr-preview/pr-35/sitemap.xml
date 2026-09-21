@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
       <url>
-        <loc>https://janwelker.github.io/homelab-apps/</loc>
+        <loc>https://homelab-apps.wlkr.ch/</loc>
       </url>
       <url>
-        <loc>https://janwelker.github.io/homelab-apps/conventions/</loc>
+        <loc>https://homelab-apps.wlkr.ch/conventions/</loc>
       </url>
       <url>
-        <loc>https://janwelker.github.io/homelab-apps/home-assistant/</loc>
+        <loc>https://homelab-apps.wlkr.ch/home-assistant/</loc>
       </url>
       <url>
-        <loc>https://janwelker.github.io/homelab-apps/nextcloud/</loc>
+        <loc>https://homelab-apps.wlkr.ch/nextcloud/</loc>
       </url>
       <url>
-        <loc>https://janwelker.github.io/homelab-apps/trivy-operator/</loc>
+        <loc>https://homelab-apps.wlkr.ch/trivy-operator/</loc>
       </url>
 </urlset>
