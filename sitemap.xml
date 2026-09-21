@@ -12,7 +12,4 @@
       <url>
         <loc>https://homelab-apps.wlkr.ch/nextcloud/</loc>
       </url>
-      <url>
-        <loc>https://homelab-apps.wlkr.ch/trivy-operator/</loc>
-      </url>
 </urlset>

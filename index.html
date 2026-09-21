@@ -262,22 +262,6 @@
   
 
       
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="./trivy-operator/" class="md-tabs__link">
-        
-  
-  Trivy Operator
-
-      </a>
-    </li>
-  
-
-      
     </ul>
   </div>
 </nav>
@@ -534,32 +518,6 @@
   
 
     
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="./trivy-operator/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Trivy Operator
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
   </ul>
 </nav>
                   </div>
@@ -719,18 +677,8 @@ runs on top.</p>
 <td>CloudNativePG</td>
 <td>Authentik OIDC</td>
 </tr>
-<tr>
-<td><a href="trivy-operator/">Trivy Operator</a></td>
-<td>—</td>
-<td>5Gi for the vulnerability database</td>
-<td>None — findings are CRDs</td>
-<td>None; it has no interface</td>
-</tr>
 </tbody>
 </table>
-<p>Trivy Operator has no UI and nothing to log into. It lives here rather than in
-the platform repository because it is a workload <em>on</em> the cluster: nothing the
-platform brings up depends on it.</p>
 <h2 id="how-a-directory-becomes-an-application">How a directory becomes an application<a class="headerlink" href="#how-a-directory-becomes-an-application" title="Permanent link">&para;</a></h2>
 <p>The <code>apps</code> ApplicationSet in the platform repository watches this one and
 generates an ArgoCD Application from every <code>*/application.yaml</code> it finds.

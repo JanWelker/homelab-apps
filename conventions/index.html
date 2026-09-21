@@ -264,22 +264,6 @@
   
 
       
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="../trivy-operator/" class="md-tabs__link">
-        
-  
-  Trivy Operator
-
-      </a>
-    </li>
-  
-
-      
     </ul>
   </div>
 </nav>
@@ -608,32 +592,6 @@
   
 
     
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../trivy-operator/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Trivy Operator
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
   </ul>
 </nav>
                   </div>
@@ -855,8 +813,8 @@ why every Application excludes it from its own source:</p>
 workload has no business reaching.</p>
 <h3 id="2-official-upstream-sources-only">2. Official upstream sources only<a class="headerlink" href="#2-official-upstream-sources-only" title="Permanent link">&para;</a></h3>
 <p>The vendor's own Helm chart, or the vendor's own container image, never a
-repackager's. Nextcloud and Trivy Operator publish their own charts; Home
-Assistant publishes none, so it is plain manifests around the official
+repackager's. Nextcloud publishes its own chart; Home Assistant publishes
+none, so it is plain manifests around the official
 <code>ghcr.io/home-assistant/home-assistant</code> image.</p>
 <p>Pin every version. No <code>latest</code>, no floating tags. Renovate moves them.</p>
 <div class="admonition warning">
