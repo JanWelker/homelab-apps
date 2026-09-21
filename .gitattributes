@@ -1,0 +1,4 @@
+# GitHub's language bar only counts what Linguist calls a language, and YAML is
+# typed as data. See https://homelab.wlkr.ch/development/maintenance/#language-statistics
+*.yaml linguist-detectable
+*.yml linguist-detectable
