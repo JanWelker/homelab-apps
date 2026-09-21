@@ -51,9 +51,10 @@ spec:
             # list, and the chart's default is k3s's CIDRs (10.42/16 and
             # 10.43/16). The ServiceMonitor scrapes that endpoint on the app
             # Service as well as the exporter, so without ours Prometheus is
-            # turned away with a 403 while the target still reports as up.
-            # Pod and service CIDRs from ansible/inventory.yaml in the homelab
-            # repository.
+            # turned away with a 403 and the target stays down. Setting this
+            # only renders the environment variable; the hook below is what
+            # applies it. Pod and service CIDRs from ansible/inventory.yaml in
+            # the homelab repository.
             openmetrics:
               allowedClients:
                 - "127.0.0.1"
@@ -105,6 +106,26 @@ spec:
                 #!/bin/sh
                 set -eu
                 php occ app:install user_oidc || php occ app:enable user_oidc
+
+                # The chart renders openmetrics.allowedClients into
+                # OPENMETRICS_ALLOWED_CLIENTS, but only mounts the config file
+                # that reads it -- helm-metrics.config.php, which the image
+                # does not ship -- when nextcloud.configs is non-empty. So the
+                # value never reaches Nextcloud and Prometheus gets a 403 from
+                # /metrics. Applying it here needs no such trigger, and leaves
+                # the image's own config files in place.
+                # https://github.com/nextcloud/helm/issues/887
+                #
+                # Deleted first because config:system:set addresses array
+                # elements by index and never shortens one, so a trimmed list
+                # would otherwise leave stale entries behind.
+                php occ config:system:delete openmetrics_allowed_clients
+                i=0
+                for cidr in $(echo "${OPENMETRICS_ALLOWED_CLIENTS:-}" | tr ',' ' '); do
+                  php occ config:system:set openmetrics_allowed_clients "$i" \
+                    --value="$cidr"
+                  i=$((i + 1))
+                done
 
                 # Not fatal, deliberately. Authentik discovers the provider
                 # blueprint asynchronously -- on its worker's startup, hourly,
