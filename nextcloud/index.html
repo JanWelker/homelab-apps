@@ -883,8 +883,8 @@ asynchronous, so on a first deploy the provider may not exist yet. The login
 form stays visible, the pod logs a warning, and the next restart configures it.</p>
 <p>The provider itself is <code>nextcloud/authentik-blueprint.yaml</code>, a ConfigMap
 targeted at the <code>authentik</code> namespace, so provider and client change in one
-commit. The platform mounts it as an optional projected volume, because this
-arrives four stages after Authentik must be Healthy. The client credentials
+commit. The platform mounts it as an optional projected volume, because a fresh
+cluster has Authentik before it has any workload. The client credentials
 stay in the platform repository (<code>make bao-secrets</code> generates them), so a
 workload cannot take itself out from behind SSO on its own.</p>
 <p>Use <code>auth.k8s.wlkr.ch</code>, never <code>auth.infra.k8s.wlkr.ch</code>: the <code>*.infra</code> zone

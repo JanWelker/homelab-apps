@@ -505,6 +505,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#8-the-shared-syncpolicy" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        8. The shared <code>syncPolicy</code>
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -732,6 +743,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#8-the-shared-syncpolicy" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        8. The shared <code>syncPolicy</code>
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -887,6 +909,12 @@ exception, because CloudNativePG generates them (rule 3).</p>
 <p>OIDC client credentials go in the application's own <code>kv/&lt;app&gt;/config</code>, never
 under <code>kv/authentik/config</code>: a <code>bao kv put</code> replaces a path wholesale, so
 sharing it would make adding an application an Authentik outage.</p>
+<h3 id="8-the-shared-syncpolicy">8. The shared <code>syncPolicy</code><a class="headerlink" href="#8-the-shared-syncpolicy" title="Permanent link">&para;</a></h3>
+<p><code>automated</code> with <code>prune</code> and <code>selfHeal</code>, plus <code>retry</code> with a limit of 10 and
+a 30s backoff up to 5m, copied from any sibling. ArgoCD never re-attempts a
+failed sync of the same revision without <code>retry</code>, and a workload that lands a
+minute before the platform resource it names would otherwise stay failed
+until someone ran <code>argocd app sync</code>.</p>
 <h2 id="what-you-do-not-have-to-write">What you do not have to write<a class="headerlink" href="#what-you-do-not-have-to-write" title="Permanent link">&para;</a></h2>
 <p>The platform handles all of this; adding your own is the usual mistake:</p>
 <table>

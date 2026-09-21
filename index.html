@@ -687,15 +687,14 @@ Pushing a directory deploys an application; there is no list to register it in.<
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  Application argocd
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    └── ApplicationSet platform
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>          └── Application workloads     ──▶  ApplicationSet apps
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                (stage 12-workloads)            └── one Application per directory
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                                                └── one Application per directory
 </span></code></pre></div>
-<p>The <code>apps</code> ApplicationSet is created in the platform's last rollout stage, so
-nothing here deploys until the whole platform beneath it is healthy. The
-platform references this repository exactly once, as a <code>repoURL</code>, and never
-reads what is in it.</p>
-<p>These Applications are not under the platform's <code>RollingSync</code> strategy, so they
-keep <code>selfHeal</code>: a hand-edited Deployment is reverted within minutes. Why the
-split exists is in
+<p>The platform references this repository exactly once, as a <code>repoURL</code>, and
+never reads what is in it. Nothing orders a workload after the platform it
+uses: each Application syncs as soon as it exists and retries until the
+Gateway, StorageClass or <code>ClusterSecretStore</code> it names is there — the
+<a href="conventions/#8-the-shared-syncpolicy">sync policy</a> is the same one every
+platform Application carries. Why the split exists is in
 <a href="https://homelab.wlkr.ch/architecture/gitops/#workloads-live-in-a-second-repository">GitOps Strategy</a>.</p>
 <h2 id="what-they-have-in-common">What they have in common<a class="headerlink" href="#what-they-have-in-common" title="Permanent link">&para;</a></h2>
 <p><a href="conventions/">Conventions</a> is the full list. The short version:</p>
