@@ -105,6 +105,7 @@ spec:
               protocol: TCP
     - toCIDR:
         - 224.0.0.0/4
+        - 255.255.255.255/32
       toPorts:
         - ports:
             - port: "5353"
