@@ -151,6 +151,19 @@ spec:
                 input.Severity != "CRITICAL"
               }
 
+            # The chart already runs the server as 65534 with a read-only
+            # root; this adds what it leaves out. Scan jobs get theirs from
+            # trivyOperator.scanJobPodTemplateContainerSecurityContext.
+            server:
+              securityContext:
+                privileged: false
+                readOnlyRootFilesystem: true
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop: ["ALL"]
+                seccompProfile:
+                  type: RuntimeDefault
+
             # Trades scan wall-clock for a smaller resident set.
             slow: true
             # Kept equal to operator.scanJobTimeout above.
