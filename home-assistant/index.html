@@ -761,8 +761,12 @@ Deployment, a Service, a PVC and a ConfigMap around the official image, per
 <td>The outpost authenticates and forwards to <code>home-assistant.home-assistant.svc:8123</code>. Home Assistant is the one proxied app with a login of its own, so browser users log in twice: defence in depth, not SSO</td>
 </tr>
 <tr>
-<td><code>CiliumNetworkPolicy</code> admits 8123 from the <code>authentik</code> namespace only</td>
+<td><code>CiliumNetworkPolicy</code> admits 8123 from the Authentik server pods only</td>
 <td>No <code>fromEntities: ingress</code>, so a request straight from the Gateway cannot skip the outpost</td>
+</tr>
+<tr>
+<td>Egress is default-deny: the database, DNS, <code>*.home-assistant.io</code> and nothing else</td>
+<td>An integration that talks to a device or a cloud is a line in <code>networkpolicy.yaml</code> first; the discovery multicast is allowed only so it does not fill the drop log. Shape and rollout: <a href="https://homelab.wlkr.ch/platform/security-policies/#network-policies">Security Policies</a></td>
 </tr>
 <tr>
 <td>Policy admits <code>cnpg-system</code> to the database pod on 8000, at sync wave <code>-2</code></td>
@@ -791,7 +795,7 @@ CloudNativePG has produced the Secret.</p>
 <ul>
 <li><strong>No local device discovery.</strong> mDNS and SSDP need host networking, which
   needs a <code>privileged</code> namespace. Add devices by IP, or through an integration
-  that does not rely on broadcast.</li>
+  that does not rely on broadcast, and add the address to the egress policy.</li>
 <li><strong>No USB devices.</strong> A Zigbee or Z-Wave stick pins the pod to one machine.
   Use a network-attached coordinator instead.</li>
 <li><strong>The cluster is now a dependency of the lights.</strong> A Ceph rebalance that

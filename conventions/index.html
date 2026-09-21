@@ -871,7 +871,10 @@ visible.</p>
 <h3 id="5-ship-a-ciliumnetworkpolicy">5. Ship a <code>CiliumNetworkPolicy</code><a class="headerlink" href="#5-ship-a-ciliumnetworkpolicy" title="Permanent link">&para;</a></h3>
 <p>Not a plain <code>NetworkPolicy</code>, which blocks the kubelet's health probes. Every
 policy needs <code>fromEntities: [host, remote-node]</code> for those probes and
-<code>ingress</code> for Gateway traffic.</p>
+<code>ingress</code> for Gateway traffic, and an egress half: the namespace, DNS through
+the proxy, and every outside name as <code>toFQDNs</code>. The template and the reasons
+are in the platform's
+<a href="https://homelab.wlkr.ch/development/add-workload/#the-network-policy">Adding a Workload</a>.</p>
 <p>Put it at sync wave <code>-2</code>, with the namespace:</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="nt">argocd.argoproj.io/sync-wave</span><span class="p">:</span><span class="w"> </span><span class="s">"-2"</span>
