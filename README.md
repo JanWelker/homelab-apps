@@ -5,7 +5,7 @@ cluster](https://github.com/JanWelker/homelab) — one directory per application
 deployed by ArgoCD.
 
 Documentation for these applications is published at
-**[janwelker.github.io/homelab-apps](https://janwelker.github.io/homelab-apps/)**,
+**[homelab-apps.wlkr.ch](https://homelab-apps.wlkr.ch/)**,
 and built from `docs/` in this repository.
 
 This repository holds only the applications. The cluster they run on — Flatcar,
@@ -17,9 +17,9 @@ Kubeadm, Cilium, Rook-Ceph, ArgoCD and everything under them — is in
 
 | Application | URL | Auth | Manifests | Page |
 | --- | --- | --- | --- | --- |
-| Home Assistant | `home.k8s.wlkr.ch` | Authentik proxy | [`home-assistant/`](home-assistant/) | [docs](https://janwelker.github.io/homelab-apps/home-assistant/) |
-| Nextcloud | `cloud.k8s.wlkr.ch` | Authentik OIDC | [`nextcloud/`](nextcloud/) | [docs](https://janwelker.github.io/homelab-apps/nextcloud/) |
-| Trivy Operator | none, it has no UI | none | [`trivy-operator/`](trivy-operator/) | [docs](https://janwelker.github.io/homelab-apps/trivy-operator/) |
+| Home Assistant | `home.k8s.wlkr.ch` | Authentik proxy | [`home-assistant/`](home-assistant/) | [docs](https://homelab-apps.wlkr.ch/home-assistant/) |
+| Nextcloud | `cloud.k8s.wlkr.ch` | Authentik OIDC | [`nextcloud/`](nextcloud/) | [docs](https://homelab-apps.wlkr.ch/nextcloud/) |
+| Trivy Operator | none, it has no UI | none | [`trivy-operator/`](trivy-operator/) | [docs](https://homelab-apps.wlkr.ch/trivy-operator/) |
 
 ## How it works
 
@@ -27,7 +27,7 @@ The `apps` ApplicationSet in the homelab repository generates an ArgoCD
 Application from every `*/application.yaml` here, so pushing a directory
 deploys an application. These Applications keep `selfHeal`: a hand-edited
 resource is reverted within minutes. The flow is on the
-[documentation home page](https://janwelker.github.io/homelab-apps/).
+[documentation home page](https://homelab-apps.wlkr.ch/).
 
 ## Adding an application
 
