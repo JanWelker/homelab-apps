@@ -5,19 +5,17 @@ description: "The rules every application directory in this repository follows, 
 # Conventions
 
 Rules every directory in this repository follows. They are short because the
-platform does most of the work; the [Adding a
-Workload](https://janwelker.github.io/homelab/development/add-workload/) guide
-in the platform documentation is the long version.
+platform does most of the work; [Adding a
+Workload](https://homelab.wlkr.ch/development/add-workload/) in the platform
+documentation is the long version.
 
 ## Structure
 
 One directory per application, named after it, containing exactly one
 `application.yaml` — a complete ArgoCD `Application`, not a fragment. The `apps`
 ApplicationSet in the [homelab](https://github.com/JanWelker/homelab)
-repository generates one Application per `*/application.yaml` it finds here.
-
-Adding a directory adds an application. There is no list to register it in, and
-nothing in the homelab repository needs to change.
+repository generates one Application per `*/application.yaml` it finds here, so
+adding a directory adds an application.
 
 Everything beside `application.yaml` is what that Application deploys, which is
 why every Application excludes it from its own source:
@@ -32,43 +30,34 @@ why every Application excludes it from its own source:
 ### 1. `project: apps`
 
 The ApplicationSet fails the whole set rather than generate a workload in the
-`infra` or `system` project. Those are authorised against destinations a
+`infra` or `system` project, which are authorised against destinations a
 workload has no business reaching.
 
 ### 2. Official upstream sources only
 
-The vendor's own Helm chart, or the vendor's own container image. Not a
-repackager's chart, however much more convenient it is.
-
-There are two shapes this takes, and every application here is one of them:
-
-- **Nextcloud** publishes its own chart, at `https://nextcloud.github.io/helm/`
-  from the Nextcloud organisation. Use it. **Trivy Operator** is the same
-  shape: Aqua Security's chart, from Aqua's own repository.
-- **Home Assistant** publishes no chart at all. The popular community charts
-  are third-party repackagers, so this is plain manifests around the official
-  `ghcr.io/home-assistant/home-assistant` image instead. Writing a Deployment
-  is less work than auditing somebody else's chart on every bump.
+The vendor's own Helm chart, or the vendor's own container image, never a
+repackager's. Nextcloud and Trivy Operator publish their own charts; Home
+Assistant publishes none, so it is plain manifests around the official
+`ghcr.io/home-assistant/home-assistant` image.
 
 Pin every version. No `latest`, no floating tags. Renovate moves them.
 
-!!! warning "A custom manager for an image field needs `autoReplaceStringTemplate`"
-    `config:best-practices` pins container images to digests as well as tags, and a custom regex manager rewrites the string it matched and nothing else. For a pin the version does not change and there is no digest in the file to swap, so the replacement comes out byte-identical, the post-write check finds no digest where it demanded one, and Renovate fails with `Error updating branch: update failure` — which takes down the whole shared `renovate/pin-dependencies` branch rather than the one dependency. Version bumps keep working throughout, so the only visible symptom is the Repository Problems banner on the Dependency Dashboard. Capturing `currentDigest` does **not** fix this; that group only lets Renovate *update* a digest already written. Adding one needs `"autoReplaceStringTemplate": "imageName: {{{depName}}}{{#if newValue}}:{{{newValue}}}{{/if}}{{#if newDigest}}@{{{newDigest}}}{{/if}}"` — the same template the `docker` and `kubernetes` managers set on every dep they extract, with the matched `imageName:` prefix rebuilt because the match includes it. Keep the optional `(?:@(?<currentDigest>sha256:[a-f0-9]+))?` group as well, and keep `@` out of `currentValue`, so the digest is read back rather than swallowed on the next run. A field holding a bare tag rather than a full image reference has no room for a digest at all; those need `pinDigests: false` instead. Upstream: [renovate#24942](https://github.com/renovatebot/renovate/issues/24942).
+!!! warning "Renovate and image fields"
+    A custom regex manager for an image field needs `autoReplaceStringTemplate`, or digest pinning fails with `update failure` and takes the shared `renovate/pin-dependencies` branch down with it. A field holding a bare tag has no room for a digest and needs `pinDigests: false` instead. See [Manager rules](https://homelab.wlkr.ch/development/maintenance/#manager-rules) and [renovate#24942](https://github.com/renovatebot/renovate/issues/24942).
 
 ### 3. PostgreSQL is always a CloudNativePG `Cluster`
 
-Never the database a chart bundles — disable it (`internalDatabase.enabled:
+Never the database a chart bundles. Disable it (`internalDatabase.enabled:
 false`, `postgresql.enabled: false`) and point the chart at a `Cluster` in the
 same namespace through its external-database settings.
 
 The operator writes a `<cluster-name>-app` Secret with `username`, `password`,
 `host`, `port`, `dbname` and a ready-assembled `uri`. Consume those keys; never
-copy the value into Git, and never put it in OpenBao either — nothing outside
-the cluster needs it.
+copy the value into Git or OpenBao.
 
-Give the `Cluster` an earlier sync wave than the application in front of it.
-ArgoCD has a built-in health check for `postgresql.cnpg.io/Cluster`, so the
-wave genuinely waits for a working database rather than merely a created one:
+Give the `Cluster` an earlier sync wave than the application. ArgoCD has a
+health check for `postgresql.cnpg.io/Cluster`, so the wave waits for a working
+database, not merely a created one:
 
 ```yaml
   annotations:
@@ -76,26 +65,23 @@ wave genuinely waits for a working database rather than merely a created one:
 ```
 
 The reasoning is in [CloudNativePG &rarr; The
-contract](https://janwelker.github.io/homelab/platform/cloudnative-pg/#the-contract).
+contract](https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract).
 
 ### 4. Own your namespace
 
 Ship a `namespace.yaml` at sync wave `-2` carrying the three Pod Security
-Admission labels. A namespace nobody labelled runs at `privileged`, which
-enforces nothing — `CreateNamespace=true` alone leaves exactly that.
+Admission labels; `CreateNamespace=true` alone leaves an unlabelled namespace
+that runs at `privileged`. Set `enforce` to what the application needs and
+`audit`/`warn` stricter, so the violations a tighter level would catch stay
+visible.
 
-Set `enforce` to what the application demonstrably needs and `audit`/`warn`
-stricter, so the violations a tighter level would catch stay visible.
-
-Annotate it `Prune=false`. Pruning a `Namespace` deletes every PVC inside it,
-and a misplaced deletion in Git should not become permanent data loss three
-minutes later.
+Annotate it `Prune=false`: pruning a `Namespace` deletes every PVC inside it.
 
 ### 5. Ship a `CiliumNetworkPolicy`
 
-Not a plain `NetworkPolicy` — a plain one blocks the kubelet's health probes
-and the pods restart forever. Every policy here needs `fromEntities: [host,
-remote-node]` for those probes and `ingress` for Gateway traffic.
+Not a plain `NetworkPolicy`, which blocks the kubelet's health probes. Every
+policy needs `fromEntities: [host, remote-node]` for those probes and
+`ingress` for Gateway traffic.
 
 Put it at sync wave `-2`, with the namespace:
 
@@ -104,76 +90,46 @@ Put it at sync wave `-2`, with the namespace:
     argocd.argoproj.io/sync-wave: "-2"
 ```
 
-At the default wave it lands *after* the `Cluster` from rule 3, and a wave that
-waits on a resource cannot be unblocked by a policy a later wave has yet to
-apply. Leave the policy at `0` while it carries the rule the operator needs to
-reach Postgres and the sync deadlocks: wave `-1` waits forever for a `Cluster`
-whose fix is sitting in wave `0` behind it. [Nextcloud &rarr; The operator needs
-ingress to the instance](nextcloud.md#the-operator-needs-ingress-to-the-instance)
-has the whole failure.
-
-Wave `-2` is also the right answer on its own terms — it puts the policy in
-force before the first pod starts, instead of leaving a window where the
-workload runs unprotected.
+At the default wave it lands after the `Cluster` from rule 3, and a rule the
+`Cluster` needs in order to go Healthy can never unblock the wave it is stuck
+behind — see [Sync stuck on the database](nextcloud.md#sync-stuck-on-the-database).
 
 ### 6. Authentication is Authentik's, not the application's
 
-An application with its own user database is an application whose accounts
-nobody remembers to revoke. Which shape applies is decided by what the
-application supports, not by preference:
+Which shape applies is decided by what the application supports:
 
-- **It speaks OIDC** — configure it against Authentik, hide or disable the
-  local login form, and keep at most one local admin as break-glass. Nextcloud
-  is the worked example.
-- **It does not** — point its `HTTPRoute` at `authentik-server` in the
-  `authentik` namespace instead of at the application, so the outpost
-  authenticates in front of it. Home Assistant is the worked example, and also
-  the honest caveat: where the application has a login of its own, this is
-  defence in depth rather than single sign-on.
+- **It speaks OIDC.** Configure it against Authentik, hide the local login
+  form, and keep at most one local admin as break-glass. Nextcloud is the
+  worked example.
+- **It does not.** Point its `HTTPRoute` at `authentik-server` in the
+  `authentik` namespace, so the outpost authenticates in front of it. Home
+  Assistant is the worked example; where the application has its own login this
+  is defence in depth, not single sign-on.
 
-An OIDC provider's blueprint belongs **here**, in the application's own
-directory, as a ConfigMap targeted at the `authentik` namespace — see
-`nextcloud/authentik-blueprint.yaml`. The key must end in `.yaml` or Authentik
-never discovers it, and the platform needs one projected-volume source added
-for the mount.
+The OIDC provider's blueprint lives here, in the application's directory, as a
+ConfigMap targeted at the `authentik` namespace with a key ending in `.yaml`
+(see `nextcloud/authentik-blueprint.yaml`). The client credentials, the
+outpost's provider list and any `referencegrant.yaml` entry stay in the
+platform repository, so going behind SSO is deliberately two pull requests.
 
-What stays in the platform repository either way: the client credentials
-(`bao-secrets.sh`), the embedded outpost's provider list, and for a proxied
-application its `referencegrant.yaml` entry. A workload cannot mint its own
-client credentials, so going behind SSO is still deliberately two pull
-requests — a workload should not be able to take itself out from behind the
-authentication layer on its own.
-
-Because discovery is asynchronous, anything that configures itself *against* a
-provider has to tolerate the provider not existing yet. Fail soft and log it;
-do not make it the reason the pod will not start. And verify the provider
-actually answers before you disable a local login on the strength of it —
-registering a provider is not the same as reaching one.
-
-Watch for **SSRF guards**, too. `auth.k8s.wlkr.ch` resolves to the apps
-Gateway's private address, and applications that refuse to let their own HTTP
-client reach private IPs will fail discovery while `curl` from the same
-container succeeds. Nextcloud needs `allow_local_remote_servers`; assume the
-next one needs its own equivalent.
+Because blueprint discovery is asynchronous, anything that configures itself
+against the provider must tolerate it not existing yet: fail soft and log.
+Watch for SSRF guards, too: `auth.k8s.wlkr.ch` resolves to a private address,
+and Nextcloud needed `allow_local_remote_servers` before discovery worked.
 
 **Use `auth.k8s.wlkr.ch`**, never `auth.infra.k8s.wlkr.ch`. The `*.infra` zone
-resolves only on the local network, so a client reachable from outside it would
-send its users to an authorize endpoint that does not exist for them. Never mix
-the two in one client: the `iss` claim must match the issuer that was
-discovered.
+resolves only on the local network, and a client must never mix the two, or
+the `iss` claim fails against the discovered issuer.
 
 ### 7. Real secrets come from OpenBao
 
 An `ExternalSecret` reading `kv/<app>/config`, with the `bao kv put` command
-that seeds it written in a comment at the top of the file. Nothing sensitive is
-committed, and the next person rebuilding the cluster can see what needs to
-exist.
+that seeds it in a comment at the top of the file. Database passwords are the
+exception, because CloudNativePG generates them (rule 3).
 
-Database passwords are the exception, and only because CloudNativePG generates
-them — see rule 3. OIDC client credentials go in the application's own
-`kv/<app>/config`, never as extra keys under `kv/authentik/config`: that path
-is replaced wholesale on every write, so sharing it would make adding an
-application an Authentik outage.
+OIDC client credentials go in the application's own `kv/<app>/config`, never
+under `kv/authentik/config`: a `bao kv put` replaces a path wholesale, so
+sharing it would make adding an application an Authentik outage.
 
 ## What you do not have to write
 
@@ -190,12 +146,9 @@ The platform handles all of this; adding your own is the usual mistake:
 
 ## Behind the Gateway
 
-Both user-facing applications here needed proxy configuration, and it is the single most
-common thing to get wrong. Traffic arrives from Cilium's Envoy inside the pod
-CIDR (`10.244.0.0/16`), not from the client, and TLS is terminated at the
-Gateway — so an application that trusts `REMOTE_ADDR` sees the proxy, and one
-that builds absolute URLs from the request scheme builds `http://` links on an
-`https://` site.
-
-Look for a trusted-proxies setting and an "overwrite protocol" setting in
-whatever you are deploying. If the login redirect loops, this is why.
+Traffic arrives from Cilium's Envoy inside the pod CIDR (`10.244.0.0/16`), not
+from the client, and TLS is terminated at the Gateway. An application that
+trusts `REMOTE_ADDR` sees the proxy, and one that builds absolute URLs from the
+request scheme produces `http://` links on an `https://` site. Look for a
+trusted-proxies setting and an overwrite-protocol setting; if the login
+redirect loops, this is why.

@@ -11,7 +11,7 @@ and built from `docs/` in this repository.
 This repository holds only the applications. The cluster they run on — Flatcar,
 Kubeadm, Cilium, Rook-Ceph, ArgoCD and everything under them — is in
 [JanWelker/homelab](https://github.com/JanWelker/homelab), documented at
-[janwelker.github.io/homelab](https://janwelker.github.io/homelab/).
+[homelab.wlkr.ch](https://homelab.wlkr.ch/).
 
 ## Applications
 
@@ -23,34 +23,16 @@ Kubeadm, Cilium, Rook-Ceph, ArgoCD and everything under them — is in
 
 ## How it works
 
-The `apps` ApplicationSet in the homelab repository watches this one and
-generates an ArgoCD Application from every `*/application.yaml` it finds.
-Pushing a new directory deploys an application; there is no list to add it to
-and nothing in the other repository to change.
-
-```text
-homelab (platform)                    homelab-apps (this repository)
-  Application argocd
-    └── ApplicationSet platform
-          └── Application workloads     ──▶  ApplicationSet apps
-                (stage 12-workloads)            └── one Application per directory
-```
-
-The `apps` ApplicationSet is created in the platform's last rollout stage, so
-nothing here is deployed until the whole platform beneath it is healthy. The
-dependency runs one way: workloads use the platform, and the platform
-references this repository exactly once — a `repoURL` — and never reads what is
-in it.
-
-Because these Applications are not under the platform's `RollingSync` strategy,
-they keep `selfHeal`: a hand-edited Deployment here is reverted within minutes.
+The `apps` ApplicationSet in the homelab repository generates an ArgoCD
+Application from every `*/application.yaml` here, so pushing a directory
+deploys an application. These Applications keep `selfHeal`: a hand-edited
+resource is reverted within minutes. The flow is on the
+[documentation home page](https://janwelker.github.io/homelab-apps/).
 
 ## Adding an application
 
-Read [the conventions](docs/conventions.md) first — they are short, and they
-are the difference between an application that works and one that loops on its
-login redirect. The step-by-step version is [Adding a
-Workload](https://janwelker.github.io/homelab/development/add-workload/) in the
+Read [the conventions](docs/conventions.md) first. The step-by-step version is
+[Adding a Workload](https://homelab.wlkr.ch/development/add-workload/) in the
 platform documentation.
 
 A new application needs a page in `docs/`, registered in `zensical.toml`. The
