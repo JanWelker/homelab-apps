@@ -78,8 +78,8 @@ form stays visible, the pod logs a warning, and the next restart configures it.
 
 The provider itself is `nextcloud/authentik-blueprint.yaml`, a ConfigMap
 targeted at the `authentik` namespace, so provider and client change in one
-commit. The platform mounts it as an optional projected volume, because this
-arrives four stages after Authentik must be Healthy. The client credentials
+commit. The platform mounts it as an optional projected volume, because a fresh
+cluster has Authentik before it has any workload. The client credentials
 stay in the platform repository (`make bao-secrets` generates them), so a
 workload cannot take itself out from behind SSO on its own.
 

@@ -12,11 +12,14 @@ is no list to register it in and nothing in the other repository to change.
 - Each directory holds exactly one `application.yaml`, a complete Application,
   plus the manifests it deploys. The Application excludes `application.yaml`
   from its own source.
-- The set is created in the platform's last rollout stage, so nothing here
-  deploys until the platform is healthy. The platform never reads this
-  repository beyond its `repoURL`.
-- These Applications are **not** under `RollingSync`, so they keep `selfHeal`.
-  A hand-edited resource is reverted within minutes.
+- The platform never reads this repository beyond its `repoURL`. Nothing
+  orders a workload after the platform it references: the Application syncs
+  as soon as it exists and retries until the Gateway, StorageClass or
+  `ClusterSecretStore` it names is there.
+- Every `application.yaml` carries the same `syncPolicy`: `automated` with
+  `prune` and `selfHeal`, plus `retry` (limit 10, 30s backoff up to 5m).
+  ArgoCD never re-attempts a failed sync of the same revision without it. A
+  hand-edited resource is reverted within minutes.
 - Each version is pinned once, in `application.yaml`. Renovate moves it.
 
 The rules every directory follows are in `docs/conventions.md`. The ones that

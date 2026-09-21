@@ -24,8 +24,8 @@ Kubeadm, Cilium, Rook-Ceph, ArgoCD and everything under them — is in
 
 The `apps` ApplicationSet in the homelab repository generates an ArgoCD
 Application from every `*/application.yaml` here, so pushing a directory
-deploys an application. These Applications keep `selfHeal`: a hand-edited
-resource is reverted within minutes. The flow is on the
+deploys an application. Every Application syncs automatically, retries a
+failed sync and reverts a hand-edited resource within minutes. The flow is on the
 [documentation home page](https://homelab-apps.wlkr.ch/).
 
 ## Adding an application

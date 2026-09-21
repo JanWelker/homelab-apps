@@ -134,6 +134,14 @@ OIDC client credentials go in the application's own `kv/<app>/config`, never
 under `kv/authentik/config`: a `bao kv put` replaces a path wholesale, so
 sharing it would make adding an application an Authentik outage.
 
+### 8. The shared `syncPolicy`
+
+`automated` with `prune` and `selfHeal`, plus `retry` with a limit of 10 and
+a 30s backoff up to 5m, copied from any sibling. ArgoCD never re-attempts a
+failed sync of the same revision without `retry`, and a workload that lands a
+minute before the platform resource it names would otherwise stay failed
+until someone ran `argocd app sync`.
+
 ## What you do not have to write
 
 The platform handles all of this; adding your own is the usual mistake:
