@@ -36,7 +36,8 @@ Deployment, a Service, a PVC and a ConfigMap around the official image, per
 | `secrets.yaml` written by an init container on every start | Home Assistant has no `!env_var` tag, so the database URL reaches `configuration.yaml` through `!secret`, from CloudNativePG's Secret. Anything added to that file by hand is lost at the next restart; secrets belong in [OpenBao](https://homelab.wlkr.ch/platform/openbao/) |
 | `use_x_forwarded_for` with the pod CIDR in `trusted_proxies` | Requests arrive from Cilium's Envoy and the outpost. Without it every request has one source address, so the ban list and rate limiting count the household as one user |
 | `HTTPRoute` targets `authentik-server`, not the app | The outpost authenticates and forwards to `home-assistant.home-assistant.svc:8123`. Home Assistant is the one proxied app with a login of its own, so browser users log in twice: defence in depth, not SSO |
-| `CiliumNetworkPolicy` admits 8123 from the `authentik` namespace only | No `fromEntities: ingress`, so a request straight from the Gateway cannot skip the outpost |
+| `CiliumNetworkPolicy` admits 8123 from the Authentik server pods only | No `fromEntities: ingress`, so a request straight from the Gateway cannot skip the outpost |
+| Egress is default-deny: the database, DNS, `*.home-assistant.io` and nothing else | An integration that talks to a device or a cloud is a line in `networkpolicy.yaml` first; the discovery multicast is allowed only so it does not fill the drop log. Shape and rollout: [Security Policies](https://homelab.wlkr.ch/platform/security-policies/#network-policies) |
 | Policy admits `cnpg-system` to the database pod on 8000, at sync wave `-2` | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](nextcloud.md#sync-stuck-on-the-database) |
 
 ## Usage
@@ -68,7 +69,7 @@ CloudNativePG has produced the Secret.
 
 - **No local device discovery.** mDNS and SSDP need host networking, which
   needs a `privileged` namespace. Add devices by IP, or through an integration
-  that does not rely on broadcast.
+  that does not rely on broadcast, and add the address to the egress policy.
 - **No USB devices.** A Zigbee or Z-Wave stick pins the pod to one machine.
   Use a network-attached coordinator instead.
 - **The cluster is now a dependency of the lights.** A Ceph rebalance that

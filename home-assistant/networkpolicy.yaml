@@ -18,9 +18,10 @@ spec:
     outpost, which authenticates the request and only then connects here from
     the authentik namespace. The recorder reaches its database inside the
     namespace, the CloudNativePG operator polls that database's status
-    endpoint, and the node runs the health probes. Nothing else has a reason to
-    connect -- including the rest of the cluster, which is the point: this
-    namespace holds a long-lived token for every device in the house.
+    endpoint, Prometheus reads the database's metrics, and the node runs the
+    health probes. Nothing else has a reason to connect -- including the rest
+    of the cluster, which is the point: this namespace holds a long-lived
+    token for every device in the house.
   endpointSelector: {}
   ingress:
     - fromEndpoints:
@@ -34,13 +35,26 @@ spec:
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: authentik
+            k8s:app.kubernetes.io/name: authentik
+            k8s:app.kubernetes.io/component: server
       toPorts:
         - ports:
             - port: "8123"
               protocol: TCP
+          rules:
+            http:
+              - {}
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: monitoring
+            k8s:app.kubernetes.io/name: prometheus
+      toPorts:
+        - ports:
+            - port: "9187"
+              protocol: TCP
+          rules:
+            http:
+              - {}
     # CloudNativePG's operator polls each instance's status endpoint from
     # cnpg-system. Without it the Cluster is stuck reporting "Instance Status
     # Extraction Error", which ArgoCD waits on forever -- see the docs page.
@@ -51,3 +65,67 @@ spec:
         - ports:
             - port: "8000"
               protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-egress
+  namespace: home-assistant
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    Default-deny egress for Home Assistant. The recorder writes to its
+    database inside the namespace. Outside the cluster, Home Assistant
+    fetches its alerts feed and version data from the project's Cloudflare
+    hosts; no integration is configured that reaches anything else, and
+    every one added later needs its name here. The discovery sockets keep
+    sending multicast that the overlay carries nowhere; it is allowed so it
+    does not fill the drop log.
+  endpointSelector: {}
+  egress:
+    - toEndpoints:
+        - {}
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: ANY
+          rules:
+            dns:
+              - matchPattern: "*"
+    - toFQDNs:
+        - matchPattern: "*.home-assistant.io"
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    - toCIDR:
+        - 224.0.0.0/4
+      toPorts:
+        - ports:
+            - port: "5353"
+              protocol: UDP
+            - port: "1900"
+              protocol: UDP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: database
+  namespace: home-assistant
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    The CloudNativePG instance manager reports its status to the API
+    server; its liveness check fails without it.
+  endpointSelector:
+    matchLabels:
+      cnpg.io/podRole: instance
+  egress:
+    - toEntities:
+        - kube-apiserver
