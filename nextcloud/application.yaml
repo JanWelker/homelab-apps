@@ -24,6 +24,17 @@ spec:
           nextcloud:
             host: cloud.k8s.wlkr.ch
 
+            # Seccomp only. Apache starts as root and drops to www-data, so
+            # neither runAsNonRoot nor a read-only root applies without
+            # changing how the image runs. RuntimeDefault is Docker's default
+            # profile, the one the image is built to run under.
+            podSecurityContext:
+              seccompProfile:
+                type: RuntimeDefault
+            securityContext:
+              seccompProfile:
+                type: RuntimeDefault
+
             # The break-glass admin, from OpenBao through secrets.yaml. Without
             # this block the chart writes a Secret of its own holding the
             # values file's defaults -- admin / changeme -- and both the
@@ -211,11 +222,20 @@ spec:
             # ReadWriteOnce volume as the web pod, which only works while both
             # land on one node.
             enabled: true
+            sidecar:
+              securityContext:
+                seccompProfile:
+                  type: RuntimeDefault
 
           metrics:
             # The nextcloud-exporter sidecar deployment. It authenticates as
             # the admin account from the same Secret the app uses.
             enabled: true
+            # Pod-level; the chart's container context already runs it as 1000.
+            podSecurityContext:
+              runAsNonRoot: true
+              seccompProfile:
+                type: RuntimeDefault
 
           prometheus:
             # Note the key: the chart's ServiceMonitor reads `prometheus.`,
