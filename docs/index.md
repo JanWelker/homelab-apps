@@ -29,17 +29,15 @@ homelab (platform)                    homelab-apps (this repository)
   Application argocd
     └── ApplicationSet platform
           └── Application workloads     ──▶  ApplicationSet apps
-                (stage 12-workloads)            └── one Application per directory
+                                                └── one Application per directory
 ```
 
-The `apps` ApplicationSet is created in the platform's last rollout stage, so
-nothing here deploys until the whole platform beneath it is healthy. The
-platform references this repository exactly once, as a `repoURL`, and never
-reads what is in it.
-
-These Applications are not under the platform's `RollingSync` strategy, so they
-keep `selfHeal`: a hand-edited Deployment is reverted within minutes. Why the
-split exists is in
+The platform references this repository exactly once, as a `repoURL`, and
+never reads what is in it. Nothing orders a workload after the platform it
+uses: each Application syncs as soon as it exists and retries until the
+Gateway, StorageClass or `ClusterSecretStore` it names is there — the
+[sync policy](conventions.md#8-the-shared-syncpolicy) is the same one every
+platform Application carries. Why the split exists is in
 [GitOps Strategy](https://homelab.wlkr.ch/architecture/gitops/#workloads-live-in-a-second-repository).
 
 ## What they have in common
