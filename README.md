@@ -19,7 +19,6 @@ Kubeadm, Cilium, Rook-Ceph, ArgoCD and everything under them — is in
 | --- | --- | --- | --- | --- |
 | Home Assistant | `home.k8s.wlkr.ch` | Authentik proxy | [`home-assistant/`](home-assistant/) | [docs](https://homelab-apps.wlkr.ch/home-assistant/) |
 | Nextcloud | `cloud.k8s.wlkr.ch` | Authentik OIDC | [`nextcloud/`](nextcloud/) | [docs](https://homelab-apps.wlkr.ch/nextcloud/) |
-| Trivy Operator | none, it has no UI | none | [`trivy-operator/`](trivy-operator/) | [docs](https://homelab-apps.wlkr.ch/trivy-operator/) |
 
 ## How it works
 
