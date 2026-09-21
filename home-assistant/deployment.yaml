@@ -6,6 +6,9 @@ metadata:
   namespace: home-assistant
 spec:
   replicas: 1
+  # Superseded ReplicaSets keep their Trivy config-audit reports until they
+  # are garbage-collected; the Kubernetes default keeps ten.
+  revisionHistoryLimit: 2
   # Recreate, not RollingUpdate: one ReadWriteOnce volume, and two Home
   # Assistant processes against one /config corrupt the .storage registries.
   strategy:
