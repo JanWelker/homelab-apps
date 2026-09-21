@@ -21,6 +21,11 @@ spec:
       # Home Assistant reads configuration.yaml once, at startup. Editing the
       # ConfigMap changes nothing until the pod restarts:
       #   kubectl -n home-assistant rollout restart deploy/home-assistant
+      # Seccomp only: the image runs as root under s6 and writes /config,
+      # so neither runAsNonRoot nor a read-only root applies as it is run.
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
       initContainers:
         - name: seed-config
           # Same tag as the container below. Renovate updates every occurrence
@@ -54,12 +59,21 @@ spec:
                   # Written by CloudNativePG, never by us.
                   name: home-assistant-db-app
                   key: uri
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
           volumeMounts:
             - name: config
               mountPath: /config
       containers:
         - name: home-assistant
           image: ghcr.io/home-assistant/home-assistant:2026.9.3@sha256:d8922685169707fd91e8b9729902d975f06157d005e422874d201e0261dda196
+          securityContext:
+            seccompProfile:
+              type: RuntimeDefault
           ports:
             - name: http
               containerPort: 8123
