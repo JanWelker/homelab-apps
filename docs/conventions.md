@@ -36,8 +36,8 @@ workload has no business reaching.
 ### 2. Official upstream sources only
 
 The vendor's own Helm chart, or the vendor's own container image, never a
-repackager's. Nextcloud and Trivy Operator publish their own charts; Home
-Assistant publishes none, so it is plain manifests around the official
+repackager's. Nextcloud publishes its own chart; Home Assistant publishes
+none, so it is plain manifests around the official
 `ghcr.io/home-assistant/home-assistant` image.
 
 Pin every version. No `latest`, no floating tags. Renovate moves them.

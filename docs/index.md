@@ -17,11 +17,6 @@ runs on top.
 | --- | --- | --- | --- | --- |
 | [Home Assistant](home-assistant.md) | [home.k8s.wlkr.ch](https://home.k8s.wlkr.ch) | 5Gi for `/config` | CloudNativePG, for the recorder | Authentik proxy, in front of its own login |
 | [Nextcloud](nextcloud.md) | [cloud.k8s.wlkr.ch](https://cloud.k8s.wlkr.ch) | 50Gi for files | CloudNativePG | Authentik OIDC |
-| [Trivy Operator](trivy-operator.md) | — | 5Gi for the vulnerability database | None — findings are CRDs | None; it has no interface |
-
-Trivy Operator has no UI and nothing to log into. It lives here rather than in
-the platform repository because it is a workload *on* the cluster: nothing the
-platform brings up depends on it.
 
 ## How a directory becomes an application
 
