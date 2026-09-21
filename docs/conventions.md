@@ -40,7 +40,10 @@ repackager's. Nextcloud publishes its own chart; Home Assistant publishes
 none, so it is plain manifests around the official
 `ghcr.io/home-assistant/home-assistant` image.
 
-Pin every version. No `latest`, no floating tags. Renovate moves them.
+Pin every version. No `latest`, no floating tags. Renovate moves them, three
+days after a release, and the `image-scan.yaml` workflow fails a pull request
+whose new image carries a fixable CRITICAL the old one did not — the
+[same gate as the platform](https://homelab.wlkr.ch/development/maintenance/#ci-workflows).
 
 !!! warning "Renovate and image fields"
     A custom regex manager for an image field needs `autoReplaceStringTemplate`, or digest pinning fails with `update failure` and takes the shared `renovate/pin-dependencies` branch down with it. A field holding a bare tag has no room for a digest and needs `pinDigests: false` instead. See [Manager rules](https://homelab.wlkr.ch/development/maintenance/#manager-rules) and [renovate#24942](https://github.com/renovatebot/renovate/issues/24942).
