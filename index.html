@@ -10,7 +10,7 @@
       
       
       
-        <link rel="canonical" href="https://janwelker.github.io/homelab-apps/">
+        <link rel="canonical" href="https://homelab-apps.wlkr.ch/">
       
       
       
@@ -687,12 +687,12 @@
 
 
 <h1 id="homelab-applications">Homelab Applications<a class="headerlink" href="#homelab-applications" title="Permanent link">&para;</a></h1>
-<p>The applications the <a href="https://janwelker.github.io/homelab/">homelab cluster</a>
-exists to run. The cluster itself — Flatcar, Kubeadm, Cilium, Rook-Ceph, ArgoCD
-and everything under them — is a
+<p>The applications the <a href="https://homelab.wlkr.ch/">homelab cluster</a> exists to
+run. The cluster itself — Flatcar, Kubeadm, Cilium, Rook-Ceph, ArgoCD and
+everything under them — is a
 <a href="https://github.com/JanWelker/homelab">separate repository</a> with
-<a href="https://janwelker.github.io/homelab/">its own documentation</a>; this site covers
-only what runs on top.</p>
+<a href="https://homelab.wlkr.ch/">its own documentation</a>; this site covers only what
+runs on top.</p>
 <h2 id="applications">Applications<a class="headerlink" href="#applications" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -728,16 +728,13 @@ only what runs on top.</p>
 </tr>
 </tbody>
 </table>
-<p>Two of those are user-facing and one is not. Trivy Operator has no URL, no
-accounts and nothing to log into: it scans what the cluster runs and writes the
-results back as Kubernetes objects. It is here rather than in the platform
-repository because it is a workload <em>on</em> the cluster, not a part of it —
-nothing the platform brings up depends on it.</p>
+<p>Trivy Operator has no UI and nothing to log into. It lives here rather than in
+the platform repository because it is a workload <em>on</em> the cluster: nothing the
+platform brings up depends on it.</p>
 <h2 id="how-a-directory-becomes-an-application">How a directory becomes an application<a class="headerlink" href="#how-a-directory-becomes-an-application" title="Permanent link">&para;</a></h2>
-<p>The <code>apps</code> ApplicationSet, which lives in the platform repository, watches this
-one and generates an ArgoCD Application from every <code>*/application.yaml</code> it
-finds. Pushing a directory deploys an application — there is no list to add it
-to, and nothing in the other repository to change.</p>
+<p>The <code>apps</code> ApplicationSet in the platform repository watches this one and
+generates an ArgoCD Application from every <code>*/application.yaml</code> it finds.
+Pushing a directory deploys an application; there is no list to register it in.</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>homelab (platform)                    homelab-apps (this repository)
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  Application argocd
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    └── ApplicationSet platform
@@ -746,64 +743,35 @@ to, and nothing in the other repository to change.</p>
 </span></code></pre></div>
 <p>The <code>apps</code> ApplicationSet is created in the platform's last rollout stage, so
 nothing here deploys until the whole platform beneath it is healthy. The
-dependency runs one way: applications use the platform, and the platform
-references this repository exactly once — a <code>repoURL</code> — and never reads what is
-in it.</p>
-<p>One consequence is worth knowing: because these Applications are not under the
-platform's <code>RollingSync</code> strategy, they keep <code>selfHeal</code>. A hand-edited
-Deployment here is reverted within minutes, where the same edit to a platform
-resource survives until the next commit.
-<a href="https://janwelker.github.io/homelab/architecture/gitops/#workloads-live-in-a-second-repository">GitOps Strategy</a>
-covers why the split exists and what it costs.</p>
+platform references this repository exactly once, as a <code>repoURL</code>, and never
+reads what is in it.</p>
+<p>These Applications are not under the platform's <code>RollingSync</code> strategy, so they
+keep <code>selfHeal</code>: a hand-edited Deployment is reverted within minutes. Why the
+split exists is in
+<a href="https://homelab.wlkr.ch/architecture/gitops/#workloads-live-in-a-second-repository">GitOps Strategy</a>.</p>
 <h2 id="what-they-have-in-common">What they have in common<a class="headerlink" href="#what-they-have-in-common" title="Permanent link">&para;</a></h2>
-<p>Everything here is deployed under the same constraints, and the shape they share
-is the one every later one is expected to take. <a href="conventions/">Conventions</a> is
-the full list; the short version:</p>
+<p><a href="conventions/">Conventions</a> is the full list. The short version:</p>
 <ul>
-<li><strong>A namespace they own</strong>, carrying explicit Pod Security Admission labels.
-  <code>CreateNamespace=true</code> on its own produces an unlabelled namespace, and an
-  unlabelled namespace runs at <code>privileged</code>. This one is universal.</li>
-<li><strong>A <code>CiliumNetworkPolicy</code></strong> denying ingress by default, admitting the
-  Gateway, the node's health probes and Prometheus. Also universal.</li>
-<li><strong>A CloudNativePG <code>Cluster</code> in their own namespace</strong>, never the database
-  their chart would have bundled — for the two that need a database. Trivy
-  Operator does not: its findings are Kubernetes objects.</li>
-<li><strong>Proxy configuration.</strong> The two user-facing applications sit behind the
-  <code>apps-gateway</code>, which terminates TLS and forwards from inside the pod CIDR.
-  An application that does not know this builds <code>http://</code> links on an <code>https://</code>
-  site.</li>
-<li><strong>Authentik, not their own accounts</strong> — as far as each is capable of it, and
-  only where there is a login at all.</li>
+<li><strong>A namespace they own</strong>, with explicit Pod Security Admission labels.</li>
+<li><strong>A <code>CiliumNetworkPolicy</code></strong> denying ingress by default.</li>
+<li><strong>A CloudNativePG <code>Cluster</code></strong>, never a chart's bundled database.</li>
+<li><strong>Proxy configuration</strong> for the <code>apps-gateway</code>, which terminates TLS and
+  forwards from inside the pod CIDR.</li>
+<li><strong>Authentik, not their own accounts</strong>, as far as each is capable of it.</li>
 </ul>
 <h2 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h2>
 <p>Both user-facing applications go through
-<a href="https://janwelker.github.io/homelab/platform/authentik/">Authentik</a>, but not
-in the same way, and the difference is not a preference — it is what each
-application supports.</p>
-<p><strong>Nextcloud speaks OIDC.</strong> The first-party <code>user_oidc</code> app is installed and
-configured by a startup hook, the login form is hidden, and the local admin
-survives only as break-glass at <code>/login?direct=1</code>. This is real single sign-on:
-one login, and revoking the Authentik account ends the access.</p>
-<p><strong>Home Assistant does not.</strong> Upstream ships four auth providers —
-<code>homeassistant</code>, <code>command_line</code>, <code>trusted_networks</code> and an example marked
-insecure — and no OIDC among them. So the Authentik outpost sits <em>in front of</em>
-Home Assistant's login rather than replacing it, and browser users authenticate
-twice. That is defence in depth, not SSO.</p>
-<div class="admonition warning">
-<p class="admonition-title">Home Assistant's API is not behind Authentik</p>
-<p>The companion apps and webhooks hold a long-lived token and cannot complete an interactive login, so <code>/api/</code> and <code>/auth/token</code> are excluded from the proxy. Home Assistant's own accounts are the only thing guarding them — revoking someone in Authentik does <strong>not</strong> revoke their Home Assistant token, which has to be done in Home Assistant.</p>
-</div>
-<p>Both use <code>auth.k8s.wlkr.ch</code>, not the <code>auth.infra</code> name the platform UIs use:
-the <code>*.infra</code> zone resolves only on the local network, so an OIDC client
-reachable from outside it would send its users somewhere that does not exist
-for them. A client must never mix the two — see <a href="https://janwelker.github.io/homelab/platform/authentik/#two-hostnames">Two
-hostnames</a>.</p>
+<a href="https://homelab.wlkr.ch/platform/authentik/">Authentik</a>, in the shape each one
+supports. <a href="nextcloud/">Nextcloud</a> speaks OIDC, so it is real single sign-on
+with the local login hidden. <a href="home-assistant/">Home Assistant</a> ships no OIDC
+provider, so the Authentik outpost sits in front of its own login and browser
+users authenticate twice. Both use <code>auth.k8s.wlkr.ch</code>, never the <code>auth.infra</code>
+name, which resolves only on the local network — see
+<a href="https://homelab.wlkr.ch/platform/authentik/#two-hostnames">Two hostnames</a>.</p>
 <h2 id="adding-one">Adding one<a class="headerlink" href="#adding-one" title="Permanent link">&para;</a></h2>
-<p><a href="conventions/">Conventions</a> first — it is short, and it is the difference
-between an application that works and one that loops on its login redirect. The
-step-by-step version is
-<a href="https://janwelker.github.io/homelab/development/add-workload/">Adding a Workload</a>
-in the platform documentation.</p>
+<p>Read <a href="conventions/">Conventions</a> first; it is short. The step-by-step version
+is <a href="https://homelab.wlkr.ch/development/add-workload/">Adding a Workload</a> in the
+platform documentation.</p>
 
 
 

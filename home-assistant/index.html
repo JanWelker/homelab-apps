@@ -6,11 +6,11 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Home Assistant on the cluster: why it is plain manifests rather than a chart, where its two kinds of state live, and what home automation gives up by running in Kubernetes.">
+        <meta name="description" content="Home Assistant on the cluster: plain manifests around the official image, two kinds of state in two places, and an Authentik proxy in front of its own login.">
       
       
       
-        <link rel="canonical" href="https://janwelker.github.io/homelab-apps/home-assistant/">
+        <link rel="canonical" href="https://homelab-apps.wlkr.ch/home-assistant/">
       
       
         <link rel="prev" href="../conventions/">
@@ -448,10 +448,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#plain-manifests-not-a-chart" class="md-nav__link">
+  <a href="#at-a-glance" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Plain manifests, not a chart
+        At a glance
       </span>
     </span>
   </a>
@@ -459,99 +459,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#two-kinds-of-state-in-two-places" class="md-nav__link">
+  <a href="#state" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Two kinds of state, in two places
-      </span>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Two kinds of state, in two places">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-recorder-is-not-sqlite" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        The recorder is not SQLite
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#restarting-after-a-config-change" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Restarting after a config change
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#behind-the-gateway-and-behind-authentik" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Behind the Gateway, and behind Authentik
-      </span>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Behind the Gateway, and behind Authentik">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#why-the-network-policy-mentions-the-cnpg-system-namespace" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Why the network policy mentions the cnpg-system namespace
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-the-network-policy-mentions-the-authentik-namespace" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Why the network policy mentions the authentik namespace
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trusted-proxies" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Trusted proxies
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-this-costs" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        What this costs
+        State
       </span>
     </span>
   </a>
@@ -559,10 +470,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#verifying" class="md-nav__link">
+  <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Verifying
+        Configuration
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Usage
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#health-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Health check
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pitfalls" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Pitfalls
       </span>
     </span>
   </a>
@@ -670,10 +614,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#plain-manifests-not-a-chart" class="md-nav__link">
+  <a href="#at-a-glance" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Plain manifests, not a chart
+        At a glance
       </span>
     </span>
   </a>
@@ -681,99 +625,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#two-kinds-of-state-in-two-places" class="md-nav__link">
+  <a href="#state" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Two kinds of state, in two places
-      </span>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Two kinds of state, in two places">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#the-recorder-is-not-sqlite" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        The recorder is not SQLite
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#restarting-after-a-config-change" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Restarting after a config change
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#behind-the-gateway-and-behind-authentik" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Behind the Gateway, and behind Authentik
-      </span>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Behind the Gateway, and behind Authentik">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#why-the-network-policy-mentions-the-cnpg-system-namespace" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Why the network policy mentions the cnpg-system namespace
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#why-the-network-policy-mentions-the-authentik-namespace" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Why the network policy mentions the authentik namespace
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#trusted-proxies" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Trusted proxies
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-this-costs" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        What this costs
+        State
       </span>
     </span>
   </a>
@@ -781,10 +636,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#verifying" class="md-nav__link">
+  <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Verifying
+        Configuration
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Usage
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#health-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Health check
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pitfalls" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Pitfalls
       </span>
     </span>
   </a>
@@ -823,21 +711,42 @@
 
 
 <h1 id="home-assistant">Home Assistant<a class="headerlink" href="#home-assistant" title="Permanent link">&para;</a></h1>
-<p><a href="https://www.home-assistant.io/">Home Assistant</a> runs the house — lights,
-sensors, climate, and whatever else has been added since this page was written.
-It answers on <a href="https://home.k8s.wlkr.ch">home.k8s.wlkr.ch</a>, and its manifests
-are in <a href="https://github.com/JanWelker/homelab-apps/tree/main/home-assistant"><code>home-assistant/</code></a>.</p>
-<h2 id="plain-manifests-not-a-chart">Plain manifests, not a chart<a class="headerlink" href="#plain-manifests-not-a-chart" title="Permanent link">&para;</a></h2>
-<p>Home Assistant publishes no official Helm chart. The community ones are
-third-party repackagers, and the rule here is that a version pin is only worth
-having when you know who published the thing you pinned — so this is a
-Deployment, a Service, a PVC and a ConfigMap, written out. See
-<a href="../conventions/#2-official-upstream-sources-only">Conventions &rarr; Official upstream sources only</a>.</p>
-<p>That turned out to be the smaller amount of work. Home Assistant is a single
-stateful process with one volume and one port; almost everything a chart would
-parameterise has exactly one correct value here.</p>
-<h2 id="two-kinds-of-state-in-two-places">Two kinds of state, in two places<a class="headerlink" href="#two-kinds-of-state-in-two-places" title="Permanent link">&para;</a></h2>
-<p>This is the part worth understanding before touching anything:</p>
+<p><a href="https://www.home-assistant.io/">Home Assistant</a> runs the house. Upstream
+publishes no Helm chart and the community ones are repackagers, so this is a
+Deployment, a Service, a PVC and a ConfigMap around the official image, per
+<a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>.</p>
+<h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>URL</td>
+<td><a href="https://home.k8s.wlkr.ch">home.k8s.wlkr.ch</a></td>
+</tr>
+<tr>
+<td>Authentication</td>
+<td>Authentik proxy outpost, in front of Home Assistant's own login</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>5Gi <code>rook-ceph-block</code> PVC for <code>/config</code></td>
+</tr>
+<tr>
+<td>Database</td>
+<td>CloudNativePG <code>Cluster</code> <code>home-assistant-db</code>, for the recorder</td>
+</tr>
+<tr>
+<td>Files</td>
+<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/home-assistant"><code>home-assistant/</code></a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="state">State<a class="headerlink" href="#state" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
@@ -855,115 +764,81 @@ parameterise has exactly one correct value here.</p>
 <tr>
 <td>History and long-term statistics</td>
 <td>PostgreSQL, via CloudNativePG</td>
-<td>Only from a backup; losing it loses your graphs</td>
+<td>Only from a backup</td>
 </tr>
 <tr>
 <td><code>configuration.yaml</code></td>
 <td>A ConfigMap, in Git</td>
-<td>Yes, it is the file in the repository</td>
+<td>Yes</td>
 </tr>
 </tbody>
 </table>
-<p>The split matters because the recorder database is the part that grows without
-bound and the <code>/config</code> volume is the part that cannot be reconstructed. They
-are sized and backed up accordingly, and 5Gi of <code>/config</code> is generous for what
-is mostly JSON.</p>
-<h3 id="the-recorder-is-not-sqlite">The recorder is not SQLite<a class="headerlink" href="#the-recorder-is-not-sqlite" title="Permanent link">&para;</a></h3>
-<p>Home Assistant's default recorder is SQLite in a file on <code>/config</code>. On a
-network block device — which is what every PVC here is — SQLite's locking
-behaviour is the single most common cause of a Home Assistant that feels slow
-for no visible reason.</p>
-<p>So the recorder points at a CloudNativePG <code>Cluster</code> instead, per <a href="https://janwelker.github.io/homelab/platform/cloudnative-pg/#the-contract">the
-contract</a>.
-<code>purge_keep_days</code> is set to 42; the default of 10 is reliably shorter than the
-moment you go looking for a graph.</p>
-<div class="admonition warning">
-<p class="admonition-title"><code>secrets.yaml</code> is generated, not yours</p>
-<p>Home Assistant removed its <code>!env_var</code> YAML tag years ago, so there is no way to put an environment variable into <code>configuration.yaml</code>. The database URL reaches it through <code>!secret</code> instead, and an init container writes <code>/config/secrets.yaml</code> from CloudNativePG's Secret on <strong>every</strong> start — so anything added to that file by hand is lost at the next restart. A secret a workload needs belongs in <a href="https://janwelker.github.io/homelab/platform/openbao/">OpenBao</a> and reaches the pod as an environment variable or a mounted file.</p>
-</div>
-<h3 id="restarting-after-a-config-change">Restarting after a config change<a class="headerlink" href="#restarting-after-a-config-change" title="Permanent link">&para;</a></h3>
-<p>The ConfigMap is mounted over <code>/config/configuration.yaml</code>, and Home Assistant
-reads it once, at startup. Merging a change to it does nothing visible until
-the pod restarts:</p>
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Plain manifests, no chart</td>
+<td>Home Assistant is one stateful process with one volume and one port; a Deployment is less work than auditing a third-party chart on every bump</td>
+</tr>
+<tr>
+<td>Recorder on CloudNativePG, not SQLite</td>
+<td>SQLite's locking on a network block device is the usual cause of a Home Assistant that feels slow. <code>purge_keep_days</code> is raised because the default of 10 is shorter than the moment you look for a graph. See <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract">the contract</a></td>
+</tr>
+<tr>
+<td><code>secrets.yaml</code> written by an init container on every start</td>
+<td>Home Assistant has no <code>!env_var</code> tag, so the database URL reaches <code>configuration.yaml</code> through <code>!secret</code>, from CloudNativePG's Secret. Anything added to that file by hand is lost at the next restart; secrets belong in <a href="https://homelab.wlkr.ch/platform/openbao/">OpenBao</a></td>
+</tr>
+<tr>
+<td><code>use_x_forwarded_for</code> with the pod CIDR in <code>trusted_proxies</code></td>
+<td>Requests arrive from Cilium's Envoy and the outpost. Without it every request has one source address, so the ban list and rate limiting count the household as one user</td>
+</tr>
+<tr>
+<td><code>HTTPRoute</code> targets <code>authentik-server</code>, not the app</td>
+<td>The outpost authenticates and forwards to <code>home-assistant.home-assistant.svc:8123</code>. Home Assistant is the one proxied app with a login of its own, so browser users log in twice: defence in depth, not SSO</td>
+</tr>
+<tr>
+<td><code>CiliumNetworkPolicy</code> admits 8123 from the <code>authentik</code> namespace only</td>
+<td>No <code>fromEntities: ingress</code>, so a request straight from the Gateway cannot skip the outpost</td>
+</tr>
+<tr>
+<td>Policy admits <code>cnpg-system</code> to the database pod on 8000, at sync wave <code>-2</code></td>
+<td>The operator polls the instance manager there; without the rule the <code>Cluster</code> never goes Healthy and the sync deadlocks. See <a href="../nextcloud/#sync-stuck-on-the-database">Sync stuck on the database</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
+<p>The ConfigMap is mounted over <code>/config/configuration.yaml</code> and read once at
+startup, so a merged change does nothing until the pod restarts:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>home-assistant<span class="w"> </span>rollout<span class="w"> </span>restart<span class="w"> </span>deploy/home-assistant
 </span></code></pre></div>
-<p>The UI's own "restart" button does the same thing from inside.</p>
-<h2 id="behind-the-gateway-and-behind-authentik">Behind the Gateway, and behind Authentik<a class="headerlink" href="#behind-the-gateway-and-behind-authentik" title="Permanent link">&para;</a></h2>
-<p><code>home.k8s.wlkr.ch</code> does <strong>not</strong> route to Home Assistant. It routes to
-Authentik's embedded outpost, which authenticates the request and only then
-forwards it to <code>home-assistant.home-assistant.svc:8123</code>.</p>
-<p>This is the one proxied application in the cluster that has a login of its own.
-Everything else behind the outpost — Hubble, the Ceph dashboard, Prometheus,
-Alertmanager — has no authentication whatsoever, which is what makes the
-outpost <em>the</em> authentication rather than an extra one. Home Assistant is
-different because upstream ships no OIDC provider at all: the only auth
-providers in the codebase are <code>homeassistant</code>, <code>command_line</code>,
-<code>trusted_networks</code> and an example marked insecure.</p>
-<p>So browser users log in twice, deliberately. That is defence in depth, not
-single sign-on, and it is worth being clear about which one you are getting.</p>
-<div class="admonition warning">
-<p class="admonition-title">The API is not behind Authentik</p>
-<p>The companion apps and every webhook authenticate with a long-lived token and cannot complete an interactive Authentik login, so <code>skip_path_regex</code> on the provider lets <code>/api/</code>, <code>/auth/token</code> and the external-auth callback through untouched. <strong>Home Assistant's own accounts are the only thing guarding those paths.</strong> Revoking someone's Authentik account does not revoke their Home Assistant token — that has to be done in Home Assistant, under Settings → People.</p>
-</div>
-<p>Gating those paths was the alternative, and it would not have made the API
-safer. It would have stopped the phones working and pushed the whole thing
-towards being exposed some other way, which is how a security control becomes
-the reason for a worse setup.</p>
-<h3 id="why-the-network-policy-mentions-the-cnpg-system-namespace">Why the network policy mentions the cnpg-system namespace<a class="headerlink" href="#why-the-network-policy-mentions-the-cnpg-system-namespace" title="Permanent link">&para;</a></h3>
-<p>The policy allows <code>cnpg-system</code> to reach the database pod on port 8000, the
-instance manager's status endpoint that the CloudNativePG operator polls.</p>
-<p>Without that rule the failure is quiet in the worst way. Postgres runs, the
-recorder writes to it, and <code>kubectl get cluster</code> says <code>1/1</code> ready — but the phase
-reads <code>Instance Status Extraction Error: HTTP communication issue</code>, the <code>Cluster</code>
-never goes Healthy, and the sync operation waiting on it at wave <code>-1</code> never
-completes. The Application reports <code>Synced</code> with health <code>Unknown</code>, and every
-entry in <code>status.resources</code> is missing its health field because the controller
-never assessed them. That combination — Unknown with no resource naming itself —
-is what distinguishes this from an actually unhealthy workload.</p>
-<p>The policy therefore sits at sync wave <code>-2</code>, with the namespace. At the default
-wave it would be applied after the <code>Cluster</code> at <code>-1</code> — and that is exactly the
-wave stuck waiting, so the rule that would release it never gets applied.
-Writing the rule and leaving the wave alone changes nothing in the cluster.</p>
-<p>The same rule is on the Nextcloud policy for the same reason; that page has <a href="../nextcloud/#the-operator-needs-ingress-to-the-instance">the
-hubble command</a> for
-confirming the drop and <a href="../nextcloud/#the-policy-has-to-land-before-the-database">the wave
-trap</a> in full.</p>
-<h3 id="why-the-network-policy-mentions-the-authentik-namespace">Why the network policy mentions the authentik namespace<a class="headerlink" href="#why-the-network-policy-mentions-the-authentik-namespace" title="Permanent link">&para;</a></h3>
-<p>Because that is where the traffic comes from. The <code>CiliumNetworkPolicy</code> admits
-port 8123 from the <code>authentik</code> namespace rather than from the Gateway, and
-<code>fromEntities: ingress</code> is deliberately absent — a request that reaches Home
-Assistant straight from the Gateway would have skipped the authentication
-layer entirely.</p>
-<h3 id="trusted-proxies">Trusted proxies<a class="headerlink" href="#trusted-proxies" title="Permanent link">&para;</a></h3>
-<p>Requests arrive from Cilium's Envoy and then the outpost, not from the client,
-so <code>configuration.yaml</code> sets <code>use_x_forwarded_for</code> with the pod CIDR in
-<code>trusted_proxies</code>. Without it, Home Assistant sees every request as coming from
-one address: the ban list becomes useless and rate limiting counts the whole
-household as one user.</p>
-<h2 id="what-this-costs">What this costs<a class="headerlink" href="#what-this-costs" title="Permanent link">&para;</a></h2>
-<p>Running home automation on a Kubernetes cluster has two real drawbacks, and
-both are accepted rather than solved:</p>
-<ul>
-<li><strong>No local device discovery.</strong> mDNS and SSDP need host networking, which
-  needs a <code>privileged</code> namespace, and that is a bad trade for a convenience.
-  Devices that cannot be added by IP address have to be added through an
-  integration that does not rely on broadcast discovery.</li>
-<li><strong>No USB devices.</strong> A Zigbee or Z-Wave stick is plugged into one specific
-  machine, and a pod that requires that machine is a pod that cannot be
-  rescheduled. Anything of that kind belongs on a network-attached coordinator
-  the pod can reach over IP.</li>
-</ul>
-<p>There is also a third, less obvious one: the cluster is now a dependency of the
-lights working. A Ceph rebalance that pauses I/O pauses Home Assistant with it.
-That is the trade for having it backed up, monitored and reproducible, and it
-is worth knowing before the first time it happens.</p>
-<h2 id="verifying">Verifying<a class="headerlink" href="#verifying" title="Permanent link">&para;</a></h2>
+<p>The UI's own restart button does the same from inside.</p>
+<h2 id="health-check">Health check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>home-assistant<span class="w"> </span>get<span class="w"> </span>pods,pvc
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>home-assistant<span class="w"> </span>get<span class="w"> </span>cluster<span class="w"> </span>home-assistant-db
 </span></code></pre></div>
-<p>The database should report <code>Cluster in healthy state</code>. If the application pod
-is in <code>Init</code>, it is waiting on that: the init container cannot write
-<code>secrets.yaml</code> until CloudNativePG has produced the Secret it reads.</p>
+<p>The database should report <code>Cluster in healthy state</code>. A pod stuck in <code>Init</code>
+is waiting on it: the init container cannot write <code>secrets.yaml</code> until
+CloudNativePG has produced the Secret.</p>
+<h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">The API is not behind Authentik</p>
+<p>The companion apps and every webhook authenticate with a long-lived token and cannot complete an interactive login, so <code>skip_path_regex</code> on the provider lets <code>/api/</code>, <code>/auth/token</code> and the external-auth callback through. Home Assistant's own accounts are the only thing guarding those paths. Revoking an Authentik account does not revoke a Home Assistant token; do that under Settings → People.</p>
+</div>
+<ul>
+<li><strong>No local device discovery.</strong> mDNS and SSDP need host networking, which
+  needs a <code>privileged</code> namespace. Add devices by IP, or through an integration
+  that does not rely on broadcast.</li>
+<li><strong>No USB devices.</strong> A Zigbee or Z-Wave stick pins the pod to one machine.
+  Use a network-attached coordinator instead.</li>
+<li><strong>The cluster is now a dependency of the lights.</strong> A Ceph rebalance that
+  pauses I/O pauses Home Assistant with it.</li>
+</ul>
 
 
 
