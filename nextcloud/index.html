@@ -849,7 +849,7 @@ blueprint) come from a second source pointing at this repository.</p>
 </tr>
 <tr>
 <td><code>allow_local_remote_servers</code>, set by the startup hook</td>
-<td><code>auth.k8s.wlkr.ch</code> resolves to the Gateway's private address and Nextcloud's SSRF guard rejects it (<code>violates local access rules</code>) while <code>curl</code> from the same container works. Lifting it applies to every outbound request; the compensating controls are the network policy and that federation and external storage are off. Pointing at the in-cluster Service instead would break the <code>iss</code> check</td>
+<td><code>auth.k8s.wlkr.ch</code> resolves to the Gateway's private address and Nextcloud's SSRF guard rejects it (<code>violates local access rules</code>) while <code>curl</code> from the same container works. Lifting it applies to every outbound request; the compensating controls are the egress half of <code>networkpolicy.yaml</code>, which names the only hosts the web pod may reach, and that federation and external storage are off. Pointing at the in-cluster Service instead would break the <code>iss</code> check</td>
 </tr>
 </tbody>
 </table>
