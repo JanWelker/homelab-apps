@@ -1,6 +1,6 @@
 [project]
 site_name = "Homelab Applications"
-site_url = "https://janwelker.github.io/homelab-apps/"
+site_url = "https://homelab-apps.wlkr.ch/"
 site_description = "The applications running on the Flatcar homelab cluster: what they are, where their state lives, and the conventions every one of them follows."
 repo_name = "JanWelker/homelab-apps"
 repo_url = "https://github.com/JanWelker/homelab-apps"
