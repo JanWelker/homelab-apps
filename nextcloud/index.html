@@ -785,7 +785,7 @@ blueprint) come from a second source pointing at this repository.</p>
 </tr>
 <tr>
 <td>Storage</td>
-<td>50Gi <code>rook-ceph-block</code> PVC, <code>ReadWriteOnce</code></td>
+<td><code>rook-ceph-block</code> PVC, <code>ReadWriteOnce</code></td>
 </tr>
 <tr>
 <td>Database</td>
@@ -813,7 +813,7 @@ blueprint) come from a second source pointing at this repository.</p>
 <tbody>
 <tr>
 <td><code>internalDatabase.enabled: false</code>, <code>externalDatabase.existingSecret</code></td>
-<td>The bundled Bitnami subchart is replaced by a CloudNativePG <code>Cluster</code> at sync wave <code>-1</code>, per <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract">the contract</a>. ArgoCD's health check for <code>Cluster</code> makes the wave wait for a working database before the chart's install job connects</td>
+<td><code>internalDatabase</code> is the chart's SQLite; its Bitnami PostgreSQL subchart is <code>postgresql.enabled</code>, off by default. Both give way to a CloudNativePG <code>Cluster</code> at sync wave <code>-1</code>, per <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract">the contract</a>. ArgoCD's health check for <code>Cluster</code> makes the wave wait for a working database before the chart's install job connects</td>
 </tr>
 <tr>
 <td><code>redis.enabled: false</code></td>
@@ -832,7 +832,7 @@ blueprint) come from a second source pointing at this repository.</p>
 <td>Same volume, same reason</td>
 </tr>
 <tr>
-<td><code>startupProbe</code> with <code>failureThreshold: 60</code></td>
+<td><code>startupProbe</code> with a long <code>failureThreshold</code></td>
 <td>Upgrades run database migrations at startup, longer than a liveness probe tolerates</td>
 </tr>
 <tr>

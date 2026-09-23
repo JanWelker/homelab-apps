@@ -692,7 +692,7 @@ Deployment, a Service, a PVC and a ConfigMap around the official image, per
 </tr>
 <tr>
 <td>Storage</td>
-<td>5Gi <code>rook-ceph-block</code> PVC for <code>/config</code></td>
+<td><code>rook-ceph-block</code> PVC for <code>/config</code></td>
 </tr>
 <tr>
 <td>Database</td>
@@ -717,12 +717,12 @@ Deployment, a Service, a PVC and a ConfigMap around the official image, per
 <tr>
 <td>Registries, users, tokens, integration config (<code>/config/.storage</code>)</td>
 <td>The <code>home-assistant-config</code> PVC</td>
-<td><strong>No.</strong> Losing it means re-pairing every device</td>
+<td><strong>No.</strong> Losing it means re-pairing every device; the nightly <a href="https://homelab.wlkr.ch/operations/backups/">Velero snapshot</a> is the only copy</td>
 </tr>
 <tr>
 <td>History and long-term statistics</td>
 <td>PostgreSQL, via CloudNativePG</td>
-<td>Only from a backup</td>
+<td>Only from the same Velero snapshot, which is crash-consistent, not point in time</td>
 </tr>
 <tr>
 <td><code>configuration.yaml</code></td>

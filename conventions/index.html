@@ -874,10 +874,13 @@ visible.</p>
 <p>Annotate it <code>Prune=false</code>: pruning a <code>Namespace</code> deletes every PVC inside it.</p>
 <h3 id="5-ship-a-ciliumnetworkpolicy">5. Ship a <code>CiliumNetworkPolicy</code><a class="headerlink" href="#5-ship-a-ciliumnetworkpolicy" title="Permanent link">&para;</a></h3>
 <p>Not a plain <code>NetworkPolicy</code>, which blocks the kubelet's health probes. Every
-policy needs <code>fromEntities: [host, remote-node]</code> for those probes and
-<code>ingress</code> for Gateway traffic, and an egress half: the namespace, DNS through
-the proxy, and every outside name as <code>toFQDNs</code>. The template and the reasons
-are in the platform's
+policy needs <code>fromEntities: [host, remote-node]</code> for those probes, one rule
+for the way users arrive, and an egress half: the namespace, DNS through the
+proxy, and every outside name as <code>toFQDNs</code>. The arrival rule depends on rule
+6: <code>fromEntities: [ingress]</code> where the Gateway reaches the pod directly, or
+the Authentik server pods and nothing else where the outpost sits in front,
+so a request cannot skip it. The template and the reasons are in the
+platform's
 <a href="https://homelab.wlkr.ch/development/add-workload/#the-network-policy">Adding a Workload</a>.</p>
 <p>Put it at sync wave <code>-2</code>, with the namespace:</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
@@ -910,9 +913,11 @@ and Nextcloud needed <code>allow_local_remote_servers</code> before discovery wo
 resolves only on the local network, and a client must never mix the two, or
 the <code>iss</code> claim fails against the discovered issuer.</p>
 <h3 id="7-real-secrets-come-from-openbao">7. Real secrets come from OpenBao<a class="headerlink" href="#7-real-secrets-come-from-openbao" title="Permanent link">&para;</a></h3>
-<p>An <code>ExternalSecret</code> reading <code>kv/&lt;app&gt;/config</code>, with the <code>bao kv put</code> command
-that seeds it in a comment at the top of the file. Database passwords are the
-exception, because CloudNativePG generates them (rule 3).</p>
+<p>An <code>ExternalSecret</code> reading <code>kv/&lt;app&gt;/config</code>, with a comment at the top of
+the file naming what seeds it: <code>make bao-secrets</code> in the platform repository,
+which runs <code>scripts/bao-secrets.sh</code> and writes every application's path.
+Database passwords are the exception, because CloudNativePG generates them
+(rule 3).</p>
 <p>OIDC client credentials go in the application's own <code>kv/&lt;app&gt;/config</code>, never
 under <code>kv/authentik/config</code>: a <code>bao kv put</code> replaces a path wholesale, so
 sharing it would make adding an application an Authentik outage.</p>
@@ -956,7 +961,7 @@ until someone ran <code>argocd app sync</code>.</p>
 <tr>
 <td>Backups of a PVC</td>
 <td>Nothing</td>
-<td>Velero snapshots it on the cluster schedule</td>
+<td>Velero snapshots it nightly; restoring is in <a href="https://homelab.wlkr.ch/operations/backups/">Backups &amp; Recovery</a></td>
 </tr>
 <tr>
 <td>Metrics</td>
