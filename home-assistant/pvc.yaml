@@ -1,7 +1,4 @@
 ---
-# /config: Home Assistant's own state -- the .storage registries that hold every
-# device, entity, user and long-lived token. The recorder database is separate
-# and in Postgres; this is the part that cannot be rebuilt from it.
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:

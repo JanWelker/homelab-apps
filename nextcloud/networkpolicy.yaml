@@ -1,24 +1,16 @@
 ---
-# Cilium, not NetworkPolicy: a plain one blocks the kubelet's health probes and
-# the pod restarts forever. See the homelab repository's Security Policies page.
+# Every rule and its reason: docs/nextcloud.md#network-policy
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
   name: default-ingress
   namespace: nextcloud
   annotations:
-    # With the namespace, ahead of the Cluster at -1: the cnpg-system rule below
-    # is what lets that Cluster go Healthy, and a wave cannot wait on a policy
-    # it has not applied yet. See the docs page.
     argocd.argoproj.io/sync-wave: "-2"
 spec:
   description: >-
-    Default-deny ingress for Nextcloud. The UI arrives through the Gateway,
-    the web pod, its cron sidecar and the metrics exporter reach Postgres
-    and each other inside the namespace, the CloudNativePG operator polls
-    that database's status endpoint, Prometheus scrapes the exporter, the
-    database and Nextcloud's own metrics page, and the node runs the health
-    probes.
+    Default-deny ingress. The Gateway, Prometheus, the CloudNativePG
+    operator, the namespace itself and the node's health probes.
   endpointSelector: {}
   ingress:
     - fromEndpoints:
@@ -47,9 +39,6 @@ spec:
           rules:
             http:
               - {}
-    # CloudNativePG's operator polls each instance's status endpoint from
-    # cnpg-system. Without it the Cluster is stuck reporting "Instance Status
-    # Extraction Error", which ArgoCD waits on forever -- see the docs page.
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: cnpg-system
@@ -67,10 +56,8 @@ metadata:
     argocd.argoproj.io/sync-wave: "-2"
 spec:
   description: >-
-    Default-deny egress for Nextcloud. Postgres and the exporter's scrape of
-    the web pod stay inside the namespace. What leaves the cluster is per
-    workload below; the exporter and the database have nothing to say
-    outside.
+    Default-deny egress. The namespace only; what leaves the cluster is
+    per workload.
   endpointSelector: {}
   egress:
     - toEndpoints:
@@ -85,19 +72,8 @@ metadata:
     argocd.argoproj.io/sync-wave: "-2"
 spec:
   description: >-
-    The web pod and its cron sidecar log users in at Authentik through the
-    public name, which resolves to the apps Gateway's own address and is
-    world to Cilium; the Gateway's Envoy then checks this policy against
-    the Authentik server pod it picks and answers 403 itself when the pod
-    is not listed, so the pod is listed too. They call the Nextcloud
-    project's hosts for the app store, update notifications and the
-    announcement feed, and GitHub for the app tarballs the store links
-    to: every app, user_oidc included, is a release asset on
-    github.com that redirects to release-assets.githubusercontent.com,
-    and without both the before-starting hook cannot install it on a
-    fresh volume. This is the control allow_local_remote_servers gives
-    up: the SSRF guard is off, the policy is what says where a request
-    may go.
+    The web pod and its cron sidecar: Authentik for logins, the Nextcloud
+    project for the app store and feeds, GitHub for app tarballs.
   endpointSelector:
     matchLabels:
       app.kubernetes.io/name: nextcloud
