@@ -43,6 +43,7 @@ The same linters CI runs:
 
 ```bash
 uv sync                      # once
+uv run pre-commit install    # once; runs the linters below on every commit
 uv run yamllint .
 uv run zensical build --clean --strict
 npx --package markdownlint-cli2 markdownlint-cli2 '**/*.md' '!**/.venv' '!site'
@@ -55,10 +56,9 @@ Previewing the docs site while writing:
 uv run zensical serve
 ```
 
-Rendering an application the way ArgoCD will, before pushing it:
+Rendering every chart-based application with its values, the way ArgoCD and
+the `Render Charts` workflow do, into `.cache/rendered/`:
 
 ```bash
-helm template nextcloud nextcloud \
-  --repo https://nextcloud.github.io/helm/ \
-  --version "$(awk '/chart: nextcloud/{f=1} f&&/targetRevision:/{print $2; exit}' nextcloud/application.yaml)"
+make render
 ```

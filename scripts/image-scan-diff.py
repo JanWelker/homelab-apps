@@ -113,13 +113,18 @@ def main(argv):
         by_repo.setdefault(repository(image), image)
     for image in changed:
         new = fixable_criticals(image)
-        old_image = by_repo.get(repository(image))
-        old = fixable_criticals(old_image) if old_image else set()
         if new is None:
             summary.append(f"- `{image}`: scan failed, see the log\n")
             continue
-        fresh = sorted(new - (old or set()))
+        old_image = by_repo.get(repository(image))
+        old = fixable_criticals(old_image) if old_image else set()
         line = f"- `{image}`: {len(new)} fixable critical"
+        if old is None:
+            # Nothing to compare against is not a new finding; the log says
+            # the old scan failed, and a person decides.
+            summary.append(line + " (scan of the previous image failed, see the log)\n")
+            continue
+        fresh = sorted(new - old)
         line += f", {len(fresh)} new" if old_image else " (no previous image to compare)"
         summary.append(line + "\n")
         for cve, pkg in fresh:

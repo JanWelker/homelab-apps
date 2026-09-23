@@ -55,6 +55,7 @@ source = { virtual = "." }
 [package.dev-dependencies]
 dev = [
     { name = "pre-commit" },
+    { name = "pyyaml" },
     { name = "yamllint" },
     { name = "zensical" },
 ]
@@ -64,6 +65,7 @@ dev = [
 [package.metadata.requires-dev]
 dev = [
     { name = "pre-commit", specifier = ">=4.5.1" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "yamllint", specifier = ">=1.37.1" },
     { name = "zensical", specifier = ">=0.0.59" },
 ]

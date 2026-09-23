@@ -24,8 +24,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
+      # Same version as .pre-commit-config.yaml, so a new rule cannot fail
+      # main while the commit hook passes. Renovate moves both.
       - name: Install markdownlint-cli2
-        run: npm install -g markdownlint-cli2
+        env:
+          # renovate: datasource=npm depName=markdownlint-cli2
+          MARKDOWNLINT_CLI2_VERSION: "0.23.3"
+        run: npm install -g "markdownlint-cli2@$MARKDOWNLINT_CLI2_VERSION"
 
       - name: Run markdownlint
         run: markdownlint-cli2 '**/*.md' '!**/.venv' '!site'
