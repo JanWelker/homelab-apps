@@ -15,7 +15,7 @@ Deployment, a Service, a PVC and a ConfigMap around the official image, per
 | --- | --- |
 | URL | [home.k8s.wlkr.ch](https://home.k8s.wlkr.ch) |
 | Authentication | Authentik proxy outpost, in front of Home Assistant's own login |
-| Storage | 5Gi `rook-ceph-block` PVC for `/config` |
+| Storage | `rook-ceph-block` PVC for `/config` |
 | Database | CloudNativePG `Cluster` `home-assistant-db`, for the recorder |
 | Files | [`home-assistant/`](https://github.com/JanWelker/homelab-apps/tree/main/home-assistant) |
 
@@ -23,8 +23,8 @@ Deployment, a Service, a PVC and a ConfigMap around the official image, per
 
 | State | Where | Rebuildable? |
 | --- | --- | --- |
-| Registries, users, tokens, integration config (`/config/.storage`) | The `home-assistant-config` PVC | **No.** Losing it means re-pairing every device |
-| History and long-term statistics | PostgreSQL, via CloudNativePG | Only from a backup |
+| Registries, users, tokens, integration config (`/config/.storage`) | The `home-assistant-config` PVC | **No.** Losing it means re-pairing every device; the nightly [Velero snapshot](https://homelab.wlkr.ch/operations/backups/) is the only copy |
+| History and long-term statistics | PostgreSQL, via CloudNativePG | Only from the same Velero snapshot, which is crash-consistent, not point in time |
 | `configuration.yaml` | A ConfigMap, in Git | Yes |
 
 ## Configuration

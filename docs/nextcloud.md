@@ -17,7 +17,7 @@ blueprint) come from a second source pointing at this repository.
 | URL | [cloud.k8s.wlkr.ch](https://cloud.k8s.wlkr.ch) |
 | Authentication | Authentik OIDC through the first-party `user_oidc` app; local login hidden |
 | Chart | `nextcloud`, from `https://nextcloud.github.io/helm/` |
-| Storage | 50Gi `rook-ceph-block` PVC, `ReadWriteOnce` |
+| Storage | `rook-ceph-block` PVC, `ReadWriteOnce` |
 | Database | CloudNativePG `Cluster` `nextcloud-db` |
 | Secrets | `kv/nextcloud/config` in OpenBao |
 | Files | [`nextcloud/`](https://github.com/JanWelker/homelab-apps/tree/main/nextcloud) |
@@ -28,12 +28,12 @@ The values in `nextcloud/application.yaml` that are not self-explanatory:
 
 | Setting | Why |
 | --- | --- |
-| `internalDatabase.enabled: false`, `externalDatabase.existingSecret` | The bundled Bitnami subchart is replaced by a CloudNativePG `Cluster` at sync wave `-1`, per [the contract](https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract). ArgoCD's health check for `Cluster` makes the wave wait for a working database before the chart's install job connects |
+| `internalDatabase.enabled: false`, `externalDatabase.existingSecret` | `internalDatabase` is the chart's SQLite; its Bitnami PostgreSQL subchart is `postgresql.enabled`, off by default. Both give way to a CloudNativePG `Cluster` at sync wave `-1`, per [the contract](https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract). ArgoCD's health check for `Cluster` makes the wave wait for a working database before the chart's install job connects |
 | `redis.enabled: false` | Another Bitnami subchart. One replica needs no shared cache; the chart configures APCu |
 | `OVERWRITEPROTOCOL`, `OVERWRITEHOST`, `OVERWRITECLIURL`, `TRUSTED_PROXIES` in `extraEnv` | TLS terminates at the Gateway and requests arrive from Cilium's Envoy, so without these Nextcloud builds `http://` links and the login redirect loops. Env vars rather than a `proxy.config.php`: the image ships `reverse-proxy.config.php` reading exactly these, and config files load alphabetically, so a `proxy.config.php` of our own would lose |
 | `strategy: Recreate`, `replicaCount: 1` | The data PVC is `ReadWriteOnce`; a `RollingUpdate` surges a pod that cannot mount it |
 | Background jobs as a sidecar, not a `CronJob` | Same volume, same reason |
-| `startupProbe` with `failureThreshold: 60` | Upgrades run database migrations at startup, longer than a liveness probe tolerates |
+| `startupProbe` with a long `failureThreshold` | Upgrades run database migrations at startup, longer than a liveness probe tolerates |
 | `prometheus.serviceMonitor`, not `metrics.serviceMonitor` | The chart's values file documents the latter; the template reads the former. The wrong key renders nothing, silently. `metrics.enabled` does control the exporter |
 | `nextcloud.openmetrics.allowedClients` | The default is k3s's CIDRs, which reject Prometheus while the ServiceMonitor looks healthy |
 | `nextcloud.existingSecret` | Without it the chart writes `admin` / `changeme` into its own Secret and points the install and the exporter at it. Nothing fails at sync time; check the block is present on every values change |

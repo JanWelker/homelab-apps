@@ -88,10 +88,13 @@ Annotate it `Prune=false`: pruning a `Namespace` deletes every PVC inside it.
 ### 5. Ship a `CiliumNetworkPolicy`
 
 Not a plain `NetworkPolicy`, which blocks the kubelet's health probes. Every
-policy needs `fromEntities: [host, remote-node]` for those probes and
-`ingress` for Gateway traffic, and an egress half: the namespace, DNS through
-the proxy, and every outside name as `toFQDNs`. The template and the reasons
-are in the platform's
+policy needs `fromEntities: [host, remote-node]` for those probes, one rule
+for the way users arrive, and an egress half: the namespace, DNS through the
+proxy, and every outside name as `toFQDNs`. The arrival rule depends on rule
+6: `fromEntities: [ingress]` where the Gateway reaches the pod directly, or
+the Authentik server pods and nothing else where the outpost sits in front,
+so a request cannot skip it. The template and the reasons are in the
+platform's
 [Adding a Workload](https://homelab.wlkr.ch/development/add-workload/#the-network-policy).
 
 Put it at sync wave `-2`, with the namespace:
@@ -134,9 +137,11 @@ the `iss` claim fails against the discovered issuer.
 
 ### 7. Real secrets come from OpenBao
 
-An `ExternalSecret` reading `kv/<app>/config`, with the `bao kv put` command
-that seeds it in a comment at the top of the file. Database passwords are the
-exception, because CloudNativePG generates them (rule 3).
+An `ExternalSecret` reading `kv/<app>/config`, with a comment at the top of
+the file naming what seeds it: `make bao-secrets` in the platform repository,
+which runs `scripts/bao-secrets.sh` and writes every application's path.
+Database passwords are the exception, because CloudNativePG generates them
+(rule 3).
 
 OIDC client credentials go in the application's own `kv/<app>/config`, never
 under `kv/authentik/config`: a `bao kv put` replaces a path wholesale, so
@@ -160,7 +165,7 @@ The platform handles all of this; adding your own is the usual mistake:
 | HTTPS | Nothing | The Gateway holds a `*.k8s.wlkr.ch` wildcard |
 | Storage | `storageClassName: rook-ceph-block` | Rook-Ceph replicates it three ways |
 | Logs | Nothing | Alloy ships stdout to Loki |
-| Backups of a PVC | Nothing | Velero snapshots it on the cluster schedule |
+| Backups of a PVC | Nothing | Velero snapshots it nightly; restoring is in [Backups & Recovery](https://homelab.wlkr.ch/operations/backups/) |
 | Metrics | A `ServiceMonitor` or `PodMonitor` | Prometheus scrapes it |
 
 ## Behind the Gateway

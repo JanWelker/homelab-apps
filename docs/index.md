@@ -15,8 +15,8 @@ runs on top.
 
 | Application | URL | Storage | Database | Authentication |
 | --- | --- | --- | --- | --- |
-| [Home Assistant](home-assistant.md) | [home.k8s.wlkr.ch](https://home.k8s.wlkr.ch) | 5Gi for `/config` | CloudNativePG, for the recorder | Authentik proxy, in front of its own login |
-| [Nextcloud](nextcloud.md) | [cloud.k8s.wlkr.ch](https://cloud.k8s.wlkr.ch) | 50Gi for files | CloudNativePG | Authentik OIDC |
+| [Home Assistant](home-assistant.md) | [home.k8s.wlkr.ch](https://home.k8s.wlkr.ch) | A PVC for `/config` | CloudNativePG, for the recorder | Authentik proxy, in front of its own login |
+| [Nextcloud](nextcloud.md) | [cloud.k8s.wlkr.ch](https://cloud.k8s.wlkr.ch) | A PVC for files | CloudNativePG | Authentik OIDC |
 
 ## How a directory becomes an application
 
@@ -42,14 +42,8 @@ platform Application carries. Why the split exists is in
 
 ## What they have in common
 
-[Conventions](conventions.md) is the full list. The short version:
-
-- **A namespace they own**, with explicit Pod Security Admission labels.
-- **A `CiliumNetworkPolicy`** denying ingress by default.
-- **A CloudNativePG `Cluster`**, never a chart's bundled database.
-- **Proxy configuration** for the `apps-gateway`, which terminates TLS and
-  forwards from inside the pod CIDR.
-- **Authentik, not their own accounts**, as far as each is capable of it.
+Every directory follows the same eight rules, each with one sentence of why:
+[Conventions](conventions.md).
 
 ## Authentication
 
