@@ -223,6 +223,11 @@ spec:
             storageClass: rook-ceph-block
             accessMode: ReadWriteOnce
             size: 50Gi
+            # The chart's own helm.sh/resource-policy: keep only survives
+            # deleting the Application; ArgoCD maps it to Delete=false and
+            # prunes on Prune=false alone. Same as pvc.yaml elsewhere.
+            annotations:
+              argocd.argoproj.io/sync-options: Prune=false
 
           # Nextcloud runs database migrations on startup after an upgrade,
           # which takes it well past a default liveness probe's patience.

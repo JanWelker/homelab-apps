@@ -8,6 +8,8 @@ metadata:
   name: home-assistant-db
   namespace: home-assistant
   annotations:
+    # Deleting a Cluster deletes its PVCs. Never available by accident.
+    argocd.argoproj.io/sync-options: Prune=false
     # Ahead of the Deployment: ArgoCD has a health check for this kind, so the
     # wave does not advance until Postgres reports "Cluster in healthy state".
     argocd.argoproj.io/sync-wave: "-1"

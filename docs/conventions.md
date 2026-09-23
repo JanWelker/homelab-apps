@@ -67,6 +67,11 @@ database, not merely a created one:
     argocd.argoproj.io/sync-wave: "-1"
 ```
 
+Annotate it `Prune=false`, as the PVC and the namespace are: deleting a
+`Cluster` deletes the volumes it owns. A chart-rendered PVC needs the same
+annotation through the chart's values; `helm.sh/resource-policy: keep` only
+survives deleting the Application, not a prune.
+
 The reasoning is in [CloudNativePG &rarr; The
 contract](https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract).
 
