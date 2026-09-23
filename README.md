@@ -37,15 +37,6 @@ platform documentation.
 A new application needs a page in `docs/`, registered in `zensical.toml`. The
 site builds with `--strict`, so an unregistered page fails CI.
 
-The rules that catch people out:
-
-- `project: apps`, or the ApplicationSet refuses the whole set.
-- Official upstream charts and images only, never a repackager's.
-- PostgreSQL is always a CloudNativePG `Cluster`, never the chart's bundled one.
-- Ship a `namespace.yaml` with Pod Security labels and a `CiliumNetworkPolicy`.
-- Authentication is Authentik's, on `auth.k8s.wlkr.ch` — never the `auth.infra`
-  name, which resolves only on the local network.
-
 ## Local checks
 
 The same linters CI runs:

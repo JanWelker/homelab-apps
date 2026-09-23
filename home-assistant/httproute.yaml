@@ -2,7 +2,7 @@
 # The backend is Authentik's embedded outpost, NOT home-assistant. Every
 # request to this hostname is authenticated by Authentik before it reaches
 # Home Assistant, which has no OIDC support of its own -- see
-# https://janwelker.github.io/homelab/platform/authentik/#home-assistant-is-the-exception
+# https://homelab.wlkr.ch/platform/authentik/#where-the-proxied-routes-point
 #
 # The cross-namespace backendRef is allowed only because
 # payload/platform/authentik/referencegrant.yaml names this namespace. Pointing
