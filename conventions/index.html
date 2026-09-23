@@ -859,6 +859,10 @@ database, not merely a created one:</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="nt">argocd.argoproj.io/sync-wave</span><span class="p">:</span><span class="w"> </span><span class="s">"-1"</span>
 </span></code></pre></div>
+<p>Annotate it <code>Prune=false</code>, as the PVC and the namespace are: deleting a
+<code>Cluster</code> deletes the volumes it owns. A chart-rendered PVC needs the same
+annotation through the chart's values; <code>helm.sh/resource-policy: keep</code> only
+survives deleting the Application, not a prune.</p>
 <p>The reasoning is in <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract">CloudNativePG &rarr; The
 contract</a>.</p>
 <h3 id="4-own-your-namespace">4. Own your namespace<a class="headerlink" href="#4-own-your-namespace" title="Permanent link">&para;</a></h3>
