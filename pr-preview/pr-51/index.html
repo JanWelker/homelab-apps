@@ -666,14 +666,14 @@ runs on top.</p>
 <tr>
 <td><a href="home-assistant/">Home Assistant</a></td>
 <td><a href="https://home.k8s.wlkr.ch">home.k8s.wlkr.ch</a></td>
-<td>5Gi for <code>/config</code></td>
+<td>A PVC for <code>/config</code></td>
 <td>CloudNativePG, for the recorder</td>
 <td>Authentik proxy, in front of its own login</td>
 </tr>
 <tr>
 <td><a href="nextcloud/">Nextcloud</a></td>
 <td><a href="https://cloud.k8s.wlkr.ch">cloud.k8s.wlkr.ch</a></td>
-<td>50Gi for files</td>
+<td>A PVC for files</td>
 <td>CloudNativePG</td>
 <td>Authentik OIDC</td>
 </tr>
@@ -697,15 +697,8 @@ Gateway, StorageClass or <code>ClusterSecretStore</code> it names is there — t
 platform Application carries. Why the split exists is in
 <a href="https://homelab.wlkr.ch/architecture/gitops/#workloads-live-in-a-second-repository">GitOps Strategy</a>.</p>
 <h2 id="what-they-have-in-common">What they have in common<a class="headerlink" href="#what-they-have-in-common" title="Permanent link">&para;</a></h2>
-<p><a href="conventions/">Conventions</a> is the full list. The short version:</p>
-<ul>
-<li><strong>A namespace they own</strong>, with explicit Pod Security Admission labels.</li>
-<li><strong>A <code>CiliumNetworkPolicy</code></strong> denying ingress by default.</li>
-<li><strong>A CloudNativePG <code>Cluster</code></strong>, never a chart's bundled database.</li>
-<li><strong>Proxy configuration</strong> for the <code>apps-gateway</code>, which terminates TLS and
-  forwards from inside the pod CIDR.</li>
-<li><strong>Authentik, not their own accounts</strong>, as far as each is capable of it.</li>
-</ul>
+<p>Every directory follows the same eight rules, each with one sentence of why:
+<a href="conventions/">Conventions</a>.</p>
 <h2 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h2>
 <p>Both user-facing applications go through
 <a href="https://homelab.wlkr.ch/platform/authentik/">Authentik</a>, in the shape each one
