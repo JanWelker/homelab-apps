@@ -32,7 +32,7 @@ break the whole set or the login if missed:
 - `namespace.yaml` with Pod Security labels and `Prune=false`, and a
   `CiliumNetworkPolicy`, both at sync wave `-2`. A policy at wave `0` cannot
   unblock a `Cluster` stuck at `-1`.
-- Authentik on `auth.k8s.wlkr.ch`, never `auth.infra.k8s.wlkr.ch`. OIDC
+- Authentik is `auth.k8s.wlkr.ch`, its only hostname. OIDC
   credentials come from `kv/<app>/config` in OpenBao, seeded by the platform's
   `bao-secrets.sh`, so going behind SSO is two PRs across two repositories.
 - Long explanations belong in `docs/`, not in YAML comments.
