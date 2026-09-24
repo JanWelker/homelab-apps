@@ -58,6 +58,8 @@ rollout and debugging are in
 | Control | Effect |
 | --- | --- |
 | Drag, scroll | Orbit and zoom; the scene auto-rotates until the first drag |
+| Group by | Platforms are namespaces or cluster nodes; the switch animates the regrouping, and in node view the arcs between platforms are the traffic that crosses the WireGuard mesh |
+| Node chips | Hover to highlight the workloads on that machine, click to hide them; a red dot marks a node Hubble Relay cannot reach |
 | Click a light or an arc | Counters, rates over the window, ports, HTTP paths and DNS names seen at L7, drop reasons, a sparkline |
 | Namespace chips | Hide a namespace; alt-click shows only that one |
 | Verdict and protocol chips | Hide arcs and sparks of that kind |
@@ -65,9 +67,13 @@ rollout and debugging are in
 | `space`, `f` | Pause, fit the ring into the view |
 
 `world` is split by the name the Hubble DNS proxy resolved, so an arc to
-`github.com` and one to `smtp.mailbox.org` are distinct. Reserved identities
-(`host`, `remote-node`, `kube-apiserver`, `ingress`) sit on the outer ring; the
-Gateway's Envoy is `ingress`, which is why user traffic arrives from there.
+`github.com` and one to `smtp.mailbox.org` are distinct. `kube-apiserver` and
+`ingress` sit on the outer ring; the Gateway's Envoy is `ingress`, which is
+why user traffic arrives from there. The six machines sit at the back of
+that ring under their own names: a flow's reporting agent places the pod on
+its node, and the `host` and `remote-node` identities resolve to the machine
+once one flow there has shown its address as `host`. Nothing is read from
+the API server for this.
 
 Without the cluster, the same binary runs on a laptop with `--demo` or replays
 a capture; the [README](https://github.com/JanWelker/flowscape#run-it) has
