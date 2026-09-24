@@ -475,6 +475,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#network-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Network policy
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -633,6 +650,23 @@
       </span>
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#network-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Network policy
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -812,6 +846,10 @@ blueprint) come from a second source pointing at this repository.</p>
 </thead>
 <tbody>
 <tr>
+<td><code>podSecurityContext</code> and <code>securityContext</code> set seccomp only; the namespace enforces <code>baseline</code></td>
+<td>The apache flavour of the official image starts as root and drops to <code>www-data</code> itself, so <code>runAsNonRoot</code> and a read-only root would mean changing how the image runs. <code>RuntimeDefault</code> is the profile the image is built for. The metrics exporter is a static Go binary that writes nothing, so it runs fully restricted</td>
+</tr>
+<tr>
 <td><code>internalDatabase.enabled: false</code>, <code>externalDatabase.existingSecret</code></td>
 <td><code>internalDatabase</code> is the chart's SQLite; its Bitnami PostgreSQL subchart is <code>postgresql.enabled</code>, off by default. Both give way to a CloudNativePG <code>Cluster</code> at sync wave <code>-1</code>, per <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract">the contract</a>. ArgoCD's health check for <code>Cluster</code> makes the wave wait for a working database before the chart's install job connects</td>
 </tr>
@@ -841,11 +879,11 @@ blueprint) come from a second source pointing at this repository.</p>
 </tr>
 <tr>
 <td><code>nextcloud.openmetrics.allowedClients</code></td>
-<td>The default is k3s's CIDRs, which reject Prometheus while the ServiceMonitor looks healthy</td>
+<td>Nextcloud's <code>/metrics</code> refuses clients outside this list, and the chart's default is k3s's CIDRs, which reject Prometheus with a 403 while the ServiceMonitor looks healthy. The pod and service CIDRs are in <code>ansible/inventory.yaml</code> in the platform repository. Setting the value only renders an environment variable: the chart mounts the config file that reads it only when <code>nextcloud.configs</code> is non-empty (<a href="https://github.com/nextcloud/helm/issues/887">nextcloud/helm#887</a>), so the startup hook applies it with <code>occ</code> instead, deleting the key first because <code>config:system:set</code> addresses array elements by index and never shortens a list</td>
 </tr>
 <tr>
 <td><code>nextcloud.existingSecret</code></td>
-<td>Without it the chart writes <code>admin</code> / <code>changeme</code> into its own Secret and points the install and the exporter at it. Nothing fails at sync time; check the block is present on every values change</td>
+<td>Without it the chart writes <code>admin</code> / <code>changeme</code> into its own Secret and points the install and the exporter at it. Nothing fails at sync time and nothing renders differently; the only sign is an exporter that cannot log in. Check the block is present on every values change</td>
 </tr>
 <tr>
 <td><code>allow_local_remote_servers</code>, set by the startup hook</td>
@@ -853,6 +891,49 @@ blueprint) come from a second source pointing at this repository.</p>
 </tr>
 </tbody>
 </table>
+<h3 id="network-policy">Network policy<a class="headerlink" href="#network-policy" title="Permanent link">&para;</a></h3>
+<p>Every rule in <code>nextcloud/networkpolicy.yaml</code>, and why it is there. The shape
+is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → Ship a <code>CiliumNetworkPolicy</code></a>.</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ingress from <code>ingress</code> on 80</td>
+<td>The Gateway reaches the web pod directly; Nextcloud handles its own login</td>
+</tr>
+<tr>
+<td>Ingress from Prometheus on 80, 9205 and 9187</td>
+<td>Nextcloud's own <code>/metrics</code>, the exporter, and the database's metrics</td>
+</tr>
+<tr>
+<td>Ingress from <code>cnpg-system</code> on 8000</td>
+<td>The operator polls the instance manager's status endpoint; without it the <code>Cluster</code> never goes Healthy. See <a href="#sync-stuck-on-the-database">Sync stuck on the database</a></td>
+</tr>
+<tr>
+<td>Egress from the web pod to the Authentik server pods on 9000</td>
+<td>Logins go to <code>auth.k8s.wlkr.ch</code>, which resolves to the Gateway's own address and is <code>world</code> to Cilium. The Gateway's Envoy then checks this policy against the Authentik pod it picks and answers 403 itself when that pod is not listed, so both the name and the pod are allowed</td>
+</tr>
+<tr>
+<td>Egress from the web pod to <code>*.nextcloud.com</code></td>
+<td>The app store, update notifications and the announcement feed</td>
+</tr>
+<tr>
+<td>Egress from the web pod to <code>github.com</code> and <code>release-assets.githubusercontent.com</code></td>
+<td>Every app, <code>user_oidc</code> included, is a GitHub release asset that redirects to the second host. Without both, the startup hook cannot install it on a fresh volume</td>
+</tr>
+<tr>
+<td>Egress from the database pod to <code>kube-apiserver</code></td>
+<td>The instance manager reports its status there; its liveness check fails otherwise</td>
+</tr>
+</tbody>
+</table>
+<p>With <code>allow_local_remote_servers</code> on, this list is the control that says where
+an outbound request may go.</p>
 <p>The database wiring, the same for every application here:</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">externalDatabase</span><span class="p">:</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
@@ -881,12 +962,53 @@ if someone changes it in the UI. Every command is idempotent:</p>
 <p>The <code>user_oidc:provider</code> call is not fatal: blueprint discovery is
 asynchronous, so on a first deploy the provider may not exist yet. The login
 form stays visible, the pod logs a warning, and the next restart configures it.</p>
+<p>Two details of that call:</p>
+<ul>
+<li><code>--unique-uid=0</code> makes the Nextcloud user ID the raw <code>preferred_username</code>
+  claim, so an Authentik user named like the local admin logs in as that
+  admin. Acceptable only while one person hands out Authentik usernames.</li>
+<li><code>user_oidc:provider</code> never fetches the discovery document, so its exit code
+  says nothing about whether the provider exists. Hiding the login form on that
+  exit code locks everyone out behind a button that 404s. The hook fetches the
+  discovery URL itself and hides the form only when it answers with an issuer;
+  the <code>false</code> branch brings the form back if a working login later stops
+  working. When it warns, check that Authentik's worker has the <code>NEXTCLOUD_*</code>
+  environment variables: <code>envFrom</code> injects them at pod start, so a Secret
+  updated later needs a worker restart.</li>
+</ul>
 <p>The provider itself is <code>nextcloud/authentik-blueprint.yaml</code>, a ConfigMap
 targeted at the <code>authentik</code> namespace, so provider and client change in one
 commit. The platform mounts it as an optional projected volume, because a fresh
-cluster has Authentik before it has any workload. The client credentials
-stay in the platform repository (<code>make bao-secrets</code> generates them), so a
-workload cannot take itself out from behind SSO on its own.</p>
+cluster has Authentik before it has any workload, and discovers it on the
+worker's startup, hourly, and through a file watcher. The ConfigMap sits at
+sync wave <code>-1</code> so the provider usually exists before the hook runs; discovery
+is asynchronous, so that is a head start, not a guarantee. The client
+credentials stay in the platform repository (<code>make bao-secrets</code> generates
+them), so a workload cannot take itself out from behind SSO on its own. The
+outpost's provider list stays there too: that entry replaces one global object,
+and two repositories writing it would overwrite each other's applications.</p>
+<table>
+<thead>
+<tr>
+<th>Blueprint field</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>grant_types</code> listed explicitly</td>
+<td>An empty list serves no grants and rejects every login</td>
+</tr>
+<tr>
+<td><code>redirect_uris</code> ends in <code>/apps/user_oidc/code</code></td>
+<td><code>user_oidc</code> builds the path from the provider name it is given</td>
+</tr>
+<tr>
+<td><code>client_id</code> and <code>client_secret</code> from <code>!Env</code></td>
+<td>Authentik reads them from its own <code>ExternalSecret</code> on <code>kv/nextcloud/config</code>, the same pair Nextcloud reads</td>
+</tr>
+</tbody>
+</table>
 <p>Use <code>auth.k8s.wlkr.ch</code>, never <code>auth.infra.k8s.wlkr.ch</code>: the <code>*.infra</code> zone
 resolves only on the local network, and a client must use one name
 consistently or the <code>iss</code> claim fails. See
@@ -913,6 +1035,11 @@ platform repository. It is its own path rather than keys under
 </tr>
 </tbody>
 </table>
+<p>Both <code>ExternalSecret</code>s sit at sync wave <code>-1</code>, with the database and ahead of
+the chart that reads them, and keep their Secret when deleted
+(<code>deletionPolicy: Retain</code>): the account survives, but the Secret is the only
+copy of the password outside OpenBao. The database password is not here;
+CloudNativePG generates it and nothing outside the cluster needs it.</p>
 <h3 id="break-glass">Break-glass<a class="headerlink" href="#break-glass" title="Permanent link">&para;</a></h3>
 <p><code>hide_login_form</code> hides the fields; it does not disable local accounts. The
 admin from <code>make bao-secrets</code> still works at:</p>

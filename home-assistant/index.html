@@ -462,6 +462,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#network-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Network policy
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -601,6 +618,23 @@
       </span>
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#network-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Network policy
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -745,12 +779,32 @@ Deployment, a Service, a PVC and a ConfigMap around the official image, per
 <td>Home Assistant is one stateful process with one volume and one port; a Deployment is less work than auditing a third-party chart on every bump</td>
 </tr>
 <tr>
+<td><code>strategy: Recreate</code>, one replica</td>
+<td>The <code>/config</code> PVC is <code>ReadWriteOnce</code>, and two Home Assistant processes against one <code>/config</code> corrupt the <code>.storage</code> registries</td>
+</tr>
+<tr>
+<td><code>revisionHistoryLimit: 2</code></td>
+<td>Superseded ReplicaSets keep their Trivy config-audit reports until they are garbage-collected; the Kubernetes default keeps ten</td>
+</tr>
+<tr>
+<td>Seccomp only; the namespace enforces <code>baseline</code></td>
+<td>The image runs as root under s6 and writes <code>/config</code>, and upstream does not support running it otherwise, so <code>runAsNonRoot</code> and a read-only root do not apply</td>
+</tr>
+<tr>
+<td>An init container from the same image seeds <code>/config</code> on every start</td>
+<td><code>configuration.yaml</code> includes <code>automations.yaml</code>, <code>scripts.yaml</code> and <code>scenes.yaml</code> so the UI editors can save; on a fresh volume they do not exist and Home Assistant fails to start rather than create them. Same image as the main container because Renovate updates every occurrence in one pull request, so the two cannot drift</td>
+</tr>
+<tr>
+<td>A long <code>startupProbe</code></td>
+<td>Home Assistant loads every integration before it serves anything, minutes rather than seconds on a cold start with a populated registry. The startup probe buys that time without making the liveness probe useless afterwards</td>
+</tr>
+<tr>
 <td>Recorder on CloudNativePG, not SQLite</td>
 <td>SQLite's locking on a network block device is the usual cause of a Home Assistant that feels slow. <code>purge_keep_days</code> is raised because the default of 10 is shorter than the moment you look for a graph. See <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract">the contract</a></td>
 </tr>
 <tr>
-<td><code>secrets.yaml</code> written by an init container on every start</td>
-<td>Home Assistant has no <code>!env_var</code> tag, so the database URL reaches <code>configuration.yaml</code> through <code>!secret</code>, from CloudNativePG's Secret. Anything added to that file by hand is lost at the next restart; secrets belong in <a href="https://homelab.wlkr.ch/platform/openbao/">OpenBao</a></td>
+<td><code>secrets.yaml</code> written by the init container on every start</td>
+<td>Home Assistant has no <code>!env_var</code> tag, so the database URL reaches <code>configuration.yaml</code> through <code>!secret</code>, from CloudNativePG's Secret, which the operator rotates. The value is written through <code>json.dumps</code> so it is valid YAML whatever the generated password contains. Anything added to that file by hand is lost at the next restart; secrets belong in <a href="https://homelab.wlkr.ch/platform/openbao/">OpenBao</a></td>
 </tr>
 <tr>
 <td><code>use_x_forwarded_for</code> with the pod CIDR in <code>trusted_proxies</code></td>
@@ -758,25 +812,54 @@ Deployment, a Service, a PVC and a ConfigMap around the official image, per
 </tr>
 <tr>
 <td><code>HTTPRoute</code> targets <code>authentik-server</code>, not the app</td>
-<td>The outpost authenticates and forwards to <code>home-assistant.home-assistant.svc:8123</code>. Home Assistant is the one proxied app with a login of its own, so browser users log in twice: defence in depth, not SSO</td>
+<td>The outpost authenticates and forwards to <code>home-assistant.home-assistant.svc:8123</code>. Home Assistant is the one proxied app with a login of its own, so browser users log in twice: defence in depth, not SSO. The cross-namespace <code>backendRef</code> works only because the platform's <code>referencegrant.yaml</code> names this namespace. Pointing the route at the Home Assistant Service instead silently removes the whole authentication layer, so it deserves a second look in review</td>
+</tr>
+</tbody>
+</table>
+<h3 id="network-policy">Network policy<a class="headerlink" href="#network-policy" title="Permanent link">&para;</a></h3>
+<p>Every rule in <code>home-assistant/networkpolicy.yaml</code>, and why it is there. The
+shape is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → Ship a <code>CiliumNetworkPolicy</code></a>;
+rollout and debugging are in
+<a href="https://homelab.wlkr.ch/platform/security-policies/#network-policies">Security Policies</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ingress on 8123 from the Authentik server pods only</td>
+<td>The outpost is the only path to the UI. No <code>fromEntities: ingress</code>, so a request straight from the Gateway cannot skip it. Nothing else in the cluster has a reason to connect: this namespace holds a long-lived token for every device in the house. With the rule missing, the hostname answers with a gateway error after a successful Authentik login</td>
 </tr>
 <tr>
-<td><code>CiliumNetworkPolicy</code> admits 8123 from the Authentik server pods only</td>
-<td>No <code>fromEntities: ingress</code>, so a request straight from the Gateway cannot skip the outpost</td>
+<td>Ingress from Prometheus on 9187</td>
+<td>The database's metrics</td>
 </tr>
 <tr>
-<td>Egress is default-deny: the database, DNS, <code>*.home-assistant.io</code> and nothing else</td>
-<td>An integration that talks to a device or a cloud is a line in <code>networkpolicy.yaml</code> first; the discovery multicast is allowed only so it does not fill the drop log. Shape and rollout: <a href="https://homelab.wlkr.ch/platform/security-policies/#network-policies">Security Policies</a></td>
-</tr>
-<tr>
-<td>Policy admits <code>cnpg-system</code> to the database pod on 8000, at sync wave <code>-2</code></td>
+<td>Ingress from <code>cnpg-system</code> on 8000</td>
 <td>The operator polls the instance manager there; without the rule the <code>Cluster</code> never goes Healthy and the sync deadlocks. See <a href="../nextcloud/#sync-stuck-on-the-database">Sync stuck on the database</a></td>
+</tr>
+<tr>
+<td>Egress to <code>*.home-assistant.io</code></td>
+<td>The alerts feed and version data. An integration that talks to a device or a cloud is a line here first</td>
+</tr>
+<tr>
+<td>Egress to the multicast and limited-broadcast ranges on 5353 and 1900</td>
+<td>The mDNS and SSDP discovery sockets keep sending, and the overlay carries it nowhere. Allowed only so it does not fill the drop log</td>
+</tr>
+<tr>
+<td>Egress from the database pod to <code>kube-apiserver</code></td>
+<td>The instance manager reports its status there; its liveness check fails otherwise</td>
 </tr>
 </tbody>
 </table>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<p>The ConfigMap is mounted over <code>/config/configuration.yaml</code> and read once at
-startup, so a merged change does nothing until the pod restarts:</p>
+<p>The ConfigMap is mounted over <code>/config/configuration.yaml</code>, so Git is the
+source of truth and the UI cannot edit it; everything Home Assistant writes for
+itself stays on the PVC underneath. The file is read once at startup, so a
+merged change does nothing until the pod restarts:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>home-assistant<span class="w"> </span>rollout<span class="w"> </span>restart<span class="w"> </span>deploy/home-assistant
 </span></code></pre></div>
 <p>The UI's own restart button does the same from inside.</p>
