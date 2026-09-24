@@ -87,6 +87,16 @@
       "separateMultipleMinor": true
     },
     {
+      "description": "Flowscape is our own image, built by the release workflow in JanWelker/flowscape; the three-day wait guards against upstream tags being pulled, which does not apply here.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/janwelker/flowscape"
+      ],
+      "minimumReleaseAge": "0 days"
+    },
+    {
       "description": "Home Assistant versions its releases as calendar dates, which semver reads as a major bump every month. Without this every routine release would wait for a human and none of them would ever be automerged.",
       "matchDatasources": [
         "docker"
