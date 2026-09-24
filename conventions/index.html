@@ -951,9 +951,10 @@ platform repository, so going behind SSO is deliberately two pull requests.</p>
 against the provider must tolerate it not existing yet: fail soft and log.
 Watch for SSRF guards, too: <code>auth.k8s.wlkr.ch</code> resolves to a private address,
 and Nextcloud needed <code>allow_local_remote_servers</code> before discovery worked.</p>
-<p><strong>Use <code>auth.k8s.wlkr.ch</code></strong>, never <code>auth.infra.k8s.wlkr.ch</code>. The <code>*.infra</code> zone
-resolves only on the local network, and a client must never mix the two, or
-the <code>iss</code> claim fails against the discovered issuer.</p>
+<p><strong>Use <code>auth.k8s.wlkr.ch</code></strong>, Authentik's only hostname, for the discovery URI
+and the redirect alike: the <code>iss</code> claim is the name the token was issued
+through, and a client that mixes names fails every login — see
+<a href="https://homelab.wlkr.ch/platform/authentik/#one-hostname">One hostname</a>.</p>
 <h3 id="7-real-secrets-come-from-openbao">7. Real secrets come from OpenBao<a class="headerlink" href="#7-real-secrets-come-from-openbao" title="Permanent link">&para;</a></h3>
 <p>An <code>ExternalSecret</code> reading <code>kv/&lt;app&gt;/config</code>, with a comment at the top of
 the file naming what seeds it: <code>make bao-secrets</code> in the platform repository,
