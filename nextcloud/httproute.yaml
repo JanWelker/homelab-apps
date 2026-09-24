@@ -1,7 +1,4 @@
 ---
-# external-dns publishes the Route53 record from this route, and the
-# apps-gateway already holds a *.k8s.wlkr.ch certificate. Neither needs a
-# resource here.
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:

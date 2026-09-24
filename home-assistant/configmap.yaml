@@ -1,7 +1,5 @@
 ---
-# Mounted over /config/configuration.yaml, so this file is the source of truth
-# and the UI cannot edit it. Everything Home Assistant writes for itself --
-# the .storage registries, automations, scenes -- stays on the PVC underneath.
+# Read once at startup; restart the pod after a change. docs/home-assistant.md#usage
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -17,31 +15,17 @@ data:
       internal_url: "http://home-assistant.home-assistant.svc.cluster.local:8123"
 
     http:
-      # Behind the apps-gateway, every request arrives from Cilium's Envoy with
-      # the real client address in X-Forwarded-For. Without these two settings
-      # Home Assistant sees the proxy as the client, which breaks per-user
-      # rate limiting and makes the ban list useless.
       use_x_forwarded_for: true
       trusted_proxies:
-        # The pod CIDR -- see ansible/inventory.yaml in the homelab repository.
         - 10.244.0.0/16
       ip_ban_enabled: true
       login_attempts_threshold: 5
 
     recorder:
-      # Home Assistant has no environment-variable tag -- !env_var was removed
-      # years ago -- so the connection string arrives through !secret, and the
-      # init container writes secrets.yaml from CloudNativePG's Secret at every
-      # start. See the note on secrets.yaml in deployment.yaml.
       db_url: !secret db_url
-      # Six weeks of history. The recorder is the only thing here that grows
-      # without bound, and the default of 10 days is shorter than most people
-      # want when they finally go looking for a graph.
       purge_keep_days: 42
       auto_purge: true
 
-    # The UI editors write to these files; without the includes the editors
-    # are read-only and quietly refuse to save.
     automation: !include automations.yaml
     script: !include scripts.yaml
     scene: !include scenes.yaml

@@ -1,16 +1,6 @@
 ---
-# The backend is Authentik's embedded outpost, NOT home-assistant. Every
-# request to this hostname is authenticated by Authentik before it reaches
-# Home Assistant, which has no OIDC support of its own -- see
-# https://homelab.wlkr.ch/platform/authentik/#where-the-proxied-routes-point
-#
-# The cross-namespace backendRef is allowed only because
-# payload/platform/authentik/referencegrant.yaml names this namespace. Pointing
-# this at the home-assistant Service instead would silently remove the whole
-# authentication layer, so it is worth a second look in review.
-#
-# external-dns still publishes the Route53 record from this route, and the
-# apps-gateway wildcard still covers the name.
+# authentik-server, not home-assistant: the outpost authenticates first.
+# Pointing this at the app removes that layer. docs/home-assistant.md#configuration
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:

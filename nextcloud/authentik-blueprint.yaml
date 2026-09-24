@@ -1,31 +1,11 @@
 ---
-# Nextcloud's own Authentik provider, in Nextcloud's own directory.
-#
-# This ConfigMap lands in the `authentik` namespace, not this workload's, and
-# the platform's Authentik mounts it into its worker as an *optional* projected
-# volume -- optional because this arrives in 12-workloads, four stages after
-# Authentik has to be Healthy, and a required mount would deadlock the rollout.
-# blueprints_discovery picks it up on startup, hourly, and on a file watcher.
-#
-# The key has to end in .yaml or it is not discovered at all.
-#
-# What is deliberately NOT here:
-#
-#   - the client credentials, which scripts/bao-secrets.sh generates into
-#     kv/nextcloud/config and Authentik reads as NEXTCLOUD_CLIENT_ID and
-#     NEXTCLOUD_CLIENT_SECRET. A workload cannot mint its own.
-#   - the embedded outpost's provider list, which proxied applications need.
-#     That entry replaces one global object, so two repositories writing it
-#     would silently overwrite each other's applications.
+# Lands in the authentik namespace; the key must end in .yaml. docs/nextcloud.md#oidc
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: authentik-blueprint-nextcloud
   namespace: authentik
   annotations:
-    # Ahead of the chart: the provider should exist before the hook that
-    # configures Nextcloud against it runs. Discovery is asynchronous, so this
-    # is a head start rather than a guarantee -- see docs/nextcloud.md.
     argocd.argoproj.io/sync-wave: "-1"
 data:
   nextcloud.yaml: |
@@ -42,13 +22,11 @@ data:
           authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
           invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
           client_type: confidential
-          # Required: an empty list serves no grants and rejects every login.
           grant_types:
             - authorization_code
             - refresh_token
           client_id: !Env NEXTCLOUD_CLIENT_ID
           client_secret: !Env NEXTCLOUD_CLIENT_SECRET
-          # user_oidc builds this path from the provider name it is given.
           redirect_uris:
             - matching_mode: strict
               url: https://cloud.k8s.wlkr.ch/apps/user_oidc/code

@@ -10,8 +10,7 @@ metadata:
 spec:
   project: apps
   sources:
-    # The Nextcloud organisation's own chart, from the repository Nextcloud
-    # publishes. Not a repackager's. See docs/conventions.md.
+    # Why each value is what it is: docs/nextcloud.md#configuration
     - repoURL: https://nextcloud.github.io/helm/
       chart: nextcloud
       targetRevision: 9.3.0
@@ -24,10 +23,6 @@ spec:
           nextcloud:
             host: cloud.k8s.wlkr.ch
 
-            # Seccomp only. Apache starts as root and drops to www-data, so
-            # neither runAsNonRoot nor a read-only root applies without
-            # changing how the image runs. RuntimeDefault is Docker's default
-            # profile, the one the image is built to run under.
             podSecurityContext:
               seccompProfile:
                 type: RuntimeDefault
@@ -35,47 +30,20 @@ spec:
               seccompProfile:
                 type: RuntimeDefault
 
-            # The break-glass admin, from OpenBao through secrets.yaml. Without
-            # this block the chart writes a Secret of its own holding the
-            # values file's defaults -- admin / changeme -- and both the
-            # install and the metrics exporter read from that instead. It was
-            # dropped once by accident and nothing rendered any differently;
-            # the only sign was an exporter that could not log in.
+            # Without this block the chart installs as admin / changeme.
             existingSecret:
               enabled: true
               secretName: nextcloud-admin
               usernameKey: username
               passwordKey: password
 
-            # Nextcloud's own /metrics endpoint refuses clients outside this
-            # list, and the chart's default is k3s's CIDRs (10.42/16 and
-            # 10.43/16). The ServiceMonitor scrapes that endpoint on the app
-            # Service as well as the exporter, so without ours Prometheus is
-            # turned away with a 403 and the target stays down. Setting this
-            # only renders the environment variable; the hook below is what
-            # applies it. Pod and service CIDRs from ansible/inventory.yaml in
-            # the homelab repository.
             openmetrics:
               allowedClients:
                 - "127.0.0.1"
                 - "10.244.0.0/16"
                 - "10.96.0.0/12"
 
-            # user_oidc reads these; so does the hook below. The Secret is the
-            # same one Authentik's blueprint reads the pair from, so the
-            # provider and its client are configured from one place and
-            # neither is ever copied out of a UI.
             extraEnv:
-              # Behind the apps-gateway, TLS is terminated before the request
-              # arrives and the source address is Cilium's Envoy. Without these
-              # Nextcloud builds http:// links on an https:// site, and
-              # user_oidc refuses to start a login at all with "You must access
-              # Nextcloud with HTTPS to use OpenID Connect".
-              #
-              # Env vars, not a file in `nextcloud.configs`: the image ships
-              # reverse-proxy.config.php, which reads exactly these, and config
-              # files load alphabetically -- a proxy.config.php of our own
-              # would be overridden by the one the image already has.
               - name: OVERWRITEPROTOCOL
                 value: https
               - name: OVERWRITEHOST
@@ -95,30 +63,14 @@ spec:
                     name: nextcloud-oidc
                     key: client-secret
 
-            # before-starting is the last hook the image runs, on every
-            # start, after an install or an upgrade has finished -- so one
-            # hook covers both cases and re-asserts the configuration if
-            # someone changes it in the UI. Every command here is idempotent:
-            # app:install is a no-op once installed, and user_oidc:provider
-            # updates the provider of that name rather than adding a second.
+            # Runs on every start. Every command is idempotent: docs/nextcloud.md#oidc
             hooks:
               before-starting: |
                 #!/bin/sh
                 set -eu
                 php occ app:install user_oidc || php occ app:enable user_oidc
 
-                # The chart renders openmetrics.allowedClients into
-                # OPENMETRICS_ALLOWED_CLIENTS, but only mounts the config file
-                # that reads it -- helm-metrics.config.php, which the image
-                # does not ship -- when nextcloud.configs is non-empty. So the
-                # value never reaches Nextcloud and Prometheus gets a 403 from
-                # /metrics. Applying it here needs no such trigger, and leaves
-                # the image's own config files in place.
-                # https://github.com/nextcloud/helm/issues/887
-                #
-                # Deleted first because config:system:set addresses array
-                # elements by index and never shortens one, so a trimmed list
-                # would otherwise leave stale entries behind.
+                # The chart never applies allowedClients itself: nextcloud/helm#887
                 php occ config:system:delete openmetrics_allowed_clients
                 i=0
                 for cidr in $(echo "${OPENMETRICS_ALLOWED_CLIENTS:-}" | tr ',' ' '); do
@@ -127,40 +79,12 @@ spec:
                   i=$((i + 1))
                 done
 
-                # Not fatal, deliberately. Authentik discovers the provider
-                # blueprint asynchronously -- on its worker's startup, hourly,
-                # or when the file watcher notices -- so on a first deploy this
-                # can run before the provider exists. A Nextcloud that will not
-                # start is a far worse outcome than one that is up with the
-                # local login still available, and this hook runs again on
-                # every start, so the next restart fixes it.
-                discovery="https://auth.k8s.wlkr.ch/application/o/nextcloud/.well-known/openid-configuration"
-
-                # Nextcloud refuses to let its own HTTP client reach a private
-                # address -- an SSRF guard, and a sensible default for a server
-                # that fetches URLs users give it. But auth.k8s.wlkr.ch is the
-                # apps Gateway, 10.9.2.249, so every discovery fetch failed
-                # with:
-                #
-                #   Host "10.9.2.249" (auth.k8s.wlkr.ch:80) violates local
-                #   access rules
-                #
-                # Pointing user_oidc at the in-cluster Service instead would
-                # dodge the guard and break the issuer check, since the browser
-                # and the server would then discover different issuers.
-                #
-                # So the guard is lifted. It is a real reduction in defence in
-                # depth -- it applies to every outbound request Nextcloud
-                # makes, not just this one -- and the compensating control is
-                # the namespace's CiliumNetworkPolicy plus the fact that
-                # federation and external storage are not enabled here.
+                # SSRF guard: auth.k8s.wlkr.ch resolves to a private address.
                 php occ config:system:set allow_local_remote_servers \
                   --type boolean --value true
 
-                # --unique-uid=0 makes the Nextcloud user ID the raw
-                # preferred_username claim, so an Authentik user named like
-                # the local admin logs in AS that admin. Acceptable only
-                # while Authentik usernames are handed out by one person.
+                # Not fatal: on a first deploy the provider may not exist yet.
+                discovery="https://auth.k8s.wlkr.ch/application/o/nextcloud/.well-known/openid-configuration"
                 php occ user_oidc:provider Authentik \
                   --clientid="$NEXTCLOUD_OIDC_CLIENT_ID" \
                   --clientsecret="$NEXTCLOUD_OIDC_CLIENT_SECRET" \
@@ -172,32 +96,16 @@ spec:
                   --scope="openid email profile" \
                   --check-bearer=0 || true
 
-                # Registering the provider does not prove it works --
-                # user_oidc:provider never fetches the discovery document, so
-                # it succeeds just as happily against a provider Authentik has
-                # not created yet. Hiding the login form on the strength of
-                # that exit code is how everyone ends up locked out behind a
-                # button that 404s, which is exactly what happened the first
-                # time this ran.
-                #
-                # So ask the issuer directly, and only hide the form once it
-                # answers. The `false` branch is not a no-op: it brings the
-                # form back if a working login later stops working.
+                # Hide the local login only once the issuer answers.
                 if curl -fsS --max-time 10 "$discovery" | grep -q '"issuer"'; then
                   php occ config:system:set hide_login_form --type boolean --value true
                 else
                   php occ config:system:set hide_login_form --type boolean --value false
-                  echo "WARNING: $discovery did not answer with an issuer." >&2
-                  echo "  Leaving the local login form visible rather than" >&2
-                  echo "  locking everyone out behind a button that 404s." >&2
-                  echo "  Check that Authentik's worker has the NEXTCLOUD_*" >&2
-                  echo "  env vars -- envFrom only injects them at pod start," >&2
-                  echo "  so a Secret updated later needs a worker restart." >&2
+                  echo "WARNING: $discovery did not answer with an issuer; leaving the local login form visible." >&2
+                  echo "  See docs/nextcloud.md#oidc" >&2
                 fi
 
           internalDatabase:
-            # Never the chart's own database. CloudNativePG runs it instead,
-            # from database.yaml in this directory.
             enabled: false
 
           externalDatabase:
@@ -205,7 +113,6 @@ spec:
             type: postgresql
             existingSecret:
               enabled: true
-              # Written by CloudNativePG. No password is copied anywhere.
               secretName: nextcloud-db-app
               usernameKey: username
               passwordKey: password
@@ -213,9 +120,6 @@ spec:
               databaseKey: dbname
 
           redis:
-            # Disabled deliberately: the chart's Redis is a Bitnami subchart
-            # already pointing at bitnamilegacy. One replica does not need a
-            # shared cache, and APCu is configured by default for the local one.
             enabled: false
 
           persistence:
@@ -223,30 +127,19 @@ spec:
             storageClass: rook-ceph-block
             accessMode: ReadWriteOnce
             size: 50Gi
-            # The chart's own helm.sh/resource-policy: keep only survives
-            # deleting the Application; ArgoCD maps it to Delete=false and
-            # prunes on Prune=false alone. Same as pvc.yaml elsewhere.
             annotations:
               argocd.argoproj.io/sync-options: Prune=false
 
-          # Nextcloud runs database migrations on startup after an upgrade,
-          # which takes it well past a default liveness probe's patience.
           startupProbe:
             enabled: true
             failureThreshold: 60
             periodSeconds: 10
 
-          # One replica, one ReadWriteOnce volume: a surging second pod cannot
-          # mount it and the rollout wedges until the deadline expires.
           replicaCount: 1
           deploymentStrategy:
             type: Recreate
 
           cronjob:
-            # Nextcloud's background jobs. Left at the default type `sidecar`
-            # deliberately: a separate CronJob pod would have to mount the same
-            # ReadWriteOnce volume as the web pod, which only works while both
-            # land on one node.
             enabled: true
             sidecar:
               securityContext:
@@ -254,16 +147,11 @@ spec:
                   type: RuntimeDefault
 
           metrics:
-            # The nextcloud-exporter sidecar deployment. It authenticates as
-            # the admin account from the same Secret the app uses.
             enabled: true
-            # Pod-level; the chart's container context already runs it as 1000.
             podSecurityContext:
               runAsNonRoot: true
               seccompProfile:
                 type: RuntimeDefault
-            # A static Go binary configured by flags and environment; it
-            # writes nothing, so a read-only root costs it nothing.
             securityContext:
               runAsUser: 1000
               runAsNonRoot: true
@@ -274,10 +162,8 @@ spec:
               seccompProfile:
                 type: RuntimeDefault
 
+          # `prometheus.`, not `metrics.serviceMonitor`: the documented key renders nothing.
           prometheus:
-            # Note the key: the chart's ServiceMonitor reads `prometheus.`,
-            # not `metrics.serviceMonitor`, despite what the values file's own
-            # comments say. Setting the documented one renders nothing at all.
             serviceMonitor:
               enabled: true
               interval: 30s
@@ -289,8 +175,6 @@ spec:
             limits:
               memory: 2Gi
 
-    # The database, the route, the policy and the admin secret: everything the
-    # chart does not render.
     - repoURL: https://github.com/JanWelker/homelab-apps.git
       targetRevision: HEAD
       path: nextcloud
