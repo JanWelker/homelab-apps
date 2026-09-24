@@ -1,0 +1,69 @@
+---
+# Why each setting is what it is: docs/flowscape.md#configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flowscape
+  namespace: flowscape
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: flowscape
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: flowscape
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: flowscape
+          image: ghcr.io/janwelker/flowscape:0.1.0
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: HUBBLE_RELAY_ADDR
+              value: hubble-relay.kube-system.svc.cluster.local:80
+            - name: LISTEN_ADDR
+              value: ":8080"
+            - name: ALLOWED_ORIGINS
+              value: flowscape.k8s.wlkr.ch
+            - name: WINDOW
+              value: 60s
+            - name: RETENTION
+              value: 300s
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi

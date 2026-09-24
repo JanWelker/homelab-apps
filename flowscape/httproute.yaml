@@ -1,0 +1,20 @@
+---
+# authentik-server, not flowscape: the outpost authenticates first.
+# Pointing this at the app removes that layer. docs/flowscape.md#configuration
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: flowscape
+  namespace: flowscape
+spec:
+  parentRefs:
+    - name: apps-gateway
+      namespace: kube-system
+      sectionName: https
+  hostnames:
+    - "flowscape.k8s.wlkr.ch"
+  rules:
+    - backendRefs:
+        - name: authentik-server
+          namespace: authentik
+          port: 80
