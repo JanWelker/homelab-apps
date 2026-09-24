@@ -127,10 +127,9 @@ and two repositories writing it would overwrite each other's applications.
 | `redirect_uris` ends in `/apps/user_oidc/code` | `user_oidc` builds the path from the provider name it is given |
 | `client_id` and `client_secret` from `!Env` | Authentik reads them from its own `ExternalSecret` on `kv/nextcloud/config`, the same pair Nextcloud reads |
 
-Use `auth.k8s.wlkr.ch`, never `auth.infra.k8s.wlkr.ch`: the `*.infra` zone
-resolves only on the local network, and a client must use one name
-consistently or the `iss` claim fails. See
-[Two hostnames](https://homelab.wlkr.ch/platform/authentik/#two-hostnames).
+Use `auth.k8s.wlkr.ch`, Authentik's only hostname, for both the discovery
+URI and the redirect, or the `iss` claim fails. See
+[One hostname](https://homelab.wlkr.ch/platform/authentik/#one-hostname).
 
 ### Secrets
 

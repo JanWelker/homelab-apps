@@ -131,9 +131,10 @@ against the provider must tolerate it not existing yet: fail soft and log.
 Watch for SSRF guards, too: `auth.k8s.wlkr.ch` resolves to a private address,
 and Nextcloud needed `allow_local_remote_servers` before discovery worked.
 
-**Use `auth.k8s.wlkr.ch`**, never `auth.infra.k8s.wlkr.ch`. The `*.infra` zone
-resolves only on the local network, and a client must never mix the two, or
-the `iss` claim fails against the discovered issuer.
+**Use `auth.k8s.wlkr.ch`**, Authentik's only hostname, for the discovery URI
+and the redirect alike: the `iss` claim is the name the token was issued
+through, and a client that mixes names fails every login — see
+[One hostname](https://homelab.wlkr.ch/platform/authentik/#one-hostname).
 
 ### 7. Real secrets come from OpenBao
 
