@@ -19,7 +19,7 @@ plain manifests around that image, per
 
 | | |
 | --- | --- |
-| URL | [flowscape.k8s.wlkr.ch](https://flowscape.k8s.wlkr.ch) |
+| URL | [flowscape.k8s.wlkr.ch](https://flowscape.k8s.wlkr.ch); a [live demo](https://janwelker.github.io/flowscape/) with a synthetic cluster runs in the browser |
 | Authentication | Authentik proxy outpost; the app has none of its own |
 | Storage | None. Five minutes of counters in memory, rebuilt from Relay on every start |
 | Database | None |
