@@ -48,7 +48,7 @@ is [Conventions → Ship a `CiliumNetworkPolicy`](conventions.md#5-ship-a-cilium
 | Rule | Why |
 | --- | --- |
 | Ingress from `ingress` on 80 | The Gateway reaches the web pod directly; Nextcloud handles its own login |
-| Ingress from Prometheus on 80, 9205 and 9187 | Nextcloud's own `/metrics`, the exporter, and the database's metrics |
+| Ingress from Prometheus on 80, 9205 and 9187, `GET /metrics` only | Nextcloud's own `/metrics`, the exporter, and the database's metrics; a week of Hubble records showed no other request |
 | Ingress from `cnpg-system` on 8000 | The operator polls the instance manager's status endpoint; without it the `Cluster` never goes Healthy. See [Sync stuck on the database](#sync-stuck-on-the-database) |
 | Egress from the web pod to the Authentik server pods on 9000 | Logins go to `auth.k8s.wlkr.ch`, which resolves to the Gateway's own address and is `world` to Cilium. The Gateway's Envoy then checks this policy against the Authentik pod it picks and answers 403 itself when that pod is not listed, so both the name and the pod are allowed |
 | Egress from the web pod to `*.nextcloud.com` | The app store, update notifications and the announcement feed |

@@ -52,7 +52,7 @@ rollout and debugging are in
 | Rule | Why |
 | --- | --- |
 | Ingress on 8123 from the Authentik server pods only | The outpost is the only path to the UI. No `fromEntities: ingress`, so a request straight from the Gateway cannot skip it. Nothing else in the cluster has a reason to connect: this namespace holds a long-lived token for every device in the house. With the rule missing, the hostname answers with a gateway error after a successful Authentik login |
-| Ingress from Prometheus on 9187 | The database's metrics |
+| Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics; a week of Hubble records showed no other request |
 | Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](nextcloud.md#sync-stuck-on-the-database) |
 | Egress to `*.home-assistant.io` | The alerts feed and version data. An integration that talks to a device or a cloud is a line here first |
 | Egress to the multicast and limited-broadcast ranges on 5353 and 1900 | The mDNS and SSDP discovery sockets keep sending, and the overlay carries it nowhere. Allowed only so it does not fill the drop log |
