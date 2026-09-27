@@ -79,6 +79,10 @@ spec:
                   i=$((i + 1))
                 done
 
+                # No phone-home: docs/nextcloud.md#configuration
+                php occ config:system:set updatechecker --type boolean --value false
+                php occ app:disable nextcloud_announcements survey_client || true
+
                 # SSRF guard: auth.k8s.wlkr.ch resolves to a private address.
                 php occ config:system:set allow_local_remote_servers \
                   --type boolean --value true
