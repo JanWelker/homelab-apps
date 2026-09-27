@@ -876,8 +876,8 @@ rollout and debugging are in
 <td>The outpost is the only path to the UI. No <code>fromEntities: ingress</code>, so a request straight from the Gateway cannot skip it. Nothing else in the cluster has a reason to connect: this namespace holds a long-lived token for every device in the house. With the rule missing, the hostname answers with a gateway error after a successful Authentik login</td>
 </tr>
 <tr>
-<td>Ingress from Prometheus on 9187</td>
-<td>The database's metrics</td>
+<td>Ingress from Prometheus on 9187, <code>GET /metrics</code> only</td>
+<td>The database's metrics; a week of Hubble records showed no other request</td>
 </tr>
 <tr>
 <td>Ingress from <code>cnpg-system</code> on 8000</td>

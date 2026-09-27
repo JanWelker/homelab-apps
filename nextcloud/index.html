@@ -949,8 +949,8 @@ is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → Ship a
 <td>The Gateway reaches the web pod directly; Nextcloud handles its own login</td>
 </tr>
 <tr>
-<td>Ingress from Prometheus on 80, 9205 and 9187</td>
-<td>Nextcloud's own <code>/metrics</code>, the exporter, and the database's metrics</td>
+<td>Ingress from Prometheus on 80, 9205 and 9187, <code>GET /metrics</code> only</td>
+<td>Nextcloud's own <code>/metrics</code>, the exporter, and the database's metrics; a week of Hubble records showed no other request</td>
 </tr>
 <tr>
 <td>Ingress from <code>cnpg-system</code> on 8000</td>
