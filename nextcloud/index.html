@@ -920,6 +920,10 @@ blueprint) come from a second source pointing at this repository.</p>
 <td>The chart's values file documents the latter; the template reads the former. The wrong key renders nothing, silently. <code>metrics.enabled</code> does control the exporter</td>
 </tr>
 <tr>
+<td><code>updatechecker</code> off and <code>nextcloud_announcements</code>, <code>survey_client</code> disabled in the startup hook</td>
+<td>Nothing phones home: the update check calls <code>updates.nextcloud.com</code>, the announcements app <code>pushfeed.nextcloud.com</code>, the survey app reports the installation. The same rule as every platform component. <code>app:disable</code> is not idempotent on an app that is already off, hence the <code>\|\| true</code></td>
+</tr>
+<tr>
 <td><code>nextcloud.openmetrics.allowedClients</code></td>
 <td>Nextcloud's <code>/metrics</code> refuses clients outside this list, and the chart's default is k3s's CIDRs, which reject Prometheus with a 403 while the ServiceMonitor looks healthy. The pod and service CIDRs are in <code>ansible/inventory.yaml</code> in the platform repository. Setting the value only renders an environment variable: the chart mounts the config file that reads it only when <code>nextcloud.configs</code> is non-empty (<a href="https://github.com/nextcloud/helm/issues/887">nextcloud/helm#887</a>), so the startup hook applies it with <code>occ</code> instead, deleting the key first because <code>config:system:set</code> addresses array elements by index and never shortens a list</td>
 </tr>
@@ -962,7 +966,7 @@ is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → Ship a
 </tr>
 <tr>
 <td>Egress from the web pod to <code>*.nextcloud.com</code></td>
-<td>The app store, update notifications and the announcement feed</td>
+<td>The app store. The update check and the announcement feed are switched off in the startup hook, not permitted here</td>
 </tr>
 <tr>
 <td>Egress from the web pod to <code>github.com</code> and <code>release-assets.githubusercontent.com</code></td>
