@@ -97,6 +97,16 @@
       "minimumReleaseAge": "0 days"
     },
     {
+      "description": "The Knead Time reminder service is our own image too, built by push-image.yml in JanWelker/knead-time.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/janwelker/knead-time-push"
+      ],
+      "minimumReleaseAge": "0 days"
+    },
+    {
       "description": "Home Assistant versions its releases as calendar dates, which semver reads as a major bump every month. Without this every routine release would wait for a human and none of them would ever be automerged.",
       "matchDatasources": [
         "docker"

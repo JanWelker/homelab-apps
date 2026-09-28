@@ -1,0 +1,19 @@
+---
+# The app's own Service, not authentik-server: browsers on kneadtime.pizza
+# call this API directly, and there is no user to log in. docs/kneadtime.md#configuration
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: kneadtime
+  namespace: kneadtime
+spec:
+  parentRefs:
+    - name: apps-gateway
+      namespace: kube-system
+      sectionName: https
+  hostnames:
+    - "kneadtime.k8s.wlkr.ch"
+  rules:
+    - backendRefs:
+        - name: kneadtime
+          port: 80

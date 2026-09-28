@@ -1,0 +1,75 @@
+---
+# Why each setting is what it is: docs/kneadtime.md#configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kneadtime
+  namespace: kneadtime
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kneadtime
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kneadtime
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: kneadtime
+          image: ghcr.io/janwelker/knead-time-push:0.1.0
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: kneadtime-db-app
+                  key: uri
+            - name: VAPID_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: kneadtime-vapid
+                  key: vapid-private-key
+            - name: VAPID_SUBJECT
+              value: https://kneadtime.pizza
+            - name: ALLOWED_ORIGINS
+              value: https://kneadtime.pizza
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi

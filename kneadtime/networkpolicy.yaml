@@ -1,0 +1,109 @@
+---
+# Every rule and its reason: docs/kneadtime.md#network-policy
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-ingress
+  namespace: kneadtime
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    Default-deny ingress. The Gateway reaches the API directly (browsers
+    call it, nobody logs in); Prometheus scrapes the app and the database;
+    the CloudNativePG operator, the namespace itself and the node's health
+    probes.
+  endpointSelector: {}
+  ingress:
+    - fromEndpoints:
+        - {}
+    - fromEntities:
+        - host
+        - remote-node
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring
+            k8s:app.kubernetes.io/name: prometheus
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+            - port: "9187"
+              protocol: TCP
+          rules:
+            http:
+              - method: GET
+                path: /metrics$
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: cnpg-system
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-egress
+  namespace: kneadtime
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    Default-deny egress. The namespace only; the push services the app
+    dials are in the kneadtime policy.
+  endpointSelector: {}
+  egress:
+    - toEndpoints:
+        - {}
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: kneadtime
+  namespace: kneadtime
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    The reminder service delivers to the browsers' push services and to
+    nothing else. The service refuses a subscription on any other host
+    before it is stored, so this list and its allow-list are one decision.
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: kneadtime
+  egress:
+    - toFQDNs:
+        - matchName: web.push.apple.com
+        - matchName: fcm.googleapis.com
+        - matchName: updates.push.services.mozilla.com
+        - matchPattern: "*.notify.windows.com"
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: database
+  namespace: kneadtime
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    The CloudNativePG instance manager reports its status to the API
+    server; its liveness check fails without it.
+  endpointSelector:
+    matchLabels:
+      cnpg.io/podRole: instance
+  egress:
+    - toEntities:
+        - kube-apiserver
