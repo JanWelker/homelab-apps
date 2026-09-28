@@ -26,6 +26,7 @@ nav = [
   { "Home Assistant" = "home-assistant.md" },
   { "Knead Time" = "kneadtime.md" },
   { "Nextcloud" = "nextcloud.md" },
+  { "Umami" = "umami.md" },
 ]
 
 [project.theme]
@@ -47,7 +48,7 @@ features = [
   "navigation.instant",
   "navigation.instant.prefetch",
   "navigation.instant.progress",
-  # The nav is flat, so the four pages are the tab bar and no sidebar is left
+  # The nav is flat, so the pages are the tab bar and no sidebar is left
   # to draw. That is the intended shape here: same header chrome as the
   # platform site, and every page one click away from every other.
   "navigation.tabs",
