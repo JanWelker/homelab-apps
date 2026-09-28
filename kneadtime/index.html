@@ -914,6 +914,10 @@ image, per
 <td>Only pages loaded from <code>kneadtime.pizza</code> may call the API from a browser; PR previews of the app live under the same origin</td>
 </tr>
 <tr>
+<td><code>FORWARDED_ALLOW_IPS</code> is the pod CIDR</td>
+<td>Envoy is the only thing that reaches the pod, and it appends the client's address to <code>X-Forwarded-For</code>; uvicorn trusts that header from the pod network only, so the service's per-address rate limit (30 requests a minute on <code>/v1/</code>) counts the phone, not the Gateway</td>
+</tr>
+<tr>
 <td><code>HTTPRoute</code> targets the app's own Service</td>
 <td>Nobody logs in — browsers call the API on behalf of a phone that already gave its subscription. The Nextcloud shape, not the Flowscape one</td>
 </tr>
