@@ -976,6 +976,10 @@ whose new image carries a fixable CRITICAL the old one did not — the
 <p>Never the database a chart bundles. Disable it (<code>internalDatabase.enabled:
 false</code>, <code>postgresql.enabled: false</code>) and point the chart at a <code>Cluster</code> in the
 same namespace through its external-database settings.</p>
+<p>A single-instance <code>Cluster</code> sets <code>enablePDB: false</code>: the operator's
+<code>&lt;cluster&gt;-primary</code> PodDisruptionBudget otherwise never allows an eviction,
+so a drain of that node hangs until Kured's timeout and the node is never
+rebooted. The pod moves and the database is down for the move either way.</p>
 <p>The operator writes a <code>&lt;cluster-name&gt;-app</code> Secret with <code>username</code>, <code>password</code>,
 <code>host</code>, <code>port</code>, <code>dbname</code> and a ready-assembled <code>uri</code>. Consume those keys; never
 copy the value into Git or OpenBao.</p>
