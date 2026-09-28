@@ -294,6 +294,22 @@
   
 
       
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="./umami/" class="md-tabs__link">
+        
+  
+  Umami
+
+      </a>
+    </li>
+  
+
+      
     </ul>
   </div>
 </nav>
@@ -602,6 +618,32 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./umami/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Umami
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -768,6 +810,13 @@ runs on top.</p>
 <td>CloudNativePG</td>
 <td>Authentik OIDC</td>
 </tr>
+<tr>
+<td><a href="umami/">Umami</a></td>
+<td><a href="https://analytics.k8s.wlkr.ch">analytics.k8s.wlkr.ch</a></td>
+<td>None</td>
+<td>CloudNativePG</td>
+<td>Authentik proxy, in front of its own login; the tracker paths are public</td>
+</tr>
 </tbody>
 </table>
 <h2 id="how-a-directory-becomes-an-application">How a directory becomes an application<a class="headerlink" href="#how-a-directory-becomes-an-application" title="Permanent link">&para;</a></h2>
@@ -791,13 +840,15 @@ platform Application carries. Why the split exists is in
 <p>Every directory follows the same eight rules, each with one sentence of why:
 <a href="conventions/">Conventions</a>.</p>
 <h2 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h2>
-<p>Both user-facing applications go through
+<p>Every application goes through
 <a href="https://homelab.wlkr.ch/platform/authentik/">Authentik</a>, in the shape each one
 supports. <a href="nextcloud/">Nextcloud</a> speaks OIDC, so it is real single sign-on
-with the local login hidden. <a href="home-assistant/">Home Assistant</a> ships no OIDC
-provider, so the Authentik outpost sits in front of its own login and browser
-users authenticate twice. Both use <code>auth.k8s.wlkr.ch</code>, never the <code>auth.infra</code>
-name, which resolves only on the local network — see
+with the local login hidden. <a href="home-assistant/">Home Assistant</a> and
+<a href="umami/">Umami</a> ship no OIDC provider, so the Authentik outpost sits in
+front of their own logins and browser users authenticate twice;
+<a href="flowscape/">Flowscape</a> has no login, so the outpost is the only one. All
+use <code>auth.k8s.wlkr.ch</code>, never the <code>auth.infra</code> name, which resolves only on
+the local network — see
 <a href="https://homelab.wlkr.ch/platform/authentik/#two-hostnames">Two hostnames</a>.</p>
 <h2 id="adding-one">Adding one<a class="headerlink" href="#adding-one" title="Permanent link">&para;</a></h2>
 <p>Read <a href="conventions/">Conventions</a> first; it is short. The step-by-step version
