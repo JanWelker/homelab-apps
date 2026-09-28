@@ -59,6 +59,13 @@
     <script>__md_scope=new URL("..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
     
       
+  
+
+
+  <script defer src="https://analytics.k8s.wlkr.ch/script.js" data-website-id="56b371f0-7926-4b5d-8562-0c31c7d4792b" data-domains="homelab-apps.wlkr.ch"></script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
 
     
     
@@ -1021,6 +1028,10 @@ blueprint) come from a second source pointing at this repository.</p>
 <td><code>allow_local_remote_servers</code>, set by the startup hook</td>
 <td><code>auth.k8s.wlkr.ch</code> resolves to the Gateway's private address and Nextcloud's SSRF guard rejects it (<code>violates local access rules</code>) while <code>curl</code> from the same container works. Lifting it applies to every outbound request; the compensating controls are the egress half of <code>networkpolicy.yaml</code>, which names the only hosts the web pod may reach, and that federation and external storage are off. Pointing at the in-cluster Service instead would break the <code>iss</code> check</td>
 </tr>
+<tr>
+<td><code>jsloader</code> installed and configured by the startup hook</td>
+<td>The Umami snippet on every page. Nextcloud pins its Content Security Policy to its own origin, so a script from <code>analytics.k8s.wlkr.ch</code> needs an app that adds the host to <code>script-src</code> and <code>connect-src</code>; <code>jsloader</code> does that from one admin setting, and the hook writes the setting so a rebuild has it too. Bump <code>cachebuster</code> when the snippet changes. See <a href="../umami/#usage">Umami → Usage</a></td>
+</tr>
 </tbody>
 </table>
 <h3 id="network-policy">Network policy<a class="headerlink" href="#network-policy" title="Permanent link">&para;</a></h3>
@@ -1234,6 +1245,8 @@ finishes never applies the rule that would unblock it.</p>
   
 
 
+
+  
 
 
 

@@ -59,6 +59,13 @@
     <script>__md_scope=new URL("..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
     
       
+  
+
+
+  <script defer src="https://analytics.k8s.wlkr.ch/script.js" data-website-id="56b371f0-7926-4b5d-8562-0c31c7d4792b" data-domains="homelab-apps.wlkr.ch"></script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
 
     
     
@@ -940,6 +947,10 @@ Deployment, a Service, a PVC and a ConfigMap around the official image, per
 <td><code>HTTPRoute</code> targets <code>authentik-server</code>, not the app</td>
 <td>The outpost authenticates and forwards to <code>home-assistant.home-assistant.svc:8123</code>. Home Assistant is the one proxied app with a login of its own, so browser users log in twice: defence in depth, not SSO. The cross-namespace <code>backendRef</code> works only because the platform's <code>referencegrant.yaml</code> names this namespace. Pointing the route at the Home Assistant Service instead silently removes the whole authentication layer, so it deserves a second look in review</td>
 </tr>
+<tr>
+<td><code>frontend.extra_module_url</code>, with <code>umami.js</code> from the ConfigMap mounted under <code>/config/www</code></td>
+<td>The Umami snippet. The frontend loads the URL through <code>import()</code>, and the tracker reads its website ID off its own <code>&lt;script&gt;</code> tag, so the module appends that tag rather than being it. See <a href="../umami/#usage">Umami → Usage</a></td>
+</tr>
 </tbody>
 </table>
 <h3 id="network-policy">Network policy<a class="headerlink" href="#network-policy" title="Permanent link">&para;</a></h3>
@@ -1023,6 +1034,8 @@ CloudNativePG has produced the Secret.</p>
   
 
 
+
+  
 
 
 
