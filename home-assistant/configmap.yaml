@@ -14,6 +14,10 @@ data:
       external_url: "https://home.k8s.wlkr.ch"
       internal_url: "http://home-assistant.home-assistant.svc.cluster.local:8123"
 
+    frontend:
+      extra_module_url:
+        - /local/umami.js
+
     http:
       use_x_forwarded_for: true
       trusted_proxies:
@@ -29,3 +33,12 @@ data:
     automation: !include automations.yaml
     script: !include scripts.yaml
     scene: !include scenes.yaml
+  # Loaded through import(), which is not how the tracker expects to run, so
+  # this module appends the real <script> tag. docs/umami.md#usage
+  umami.js: |
+    const s = document.createElement("script");
+    s.defer = true;
+    s.src = "https://analytics.k8s.wlkr.ch/script.js";
+    s.dataset.websiteId = "afe34cd6-54d1-4ec4-93b1-cd873cdf6451";
+    s.dataset.domains = "home.k8s.wlkr.ch";
+    document.head.appendChild(s);

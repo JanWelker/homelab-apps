@@ -83,6 +83,14 @@ spec:
                 php occ config:system:set updatechecker --type boolean --value false
                 php occ app:disable nextcloud_announcements survey_client || true
 
+                # The Umami snippet on every page, and the analytics host in the
+                # Content Security Policy: docs/umami.md#usage
+                php occ app:install jsloader || php occ app:enable jsloader
+                php occ config:app:set jsloader url --value="https://analytics.k8s.wlkr.ch"
+                php occ config:app:set jsloader snippet \
+                  --value='var s=document.createElement("script");s.defer=true;s.src="https://analytics.k8s.wlkr.ch/script.js";s.dataset.websiteId="d007f6dc-928d-4a5d-be5e-012b73118d6d";s.dataset.domains="cloud.k8s.wlkr.ch";document.head.appendChild(s);'
+                php occ config:app:set jsloader cachebuster --value="1"
+
                 # SSRF guard: auth.k8s.wlkr.ch resolves to a private address.
                 php occ config:system:set allow_local_remote_servers \
                   --type boolean --value true

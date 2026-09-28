@@ -70,6 +70,10 @@ spec:
               mountPath: /config/configuration.yaml
               subPath: configuration.yaml
               readOnly: true
+            - name: configuration
+              mountPath: /config/www/umami.js
+              subPath: umami.js
+              readOnly: true
           startupProbe:
             httpGet:
               path: /
