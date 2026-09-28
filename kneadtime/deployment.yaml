@@ -54,6 +54,8 @@ spec:
               value: https://kneadtime.pizza
             - name: ALLOWED_ORIGINS
               value: https://kneadtime.pizza
+            - name: FORWARDED_ALLOW_IPS
+              value: 10.244.0.0/16
           livenessProbe:
             httpGet:
               path: /healthz
