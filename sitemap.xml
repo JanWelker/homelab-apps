@@ -13,6 +13,9 @@
         <loc>https://homelab-apps.wlkr.ch/home-assistant/</loc>
       </url>
       <url>
+        <loc>https://homelab-apps.wlkr.ch/kneadtime/</loc>
+      </url>
+      <url>
         <loc>https://homelab-apps.wlkr.ch/nextcloud/</loc>
       </url>
 </urlset>

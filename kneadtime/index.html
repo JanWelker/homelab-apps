@@ -6,17 +6,17 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Flowscape on the cluster: a self-built 3D map of Hubble flows across namespaces, read-only, behind the Authentik proxy outpost.">
+        <meta name="description" content="Knead Time's reminder service on the cluster: the one server behind kneadtime.pizza, holding push subscriptions and step times, reachable from the public internet without a login.">
       
       
       
-        <link rel="canonical" href="https://homelab-apps.wlkr.ch/flowscape/">
+        <link rel="canonical" href="https://homelab-apps.wlkr.ch/kneadtime/">
       
       
-        <link rel="prev" href="../conventions/">
+        <link rel="prev" href="../home-assistant/">
       
       
-        <link rel="next" href="../home-assistant/">
+        <link rel="next" href="../nextcloud/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Flowscape - Homelab Applications</title>
+        <title>Knead Time - Homelab Applications</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#flowscape" class="md-skip">
+        <a href="#knead-time" class="md-skip">
           Skip to content
         </a>
       
@@ -116,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Flowscape
+              Knead Time
             
           </span>
         </div>
@@ -234,11 +234,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="././" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../flowscape/" class="md-tabs__link">
         
   
   Flowscape
@@ -268,9 +266,11 @@
   
   
   
+    
   
-    <li class="md-tabs__item">
-      <a href="../kneadtime/" class="md-tabs__link">
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="././" class="md-tabs__link">
         
   
   Knead Time
@@ -402,6 +402,58 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../flowscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Flowscape
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../home-assistant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home Assistant
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -421,7 +473,7 @@
   <span class="md-ellipsis">
     
   
-  Flowscape
+  Knead Time
 
     
   </span>
@@ -438,7 +490,7 @@
   <span class="md-ellipsis">
     
   
-  Flowscape
+  Knead Time
 
     
   </span>
@@ -475,6 +527,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#state" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        State
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -491,6 +554,17 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         Network policy
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Secrets
       </span>
     </span>
   </a>
@@ -539,58 +613,6 @@
   
 </nav>
       
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../home-assistant/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Home Assistant
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../kneadtime/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Knead Time
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -673,6 +695,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#state" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        State
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -689,6 +722,17 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         Network policy
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Secrets
       </span>
     </span>
   </a>
@@ -748,7 +792,7 @@
                 
                   
   
-    <a href="https://github.com/JanWelker/homelab-apps/edit/main/docs/flowscape.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/JanWelker/homelab-apps/edit/main/docs/kneadtime.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
     </a>
@@ -757,23 +801,24 @@
     
       
     
-    <a href="https://github.com/JanWelker/homelab-apps/raw/main/docs/flowscape.md" title="View source of this page" class="md-content__button md-icon">
+    <a href="https://github.com/JanWelker/homelab-apps/raw/main/docs/kneadtime.md" title="View source of this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-code-2" viewBox="0 0 24 24"><path d="M4 12.15V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2h-3.35"/><path d="M14 2v5a1 1 0 0 0 1 1h5M5 16l-3 3 3 3M9 22l3-3-3-3"/></svg>
     </a>
   
 
 
-<h1 id="flowscape">Flowscape<a class="headerlink" href="#flowscape" title="Permanent link">&para;</a></h1>
-<p><a href="https://github.com/JanWelker/flowscape">Flowscape</a> draws the whole cluster's
-network traffic as one 3D scene: namespaces as platforms, workloads as
-lights, every conversation an arc with sparks coloured by verdict. Hubble UI
-shows one namespace at a time; this answers "who talks to whom across
-namespaces, and what would a policy have dropped" in one picture. It is the
-one application here whose upstream is our own repository, and it deploys as
-plain manifests around that image, per
+<h1 id="knead-time">Knead Time<a class="headerlink" href="#knead-time" title="Permanent link">&para;</a></h1>
+<p><a href="https://kneadtime.pizza">Knead Time</a> is a static pizza-dough calculator on
+GitHub Pages. Its step reminders cannot come from the page — iOS wakes a web
+app's service worker only for a server-sent push — so this is the one server
+it has: a small FastAPI service that holds a phone's push subscription and the
+times of its hands-on steps, and sends a Web Push notification when each comes
+due. The source and the image live in the
+<a href="https://github.com/JanWelker/knead-time/tree/main/push">knead-time</a>
+repository, so like Flowscape it deploys as plain manifests around our own
+image, per
 <a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>.</p>
-<p><img alt="Flowscape showing the demo cluster" src="https://raw.githubusercontent.com/JanWelker/flowscape/main/docs/screenshot.png" /></p>
 <h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -785,27 +830,49 @@ plain manifests around that image, per
 <tbody>
 <tr>
 <td>URL</td>
-<td><a href="https://flowscape.k8s.wlkr.ch">flowscape.k8s.wlkr.ch</a>; a <a href="https://janwelker.github.io/flowscape/">live demo</a> with a synthetic cluster runs in the browser</td>
+<td><a href="https://kneadtime.k8s.wlkr.ch/healthz">kneadtime.k8s.wlkr.ch</a>, an API; the app that calls it is <a href="https://kneadtime.pizza">kneadtime.pizza</a></td>
 </tr>
 <tr>
 <td>Authentication</td>
-<td>Authentik proxy outpost; the app has none of its own</td>
+<td>None. Browsers on kneadtime.pizza call it directly; CORS admits that origin only</td>
 </tr>
 <tr>
 <td>Storage</td>
-<td>None. Five minutes of counters in memory, rebuilt from Relay on every start</td>
+<td>None on the pod</td>
 </tr>
 <tr>
 <td>Database</td>
-<td>None</td>
+<td>CloudNativePG <code>Cluster</code> <code>kneadtime-db</code></td>
 </tr>
 <tr>
-<td>Reads</td>
-<td>Hubble Relay in <code>kube-system</code>, plaintext gRPC on the pod port</td>
+<td>Dials</td>
+<td>The browsers' push services, over HTTPS</td>
 </tr>
 <tr>
 <td>Files</td>
-<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/flowscape"><code>flowscape/</code></a></td>
+<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/kneadtime"><code>kneadtime/</code></a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="state">State<a class="headerlink" href="#state" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Where</th>
+<th>Rebuildable?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Push subscriptions and the reminders queued for them</td>
+<td>PostgreSQL, via CloudNativePG</td>
+<td>Only by every phone tapping <strong>Remind me</strong> again; a lost database means one missed bake, not a lost account</td>
+</tr>
+<tr>
+<td>The VAPID private key</td>
+<td>OpenBao <code>kv/kneadtime/config</code>, through an ExternalSecret</td>
+<td>No — rotating it retires every subscription taken with the old key</td>
 </tr>
 </tbody>
 </table>
@@ -820,43 +887,45 @@ plain manifests around that image, per
 <tbody>
 <tr>
 <td>Plain manifests, no chart</td>
-<td>One stateless process with one port; the <a href="https://github.com/JanWelker/flowscape/blob/main/deploy/README.md">application repository</a> lists what any deployment needs, and that is all there is</td>
+<td>One process, one port, one database; the <a href="https://github.com/JanWelker/knead-time/blob/main/push/README.md">service README</a> lists the environment and that is all there is</td>
 </tr>
 <tr>
 <td>The namespace enforces <code>restricted</code></td>
-<td>The image is distroless, runs as uid 65532, writes nothing and needs no capability, so the strictest profile costs nothing</td>
+<td>The image runs as uid 65532, writes nothing and needs no capability; CloudNativePG's pods declare restricted-compliant contexts of their own</td>
 </tr>
 <tr>
-<td><code>automountServiceAccountToken: false</code></td>
-<td>The flow metadata already carries namespace, workload, identity, ports and verdict; the app never talks to the API server, so it holds no token</td>
+<td><code>strategy: Recreate</code>, one replica</td>
+<td>The dispatcher that sends due reminders runs inside the process; a second copy would race the first on the same rows</td>
 </tr>
 <tr>
-<td><code>HUBBLE_RELAY_ADDR</code> on the Service port</td>
-<td>Relay's Service maps 80 to the pod's 4245 and serves plaintext: the Cilium chart enables TLS only on the agent leg by default. The network policy names the pod port because policy sees the backend, not the Service</td>
+<td>A <code>Cluster</code>, not SQLite on a PVC</td>
+<td><a href="../conventions/#3-postgresql-is-always-a-cloudnativepg-cluster">Conventions → PostgreSQL is always a CloudNativePG Cluster</a>; <code>DATABASE_URL</code> is the <code>uri</code> key the operator writes to <code>kneadtime-db-app</code></td>
 </tr>
 <tr>
-<td><code>ALLOWED_ORIGINS</code> is the hostname</td>
-<td>The WebSocket accepts only browsers that loaded the page from <code>flowscape.k8s.wlkr.ch</code>; anything else is refused before the socket opens</td>
+<td><code>VAPID_PRIVATE_KEY</code> from OpenBao</td>
+<td>A P-256 key in PEM, generated by <code>make bao-secrets</code>; the service derives the public half at startup and serves it, so the static site carries no key</td>
 </tr>
 <tr>
-<td>Readiness ignores the Relay connection</td>
-<td>The outpost turns a failing readiness probe into a 502 on the whole site. A Relay outage shows as a red status pill in the UI and <code>flowscape_relay_connected 0</code> in Prometheus instead, so the page stays up to say what is wrong</td>
+<td><code>VAPID_SUBJECT</code> is the site URL</td>
+<td>The contact a push service may use; a URL rather than a mailbox keeps an address out of a manifest</td>
+</tr>
+<tr>
+<td><code>ALLOWED_ORIGINS</code> is the site</td>
+<td>Only pages loaded from <code>kneadtime.pizza</code> may call the API from a browser; PR previews of the app live under the same origin</td>
+</tr>
+<tr>
+<td><code>HTTPRoute</code> targets the app's own Service</td>
+<td>Nobody logs in — browsers call the API on behalf of a phone that already gave its subscription. The Nextcloud shape, not the Flowscape one</td>
 </tr>
 <tr>
 <td><code>revisionHistoryLimit: 2</code></td>
 <td>Superseded ReplicaSets keep their Trivy config-audit reports until garbage collection; the default keeps ten</td>
 </tr>
-<tr>
-<td><code>HTTPRoute</code> targets <code>authentik-server</code>, not the app</td>
-<td>Every flow in the cluster, with pod names, ports and request paths, is visible in the UI; the outpost authenticates before the request reaches it. The cross-namespace <code>backendRef</code> works only because the platform's <code>referencegrant.yaml</code> names this namespace. Pointing the route at the Service instead silently removes the whole authentication layer, so it deserves a second look in review</td>
-</tr>
 </tbody>
 </table>
 <h3 id="network-policy">Network policy<a class="headerlink" href="#network-policy" title="Permanent link">&para;</a></h3>
-<p>Every rule in <code>flowscape/networkpolicy.yaml</code>, and why it is there. The shape
-is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → Ship a <code>CiliumNetworkPolicy</code></a>;
-rollout and debugging are in
-<a href="https://homelab.wlkr.ch/platform/security-policies/#network-policies">Security Policies</a>.</p>
+<p>Every rule in <code>kneadtime/networkpolicy.yaml</code>, and why it is there. The shape
+is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → Ship a <code>CiliumNetworkPolicy</code></a>.</p>
 <table>
 <thead>
 <tr>
@@ -866,100 +935,57 @@ rollout and debugging are in
 </thead>
 <tbody>
 <tr>
-<td>Ingress on 8080 from the Authentik server pods only, with an L7 <code>http</code> rule</td>
-<td>The outpost is the only path to the UI, and the WebSocket upgrade passes the proxy the same way Home Assistant's does. No <code>fromEntities: ingress</code>, so a request straight from the Gateway cannot skip the login</td>
+<td>Ingress on 8080 from <code>ingress</code></td>
+<td>The Gateway reaches the pod directly; there is no outpost to skip</td>
 </tr>
 <tr>
-<td>Ingress from Prometheus on 8080, <code>GET /metrics</code> only</td>
-<td>The metrics share the port with the UI; the path match keeps the scraper away from <code>/api</code> and <code>/ws</code></td>
+<td>Ingress from Prometheus on 8080 and 9187, <code>GET /metrics</code> only</td>
+<td>The app's counters and the database's exporter</td>
 </tr>
 <tr>
-<td>Egress to <code>hubble-relay</code> in <code>kube-system</code> on 4245</td>
-<td>The one thing the app dials. The matching ingress rule on Relay's own policy lives in the platform repository, so reading every flow in the cluster is deliberately a change on both sides</td>
+<td>Ingress from <code>cnpg-system</code> on 8000</td>
+<td>The operator reads the instance manager's status</td>
 </tr>
 <tr>
-<td>No <code>toFQDNs</code>, no <code>kube-apiserver</code></td>
-<td>Nothing outside the cluster and no API access are needed; the absence is the point</td>
+<td>Egress to the four push-service names on 443</td>
+<td>Apple, Google, Mozilla and Microsoft are where subscriptions live. The service refuses any other host at request time, so this list and the code's allow-list are one decision taken twice</td>
+</tr>
+<tr>
+<td>The instance pods reach <code>kube-apiserver</code></td>
+<td>The CloudNativePG instance manager reports its status there</td>
 </tr>
 </tbody>
 </table>
+<h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
+<p><code>kv/kneadtime/config</code> holds one key, <code>vapid-private-key</code>, written by <code>make
+bao-secrets</code> in the platform repository. Overwriting it is gated behind a
+typed confirmation there: the push services answer 401 or 403 for every
+subscription taken with the old key, the service deletes them, and every phone
+has to opt in again.</p>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Control</th>
-<th>Effect</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Drag, scroll</td>
-<td>Orbit and zoom; the scene auto-rotates until the first drag</td>
-</tr>
-<tr>
-<td>Group by</td>
-<td>Platforms are namespaces or cluster nodes; the switch animates the regrouping, and in node view the arcs between platforms are the traffic that crosses the WireGuard mesh</td>
-</tr>
-<tr>
-<td>Node chips</td>
-<td>Hover to highlight the workloads on that machine, click to hide them; a red dot marks a node Hubble Relay cannot reach</td>
-</tr>
-<tr>
-<td>Click a light or an arc</td>
-<td>Counters, rates over the window, ports, HTTP paths and DNS names seen at L7, drop reasons, a sparkline</td>
-</tr>
-<tr>
-<td>Namespace chips</td>
-<td>Hide a namespace; alt-click shows only that one</td>
-</tr>
-<tr>
-<td>Verdict and protocol chips</td>
-<td>Hide arcs and sparks of that kind</td>
-</tr>
-<tr>
-<td>Window slider</td>
-<td>10 s to 5 min; rates and the sparkline follow</td>
-</tr>
-<tr>
-<td><code>space</code>, <code>f</code></td>
-<td>Pause, fit the ring into the view</td>
-</tr>
-</tbody>
-</table>
-<p><code>world</code> is split by the name the Hubble DNS proxy resolved, so an arc to
-<code>github.com</code> and one to <code>smtp.mailbox.org</code> are distinct. <code>kube-apiserver</code> and
-<code>ingress</code> sit on the outer ring; the Gateway's Envoy is <code>ingress</code>, which is
-why user traffic arrives from there. The six machines sit at the back of
-that ring under their own names: a flow's reporting agent places the pod on
-its node, and the <code>host</code> and <code>remote-node</code> identities resolve to the machine
-once one flow there has shown its address as <code>host</code>. Nothing is read from
-the API server for this.</p>
-<p>Without the cluster, the same binary runs on a laptop with <code>--demo</code> or replays
-a capture; the <a href="https://github.com/JanWelker/flowscape#run-it">README</a> has
-both.</p>
-<h2 id="health-check">Health check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>flowscape<span class="w"> </span>get<span class="w"> </span>pods
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>flowscape<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>deploy/flowscape<span class="w"> </span>--<span class="w"> </span>wget<span class="w"> </span>-qO-<span class="w"> </span>localhost:8080/api/status
+<p>Nothing to operate by hand. A phone with the app on its Home Screen taps
+<strong>Remind me on this device</strong> in the plan's menu; the receipt notification that
+arrives at once is the end-to-end check.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>curl<span class="w"> </span>-s<span class="w"> </span>https://kneadtime.k8s.wlkr.ch/v1/vapid<span class="w">     </span><span class="c1"># the public key, from outside the LAN</span>
 </span></code></pre></div>
-<p><code>status.relay</code> should read <code>connected</code> with an empty <code>unavailable</code> list. In
-Grafana, <code>flowscape_relay_connected</code> and <code>flowscape_relay_unavailable_nodes</code>
-say the same over time, and <code>rate(flowscape_flows_received_total[5m])</code> should
-sit in the hundreds per second.</p>
+<h2 id="health-check">Health check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>kneadtime<span class="w"> </span>get<span class="w"> </span>pods,cluster,externalsecret,httproute
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>kneadtime<span class="w"> </span>port-forward<span class="w"> </span>svc/kneadtime<span class="w"> </span><span class="m">8080</span>:80<span class="w"> </span><span class="p">&amp;</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>curl<span class="w"> </span>-s<span class="w"> </span>localhost:8080/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>kneadtime_push
+</span></code></pre></div>
+<p><code>kneadtime_push_sent_total</code> moves when a reminder goes out; <code>gone_total</code> counts
+subscriptions the push services refused.</p>
 <h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
-<div class="admonition warning">
-<p class="admonition-title">Amber means audited, not blocked</p>
-<p>With <code>policyAuditMode</code> on, a policy that would deny a flow logs an <code>AUDIT</code> verdict and lets it through. Amber arcs are exactly the conversations that break the day audit mode is switched off — see <a href="https://homelab.wlkr.ch/platform/security-policies/#rollout">Security Policies → Rollout</a>. Red arcs are real drops.</p>
-</div>
 <ul>
-<li><strong>It is live, not history.</strong> Relay's buffer is minutes deep and the app
-  keeps five minutes; the record of what a policy refused last week is in
-  Loki, via the Hubble export the platform tails.</li>
-<li><strong>The status pill, not the pod, reports a Relay outage.</strong> Readiness stays
-  green on purpose (see Configuration), so <code>kubectl get pods</code> looks fine
-  while the scene is empty. Check <code>/api/status</code> or the metric.</li>
-<li><strong>Sparks are a sample.</strong> The server sends at most 200 flow events per
-  second per browser and the browser adds synthetic ones in proportion to
-  the rate; the counters in the panel are exact, the particles are not.</li>
+<li><strong>The image has to be public on GHCR.</strong> The cluster has no pull secret for
+  <code>ghcr.io/janwelker</code>; a version published while the package was private
+  stays <code>ImagePullBackOff</code> until the package's visibility is changed.</li>
+<li><strong><code>readyz</code> is the database.</strong> A pod that is up but not ready is a database
+  that is not reachable; check the <code>Cluster</code> before the pod.</li>
+<li><strong>Nothing here sends on its own schedule.</strong> A reminder that did not arrive is
+  either a subscription the push service retired (<code>gone_total</code> rose, the phone
+  has to opt in again) or a phone whose Home Screen icon was removed, which
+  drops the subscription on the device side.</li>
 </ul>
 
 
@@ -1001,7 +1027,7 @@ sit in the hundreds per second.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../conventions/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Conventions">
+          <a href="../home-assistant/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Home Assistant">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
@@ -1011,20 +1037,20 @@ sit in the hundreds per second.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Conventions
+                Home Assistant
               </div>
             </div>
           </a>
         
         
           
-          <a href="../home-assistant/" class="md-footer__link md-footer__link--next" aria-label="Next: Home Assistant">
+          <a href="../nextcloud/" class="md-footer__link md-footer__link--next" aria-label="Next: Nextcloud">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Home Assistant
+                Nextcloud
               </div>
             </div>
             <div class="md-footer__button md-icon">
