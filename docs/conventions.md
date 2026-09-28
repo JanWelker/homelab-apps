@@ -54,6 +54,11 @@ Never the database a chart bundles. Disable it (`internalDatabase.enabled:
 false`, `postgresql.enabled: false`) and point the chart at a `Cluster` in the
 same namespace through its external-database settings.
 
+A single-instance `Cluster` sets `enablePDB: false`: the operator's
+`<cluster>-primary` PodDisruptionBudget otherwise never allows an eviction,
+so a drain of that node hangs until Kured's timeout and the node is never
+rebooted. The pod moves and the database is down for the move either way.
+
 The operator writes a `<cluster-name>-app` Secret with `username`, `password`,
 `host`, `port`, `dbname` and a ready-assembled `uri`. Consume those keys; never
 copy the value into Git or OpenBao.
