@@ -27,7 +27,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: kneadtime
-          image: ghcr.io/janwelker/knead-time-push:0.1.0@sha256:6fd9084ea55ac2f53846e5db2f2df3bc17865834b6175477725f2263f956c1c5
+          image: ghcr.io/janwelker/knead-time-push:0.2.0@sha256:44cf76bd6edd4039dd7dcf5bc29b8859e97c40a9311e16d45500bfddaebd1dc3
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
