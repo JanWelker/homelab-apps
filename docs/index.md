@@ -18,6 +18,7 @@ runs on top.
 | [Flowscape](flowscape.md) | [flowscape.k8s.wlkr.ch](https://flowscape.k8s.wlkr.ch) | None | None | Authentik proxy |
 | [Home Assistant](home-assistant.md) | [home.k8s.wlkr.ch](https://home.k8s.wlkr.ch) | A PVC for `/config` | CloudNativePG, for the recorder | Authentik proxy, in front of its own login |
 | [Nextcloud](nextcloud.md) | [cloud.k8s.wlkr.ch](https://cloud.k8s.wlkr.ch) | A PVC for files | CloudNativePG | Authentik OIDC |
+| [Umami](umami.md) | [analytics.k8s.wlkr.ch](https://analytics.k8s.wlkr.ch) | None | CloudNativePG | Authentik proxy, in front of its own login; the tracker paths are public |
 
 ## How a directory becomes an application
 
@@ -48,13 +49,15 @@ Every directory follows the same eight rules, each with one sentence of why:
 
 ## Authentication
 
-Both user-facing applications go through
+Every application goes through
 [Authentik](https://homelab.wlkr.ch/platform/authentik/), in the shape each one
 supports. [Nextcloud](nextcloud.md) speaks OIDC, so it is real single sign-on
-with the local login hidden. [Home Assistant](home-assistant.md) ships no OIDC
-provider, so the Authentik outpost sits in front of its own login and browser
-users authenticate twice. Both use `auth.k8s.wlkr.ch`, never the `auth.infra`
-name, which resolves only on the local network — see
+with the local login hidden. [Home Assistant](home-assistant.md) and
+[Umami](umami.md) ship no OIDC provider, so the Authentik outpost sits in
+front of their own logins and browser users authenticate twice;
+[Flowscape](flowscape.md) has no login, so the outpost is the only one. All
+use `auth.k8s.wlkr.ch`, never the `auth.infra` name, which resolves only on
+the local network — see
 [Two hostnames](https://homelab.wlkr.ch/platform/authentik/#two-hostnames).
 
 ## Adding one
