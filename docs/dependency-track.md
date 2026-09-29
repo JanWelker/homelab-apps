@@ -83,6 +83,19 @@ each distinct image that is running, once, to `PUT /api/v1/bom` with
 | The API key is `optional` on the container, and its `ExternalSecret` is at sync wave 1 | A missing Secret would leave the pod in `CreateContainerConfigError`, and a `Forbid` CronJob never runs again behind a Job that never finishes; the script exits 1 with the reason instead. The wave is the same argument one level up: this is the one secret only a running Dependency-Track can issue, so it is fetched after the application, never in a wave that gates it. `make bao-secrets` writes the path empty rather than leaving it absent, for the same reason |
 | Runs before the platform's `findings-history` job at 06:30 | Both read the same reports; neither depends on the other |
 
+### False positives
+
+`false-positives.json` in the same ConfigMap names findings that are not
+findings: a project, an advisory, a component and the reason. After the
+uploads the job records each as a suppressed `FALSE_POSITIVE` analysis.
+
+| Detail | Why |
+| --- | --- |
+| The job records them, not a person | An analysis belongs to one project version, so every new tag of the image arrives with the finding open again |
+| A rule names the component by PURL without its version | The version moves with the image; the name is what collides |
+| A finding raised by tonight's upload is suppressed tomorrow | Dependency-Track analyses a BOM after it has accepted it, and the job does not wait |
+| Without `VULNERABILITY_ANALYSIS` the job says so and succeeds | The uploads are what the job is for |
+
 An image that is bumped leaves its old version behind as a project.
 Administration → Configuration → Maintenance sets how many versions of a
 project to keep, which is where that is bounded, not in the job.
@@ -140,7 +153,8 @@ one. Keep the account as break-glass; everything after is Authentik.
         by hand holds only until they log in again. The mapping, not the
         membership, is what lasts.
 2. Administration → Access Management → Teams: a team `sbom-upload` with the
-   `BOM_UPLOAD` and `PROJECT_CREATION_UPLOAD` permissions, and an API key on
+   `BOM_UPLOAD`, `PROJECT_CREATION_UPLOAD`, `VIEW_PORTFOLIO` and
+   `VULNERABILITY_ANALYSIS` permissions, and an API key on
    it. `make bao-secrets` in the platform repository writes it to
    `kv/dependency-track/sbom-upload`; the job picks it up at its next run,
    or sooner:

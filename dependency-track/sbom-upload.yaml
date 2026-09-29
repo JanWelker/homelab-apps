@@ -28,6 +28,10 @@ data:
     A report outlives its workload: a ReplicaSet scaled to zero keeps its
     SbomReport until it is garbage-collected. Those are skipped, so the
     portfolio is what runs, and the highest running version is the latest.
+
+    Afterwards the findings named in false-positives.json are marked as
+    such and suppressed. An analysis belongs to one project version, so it
+    is made again for every new tag, which is why it is the job's to make.
     """
     import base64
     import json
@@ -47,6 +51,7 @@ data:
     GROUP = "/apis/aquasecurity.github.io/v1alpha1"
     DTRACK = os.environ["DTRACK_URL"]
     API_KEY = os.environ.get("DTRACK_API_KEY", "")
+    RULES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "false-positives.json")
 
 
     def pages(path, limit):
@@ -147,6 +152,67 @@ data:
             return response.status
 
 
+    def dtrack(method, path, body=None):
+        request = urllib.request.Request(
+            f"{DTRACK}/api/v1/{path}",
+            data=None if body is None else json.dumps(body).encode(),
+            method=method,
+            headers={"Content-Type": "application/json", "X-Api-Key": API_KEY},
+        )
+        with urllib.request.urlopen(request, timeout=120) as response:
+            return json.load(response)
+
+
+    def findings(rule):
+        """(project, component, vulnerability) UUIDs a rule applies to.
+
+        A suppressed finding is not listed, so a rule that has been applied
+        matches nothing the next night.
+        """
+        name = urllib.parse.quote(rule["project"], safe="")
+        for known in dtrack("GET", f"project?name={name}&pageSize=500"):
+            if known["name"] != rule["project"]:
+                continue
+            for entry in dtrack("GET", f"vulnerability/project/{known['uuid']}?pageSize=5000"):
+                if entry["vulnId"] != rule["vulnerability"]:
+                    continue
+                for component in entry.get("components", []):
+                    if (component.get("purl") or "").startswith(rule["component"] + "@"):
+                        yield known, component, entry
+
+
+    def suppress():
+        """Mark what false-positives.json names. Returns how many it could not."""
+        with open(RULES, encoding="utf-8") as handle:
+            rules = json.load(handle)
+        marked = 0
+        for rule in rules:
+            try:
+                for known, component, entry in findings(rule):
+                    dtrack("PUT", "analysis", {
+                        "project": known["uuid"],
+                        "component": component["uuid"],
+                        "vulnerability": entry["uuid"],
+                        "analysisState": "FALSE_POSITIVE",
+                        "analysisDetails": rule["details"],
+                        "suppressed": True,
+                    })
+                    marked += 1
+                    print(f"SUPPRESSED {rule['vulnerability']} in {known['name']}:{known['version']}")
+            except urllib.error.HTTPError as error:
+                # Not a failure: the uploads are done, and a job that fails
+                # nightly until someone grants a permission is only noise.
+                if error.code == 403:
+                    print("may not record an analysis: the team lacks VULNERABILITY_ANALYSIS")
+                    return 0, marked
+                print(f"FAILED {rule['vulnerability']} HTTP {error.code}")
+                return len(rules), marked
+            except (urllib.error.URLError, TimeoutError) as error:
+                print(f"FAILED {rule['vulnerability']} {error}")
+                return len(rules), marked
+        return 0, marked
+
+
     def main():
         if not API_KEY:
             print("no API key yet: seed kv/dependency-track/sbom-upload, see docs/dependency-track.md")
@@ -197,11 +263,29 @@ data:
             f"{len(projects)} images, {failed} failed, {skipped} reports skipped, "
             f"{superseded} from superseded revisions"
         )
-        return 1 if failed else 0
+        unmarked, marked = suppress()
+        print(f"{marked} false positives suppressed, {unmarked} rules not applied")
+        return 1 if failed or unmarked else 0
 
 
     if __name__ == "__main__":
         sys.exit(main())
+  # Findings that are not findings. Why each one: docs/dependency-track.md#false-positives
+  false-positives.json: |
+    [
+      {
+        "project": "docker.io/library/nextcloud",
+        "vulnerability": "MAL-2022-3033",
+        "component": "pkg:npm/files_pdfviewer",
+        "details": "Nextcloud's own files_pdfviewer app under apps/, which shares its name with an unrelated package on npm."
+      },
+      {
+        "project": "docker.io/library/nextcloud",
+        "vulnerability": "MAL-2022-3056",
+        "component": "pkg:npm/firstrunwizard",
+        "details": "Nextcloud's own firstrunwizard app under apps/, which shares its name with an unrelated package on npm."
+      }
+    ]
 ---
 apiVersion: batch/v1
 kind: CronJob
