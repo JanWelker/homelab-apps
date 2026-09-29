@@ -1264,10 +1264,22 @@ membership, is what lasts.</p>
    with the <code>Debian</code>, <code>Alpine</code>, <code>Go</code>, <code>npm</code>, <code>PyPI</code>, <code>Maven</code>, <code>NuGet</code>,
    <code>crates.io</code> and <code>RubyGems</code> ecosystems; NVD and EPSS are on already.
    GitHub Advisories needs a token.</p>
-</li>
-<li>Administration → Repositories: disable the repositories the
+<div class="admonition warning">
+<p class="admonition-title">Without OSV the portfolio has components and no findings</p>
+<p>NVD describes what a vulnerability affects as a CPE, and the internal
+analyzer skips any component without one. Trivy's SBOMs are mostly
+operating-system and language packages, which carry a PURL and no
+CPE, so NVD alone matches almost nothing here however many hundred
+thousand advisories it has mirrored. OSV and GitHub Advisories are
+the ones that match on PURL. A full portfolio reporting zero
+vulnerabilities is this, not a clean estate.</p>
+</div>
+<p>OSV mirrors at 03:00 and NVD at 04:00, so findings appear the morning
+after the source is switched on, not the minute it is.
+4. Administration → Repositories: disable the repositories the
    <a href="#network-policy">egress policy</a> does not allow, or every analysis logs a
-   failed lookup for them.</li>
+   failed lookup for them.</p>
+</li>
 </ol>
 <h3 id="reading-it">Reading it<a class="headerlink" href="#reading-it" title="Permanent link">&para;</a></h3>
 <p>The portfolio is one project per image; the <code>namespace:</code> tags say where it
