@@ -1,0 +1,94 @@
+---
+# Every rule and its reason: docs/advent-wollbi.md#network-policy
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-ingress
+  namespace: advent-wollbi
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    Default-deny ingress. The Gateway reaches the public site directly and
+    the Authentik outpost reaches it for /admin; Prometheus, the
+    CloudNativePG operator, the namespace itself and the node's health
+    probes.
+  endpointSelector: {}
+  ingress:
+    - fromEndpoints:
+        - {}
+    - fromEntities:
+        - host
+        - remote-node
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: authentik
+            k8s:app.kubernetes.io/name: authentik
+            k8s:app.kubernetes.io/component: server
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
+          rules:
+            http:
+              - {}
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring
+            k8s:app.kubernetes.io/name: prometheus
+      toPorts:
+        - ports:
+            - port: "9187"
+              protocol: TCP
+          rules:
+            http:
+              - method: GET
+                path: /metrics$
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: cnpg-system
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-egress
+  namespace: advent-wollbi
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    Default-deny egress. The namespace only, and that is the whole list:
+    the site renders from its own database and serves its own uploads, so
+    nothing here dials anything outside the cluster.
+  endpointSelector: {}
+  egress:
+    - toEndpoints:
+        - {}
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: database
+  namespace: advent-wollbi
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    The CloudNativePG instance manager reports its status to the API
+    server; its liveness check fails without it.
+  endpointSelector:
+    matchLabels:
+      cnpg.io/podRole: instance
+  egress:
+    - toEntities:
+        - kube-apiserver
