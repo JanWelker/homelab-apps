@@ -1,0 +1,145 @@
+---
+# Every rule and its reason: docs/dependency-track.md#network-policy
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-ingress
+  namespace: dependency-track
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    Default-deny ingress. The Gateway reaches the API server and the
+    frontend directly, because the login is OIDC; Prometheus, the
+    CloudNativePG operator, the namespace itself and the node's health
+    probes.
+  endpointSelector: {}
+  ingress:
+    - fromEndpoints:
+        - {}
+    - fromEntities:
+        - host
+        - remote-node
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring
+            k8s:app.kubernetes.io/name: prometheus
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP
+            - port: "9187"
+              protocol: TCP
+          rules:
+            http:
+              - method: GET
+                path: /metrics$
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: cnpg-system
+      toPorts:
+        - ports:
+            - port: "8000"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-egress
+  namespace: dependency-track
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    Default-deny egress. The namespace only; what leaves the cluster is
+    per workload.
+  endpointSelector: {}
+  egress:
+    - toEndpoints:
+        - {}
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: api-server
+  namespace: dependency-track
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    The API server: Authentik for logins, the vulnerability feeds it
+    mirrors, and the package registries it asks for newer versions.
+    Telemetry is switched off, so metrics.dependencytrack.org is not
+    here.
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/component: api-server
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: authentik
+            k8s:app.kubernetes.io/name: authentik
+            k8s:app.kubernetes.io/component: server
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP
+    - toFQDNs:
+        - matchName: auth.k8s.wlkr.ch
+        - matchName: nvd.nist.gov
+        - matchName: storage.googleapis.com
+        - matchName: api.github.com
+        - matchName: epss.empiricalsecurity.com
+        - matchName: proxy.golang.org
+        - matchName: registry.npmjs.org
+        - matchName: pypi.org
+        - matchName: repo1.maven.org
+        - matchName: api.nuget.org
+        - matchName: crates.io
+        - matchName: rubygems.org
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: sbom-upload
+  namespace: dependency-track
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    The upload job lists Trivy Operator's SbomReports through the API
+    server; the Dependency-Track API it posts them to is in the namespace.
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: sbom-upload
+  egress:
+    - toEntities:
+        - kube-apiserver
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: database
+  namespace: dependency-track
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    The CloudNativePG instance manager reports its status to the API
+    server; its liveness check fails without it.
+  endpointSelector:
+    matchLabels:
+      cnpg.io/podRole: instance
+  egress:
+    - toEntities:
+        - kube-apiserver

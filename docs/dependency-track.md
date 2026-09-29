@@ -1,0 +1,201 @@
+---
+description: "Dependency-Track on the cluster: the official chart, an external CloudNativePG database, Authentik OIDC, and a nightly job that feeds it every SBOM Trivy Operator already produces."
+---
+
+# Dependency-Track
+
+[Dependency-Track](https://dependencytrack.org/) keeps a software bill of
+materials for every image the cluster runs and re-checks each one against the
+vulnerability feeds every day, so a new CVE shows up against images that were
+already scanned, not only the next time Trivy looks. Upstream publishes the
+[`dependency-track` chart](https://github.com/DependencyTrack/helm-charts/tree/main/charts/dependency-track),
+so this is that chart with an external database, per
+[Conventions → Official upstream sources only](conventions.md#2-official-upstream-sources-only);
+the network policy, the database, the Authentik blueprint and the upload job
+come from a second source pointing at this repository.
+
+The SBOMs are not generated here. The platform's
+[Trivy Operator](https://homelab.wlkr.ch/platform/trivy-operator/) writes one
+CycloneDX `SbomReport` per running container, and the [upload job](#sbom-upload)
+hands them over once a night. Trivy answers what is in the images today;
+Dependency-Track answers what changed, which images share a component, and
+whether a policy holds across the portfolio.
+
+## At a glance
+
+| | |
+| --- | --- |
+| URL | [sbom.k8s.wlkr.ch](https://sbom.k8s.wlkr.ch) |
+| Authentication | Authentik OIDC, code flow with PKCE; `admin` kept as break-glass |
+| Storage | A PVC for uploaded BOM files and the mirrored feeds |
+| Database | CloudNativePG `Cluster` `dependency-track-db` |
+| Secrets | `kv/dependency-track/config` and `kv/dependency-track/sbom-upload` in OpenBao |
+| Files | [`dependency-track/`](https://github.com/JanWelker/homelab-apps/tree/main/dependency-track) |
+
+## Configuration
+
+The chart values in `application.yaml` that are not defaults:
+
+| Setting | Why |
+| --- | --- |
+| `database.existingSecret: dependency-track-db-app` | CloudNativePG's generated credentials carry the `username` and `password` keys the chart mounts as files; see [the contract](https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract). The JDBC URL names the `-rw` Service |
+| `secretManagement.database.kek` from `dependency-track-config` | The key that encrypts every secret Dependency-Track stores in its database, API tokens for the feeds included. It must survive a rebuild, so it is generated into OpenBao, never by the chart. See [Secrets](#secrets) |
+| `fileStorage.local.existingClaim` | The chart's own PVC carries only `helm.sh/resource-policy: keep`, which a prune ignores; `pvc.yaml` carries `Prune=false` like every other volume here |
+| `DT_TELEMETRY_SUBMISSION_DEFAULT_ENABLED: "false"` | No phone-home. The property seeds the setting once, so it has to be off before the first start; the egress policy would drop the request anyway |
+| `DT_OIDC_*` and the frontend's `OIDC_*` | Both halves must name the same issuer and client ID; the API server validates the ID token the browser obtained. `preferred_username` is Authentik's username claim, and `groups` arrives with the `profile` scope, so team membership follows Authentik's groups. See [OIDC](#oidc) |
+| `apiServer.web.resources`, 1Gi requested, 3Gi limit | The JVM sizes its heap from the limit. Upstream recommends 8Gi for production; the portfolio here is a few hundred small images |
+| `serviceMonitor.namespace: dependency-track` | The chart defaults to the `monitoring` namespace, which the `apps` project may not write to. Prometheus reads it from here like every other application's |
+| `httpRoute` on `apps-gateway` | The chart's route sends `/api` to the API server and everything else to the frontend on one hostname, so the frontend's `API_BASE_URL` stays empty and the browser uses relative URLs |
+| `revisionHistoryLimit: 2` on both Deployments | Superseded ReplicaSets keep their Trivy config-audit reports until garbage collection; the chart keeps five |
+
+### Network policy
+
+Every rule in `dependency-track/networkpolicy.yaml`, and why it is there. The
+shape is [Conventions → Ship a `CiliumNetworkPolicy`](conventions.md#5-ship-a-ciliumnetworkpolicy).
+
+| Rule | Why |
+| --- | --- |
+| Ingress on 8080 from `ingress` | The Gateway reaches the API server and the frontend directly; the login is OIDC, so no outpost sits in front |
+| Ingress from Prometheus on 9000 and 9187, `GET /metrics` only | The API server's management port and the database's exporter |
+| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy. See [Sync stuck on the database](nextcloud.md#sync-stuck-on-the-database) |
+| Egress from the API server to Authentik | Discovery, the signing keys and the userinfo endpoint, on the public name, for the same reason Nextcloud dials it: the `iss` claim is that name |
+| Egress from the API server to `nvd.nist.gov`, `storage.googleapis.com`, `api.github.com`, `epss.empiricalsecurity.com` | The feeds the internal analyzer mirrors: NVD, OSV, GitHub Advisories, EPSS. GitHub stays off until a token is entered in the UI; the rule is there so entering one is the only step |
+| Egress from the API server to `proxy.golang.org`, `registry.npmjs.org`, `pypi.org`, `repo1.maven.org`, `api.nuget.org`, `crates.io`, `rubygems.org` | The registries Dependency-Track asks for the latest version of a component, for the ecosystems the images here contain. The other default repositories are disabled at [first login](#first-login) rather than allowed |
+| Egress from the upload job to `kube-apiserver` | It lists the `SbomReport` objects; the API it posts to is in the namespace |
+| Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise |
+
+### SBOM upload
+
+`sbom-upload.yaml` is a CronJob, a ConfigMap holding the script, and a
+ServiceAccount. At 05:00 it lists every `SbomReport` in the cluster and sends
+each distinct image, once, to `PUT /api/v1/bom` with `autoCreate` and
+`isLatest`, so the newest tag of an image is the version the portfolio shows.
+
+| Detail | Why |
+| --- | --- |
+| Project name is the image reference without its tag, version is the tag | A project's version history is then Renovate's bump history, and two namespaces running the same image share one project |
+| Namespaces become `namespace:<name>` tags on the project | Where a finding runs is the first question when it fires |
+| Reads `report.components` from the report, unchanged | Trivy Operator already writes CycloneDX; Dependency-Track accepts the same document, `specVersion` 1.7 included |
+| The `ClusterRole` that lets it list reports is the platform's | The `apps` project may not create cluster-scoped RBAC, and who may read Trivy's findings is the platform's call. It is `sbom-readers.yaml` next to the operator in the homelab repository |
+| The API key is `optional` on the container | A missing Secret would leave the pod in `CreateContainerConfigError`, and a `Forbid` CronJob never runs again behind a Job that never finishes. The script exits 1 with the reason instead |
+| Runs before the platform's `findings-history` job at 06:30 | Both read the same reports; neither depends on the other |
+
+An image that is bumped leaves its old version behind as a project.
+Administration → Configuration → Maintenance sets how many versions of a
+project to keep, which is where that is bounded, not in the job.
+
+### OIDC
+
+The provider is `dependency-track/authentik-blueprint.yaml`, a ConfigMap
+targeted at the `authentik` namespace, mounted and discovered the way
+[Nextcloud's](nextcloud.md#oidc) is. What differs:
+
+| Blueprint field | Why |
+| --- | --- |
+| `client_type: public`, no `client_secret` | The frontend is a browser application and authenticates with authorization code plus PKCE; there is nowhere to keep a secret and the API server only validates the resulting ID token |
+| `redirect_uris` ends in `/static/oidc-callback.html` | The page the frontend ships for the return leg |
+| `client_id` from `!Env` | Authentik reads it from its own `ExternalSecret` on `kv/dependency-track/config`, the same value both Deployments read |
+
+The issuer is `https://auth.k8s.wlkr.ch/application/o/dependency-track/`,
+trailing slash included: Dependency-Track compares the discovered issuer
+with the configured one character for character, and Authentik's carries
+the slash. Use `auth.k8s.wlkr.ch`, Authentik's only hostname; see
+[One hostname](https://homelab.wlkr.ch/platform/authentik/#one-hostname).
+
+### Secrets
+
+Two paths, both written by `make bao-secrets` in the platform repository.
+
+| Path | Key | Read by |
+| --- | --- | --- |
+| `kv/dependency-track/config` | `kek` | The API server, as the key encryption key for the secrets it stores |
+| `kv/dependency-track/config` | `oidc-client-id` | The API server, the frontend **and** Authentik, through two `ExternalSecret`s |
+| `kv/dependency-track/sbom-upload` | `api-key` | The upload job |
+
+The API key is its own path because Dependency-Track issues it, after the
+first start, and a `bao kv put` replaces a path wholesale: writing it later
+into the first path would have rotated the KEK. The script asks for it and
+accepts an empty answer, so a fresh cluster still seeds everything else
+without one. The database password is not here; CloudNativePG generates it.
+
+## Usage
+
+### First login
+
+The first start seeds `admin` with the password `admin` and asks for a new
+one. Keep the account as break-glass; everything after is Authentik.
+
+1. Administration → Access Management → OpenID Connect Groups: add the
+   Authentik group that should administer, and map it to the
+   `Administrators` team. Team synchronization then grants it on the next
+   Authentik login.
+2. Administration → Access Management → Teams: a team `sbom-upload` with the
+   `BOM_UPLOAD` and `PROJECT_CREATION_UPLOAD` permissions, and an API key on
+   it. `make bao-secrets` in the platform repository writes it to
+   `kv/dependency-track/sbom-upload`; the job picks it up at its next run,
+   or sooner:
+
+    ```bash
+    kubectl -n dependency-track create job --from=cronjob/sbom-upload sbom-upload-now
+    kubectl -n dependency-track logs job/sbom-upload-now
+    ```
+
+3. Administration → Vulnerability Sources: OSV is off by default. Enable it
+   with the `Debian`, `Alpine`, `Go`, `npm`, `PyPI`, `Maven`, `NuGet`,
+   `crates.io` and `RubyGems` ecosystems; NVD and EPSS are on already.
+   GitHub Advisories needs a token.
+4. Administration → Repositories: disable the repositories the
+   [egress policy](#network-policy) does not allow, or every analysis logs a
+   failed lookup for them.
+
+### Reading it
+
+The portfolio is one project per image; the `namespace:` tags say where it
+runs. A vulnerability's Affected Projects view is the cross-image question
+Trivy's per-container reports cannot answer directly. The same objects are
+in the API:
+
+```bash
+# Every project and its version, newest upload first
+curl -s -H "X-Api-Key: $KEY" "https://sbom.k8s.wlkr.ch/api/v1/project?sortName=lastBomImport&sortOrder=desc" \
+  | jq -r '.[] | [.name, .version, .lastBomImport] | @tsv'
+
+# Findings for one project
+curl -s -H "X-Api-Key: $KEY" "https://sbom.k8s.wlkr.ch/api/v1/finding/project/<uuid>" \
+  | jq -r '.[] | [.vulnerability.severity, .vulnerability.vulnId, .component.purl] | @tsv'
+```
+
+## Health check
+
+```bash
+kubectl -n dependency-track get pods,cronjob
+kubectl -n dependency-track get cluster dependency-track-db
+curl -s https://sbom.k8s.wlkr.ch/api/version | jq .version
+```
+
+The database should report `Cluster in healthy state`, the version endpoint
+answers without a login, and the last `sbom-upload` job should have
+succeeded with a line like `75 images, 0 failed`. In the UI, the Dashboard's
+portfolio count should match that number.
+
+## Pitfalls
+
+!!! warning "The KEK is the database"
+    Every secret Dependency-Track stores, feed tokens and notification
+    credentials among them, is encrypted with the key in
+    `kv/dependency-track/config`. Rewriting that path leaves the database
+    unreadable in those places; `make bao-secrets` asks for a typed
+    confirmation before it does. A restore of the database is only a restore
+    together with the key.
+
+- **A login that fails on `iss`** is a mismatch between the issuer in
+  `application.yaml` and Authentik's, usually the trailing slash. Both
+  Deployments carry the value; change it in one place.
+- **A first login that lands nowhere** is a user with no team. Provisioning
+  creates the account; the group mapping in [First login](#first-login) is
+  what grants it anything.
+- **A job that reports `no API key yet`** is the [first-login](#first-login)
+  step not done, or the `ExternalSecret` not refreshed since it was; the
+  Secret carries a `data-hash` annotation that moves when the value does.
+- **Old image versions pile up as projects.** The job never deletes; the
+  retention setting under Maintenance does.
