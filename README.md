@@ -20,6 +20,7 @@ Kubeadm, Cilium, Rook-Ceph, ArgoCD and everything under them — is in
 | Flowscape | `flowscape.k8s.wlkr.ch` ([live demo](https://janwelker.github.io/flowscape/)) | Authentik proxy | [`flowscape/`](flowscape/) | [docs](https://homelab-apps.wlkr.ch/flowscape/) |
 | Home Assistant | `home.k8s.wlkr.ch` | Authentik proxy | [`home-assistant/`](home-assistant/) | [docs](https://homelab-apps.wlkr.ch/home-assistant/) |
 | Nextcloud | `cloud.k8s.wlkr.ch` | Authentik OIDC | [`nextcloud/`](nextcloud/) | [docs](https://homelab-apps.wlkr.ch/nextcloud/) |
+| Paperless-ngx | `paperless.k8s.wlkr.ch` | Authentik OIDC | [`paperless-ngx/`](paperless-ngx/) | [docs](https://homelab-apps.wlkr.ch/paperless-ngx/) |
 | Umami | `analytics.k8s.wlkr.ch` | Authentik proxy | [`umami/`](umami/) | [docs](https://homelab-apps.wlkr.ch/umami/) |
 
 ## How it works

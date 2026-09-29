@@ -27,6 +27,7 @@ nav = [
   { "Home Assistant" = "home-assistant.md" },
   { "Knead Time" = "kneadtime.md" },
   { "Nextcloud" = "nextcloud.md" },
+  { "Paperless-ngx" = "paperless-ngx.md" },
   { "Umami" = "umami.md" },
 ]
 
