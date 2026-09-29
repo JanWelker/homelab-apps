@@ -151,6 +151,18 @@ one. Keep the account as break-glass; everything after is Authentik.
    with the `Debian`, `Alpine`, `Go`, `npm`, `PyPI`, `Maven`, `NuGet`,
    `crates.io` and `RubyGems` ecosystems; NVD and EPSS are on already.
    GitHub Advisories needs a token.
+
+    !!! warning "Without OSV the portfolio has components and no findings"
+        NVD describes what a vulnerability affects as a CPE, and the internal
+        analyzer skips any component without one. Trivy's SBOMs are mostly
+        operating-system and language packages, which carry a PURL and no
+        CPE, so NVD alone matches almost nothing here however many hundred
+        thousand advisories it has mirrored. OSV and GitHub Advisories are
+        the ones that match on PURL. A full portfolio reporting zero
+        vulnerabilities is this, not a clean estate.
+
+    OSV mirrors at 03:00 and NVD at 04:00, so findings appear the morning
+    after the source is switched on, not the minute it is.
 4. Administration → Repositories: disable the repositories the
    [egress policy](#network-policy) does not allow, or every analysis logs a
    failed lookup for them.
