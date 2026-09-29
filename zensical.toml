@@ -30,6 +30,7 @@ nav = [
   { "Nextcloud" = "nextcloud.md" },
   { "Open WebUI" = "open-webui.md" },
   { "Paperless-ngx" = "paperless-ngx.md" },
+  { "OpenClaw" = "openclaw.md" },
   { "Umami" = "umami.md" },
   { "Wollbi Adventsfenster" = "advent-wollbi.md" },
   { "Wollbi-Fescht" = "fest-wollbi.md" },
