@@ -1219,7 +1219,7 @@ uploads the job records each as a suppressed <code>FALSE_POSITIVE</code> analysi
 <td>Dependency-Track analyses a BOM after it has accepted it, and the job does not wait</td>
 </tr>
 <tr>
-<td>Without <code>VULNERABILITY_ANALYSIS</code> the job says so and succeeds</td>
+<td>Without <code>VULNERABILITY_ANALYSIS_UPDATE</code> the job says so and succeeds</td>
 <td>The uploads are what the job is for</td>
 </tr>
 </tbody>
@@ -1315,7 +1315,7 @@ membership, is what lasts.</p>
 <ol>
 <li>Administration → Access Management → Teams: a team <code>sbom-upload</code> with the
    <code>BOM_UPLOAD</code>, <code>PROJECT_CREATION_UPLOAD</code>, <code>VIEW_PORTFOLIO</code> and
-   <code>VULNERABILITY_ANALYSIS</code> permissions, and an API key on
+   <code>VULNERABILITY_ANALYSIS_UPDATE</code> permissions, and an API key on
    it. <code>make bao-secrets</code> in the platform repository writes it to
    <code>kv/dependency-track/sbom-upload</code>; the job picks it up at its next run,
    or sooner:</li>
