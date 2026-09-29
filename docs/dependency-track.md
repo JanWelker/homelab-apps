@@ -68,15 +68,18 @@ shape is [Conventions → Ship a `CiliumNetworkPolicy`](conventions.md#5-ship-a-
 
 `sbom-upload.yaml` is a CronJob, a ConfigMap holding the script, and a
 ServiceAccount. At 05:00 it lists every `SbomReport` in the cluster and sends
-each distinct image, once, to `PUT /api/v1/bom` with `autoCreate` and
-`isLatest`, so the newest tag of an image is the version the portfolio shows.
+each distinct image that is running, once, to `PUT /api/v1/bom` with
+`autoCreate`.
 
 | Detail | Why |
 | --- | --- |
 | Project name is the image reference without its tag, version is the tag | A project's version history is then Renovate's bump history, and two namespaces running the same image share one project |
 | Namespaces become `namespace:<name>` tags on the project | Where a finding runs is the first question when it fires |
+| Reports owned by a ReplicaSet scaled to zero are skipped | A report outlives its workload until the ReplicaSet is garbage-collected, and a superseded revision is not part of what runs. If the platform's grant lacks `replicasets`, the job says so and uploads everything |
+| `isLatest` goes to the highest version that is running | Two versions of one image can run at once, and the flag otherwise lands on whichever was uploaded last |
+| Two digests under one tag are one upload | They are one project version; the namespaces of both become its tags |
 | Reads `report.components` from the report, unchanged | Trivy Operator already writes CycloneDX; Dependency-Track accepts the same document, `specVersion` 1.7 included |
-| The `ClusterRole` that lets it list reports is the platform's | The `apps` project may not create cluster-scoped RBAC, and who may read Trivy's findings is the platform's call. It is `sbom-readers.yaml` next to the operator in the homelab repository |
+| The `ClusterRole` that lets it list reports and ReplicaSets is the platform's | The `apps` project may not create cluster-scoped RBAC, and who may read Trivy's findings is the platform's call. It is `sbom-readers.yaml` next to the operator in the homelab repository |
 | The API key is `optional` on the container, and its `ExternalSecret` is at sync wave 1 | A missing Secret would leave the pod in `CreateContainerConfigError`, and a `Forbid` CronJob never runs again behind a Job that never finishes; the script exits 1 with the reason instead. The wave is the same argument one level up: this is the one secret only a running Dependency-Track can issue, so it is fetched after the application, never in a wave that gates it. `make bao-secrets` writes the path empty rather than leaving it absent, for the same reason |
 | Runs before the platform's `findings-history` job at 06:30 | Both read the same reports; neither depends on the other |
 
@@ -194,7 +197,8 @@ curl -s https://sbom.k8s.wlkr.ch/api/version | jq .version
 
 The database should report `Cluster in healthy state`, the version endpoint
 answers without a login, and the last `sbom-upload` job should have
-succeeded with a line like `75 images, 0 failed`. In the UI, the Dashboard's
+succeeded with a line like `66 images, 0 failed, 0 reports skipped, 110 from
+superseded revisions`. In the UI, the Dashboard's
 portfolio count should match that number.
 
 ## Pitfalls
