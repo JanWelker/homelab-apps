@@ -32,6 +32,10 @@ data:
     Afterwards the findings named in false-positives.json are marked as
     such and suppressed. An analysis belongs to one project version, so it
     is made again for every new tag, which is why it is the job's to make.
+
+    Last, a project this job created and did not upload tonight is marked
+    inactive: the image no longer runs. Dependency-Track's retention only
+    ever deletes inactive projects, and nothing else knows which those are.
     """
     import base64
     import json
@@ -142,6 +146,7 @@ data:
             "projectTags": [{"name": f"namespace:{ns}"} for ns in sorted(namespaces)],
             "autoCreate": True,
             "isLatest": latest,
+            "isActive": True,
             "bom": base64.b64encode(json.dumps(bom).encode()).decode(),
         }).encode()
         request = urllib.request.Request(
@@ -213,6 +218,39 @@ data:
         return 0, marked
 
 
+    def retire(uploaded):
+        """Mark inactive what no longer runs. Returns how many it could not.
+
+        Only projects carrying a namespace: tag, which is this job's mark;
+        one created by hand is not the job's to retire.
+        """
+        retired = 0
+        page = 1
+        stale = []
+        while True:
+            batch = dtrack("GET", f"project?excludeInactive=true&pageSize=100&pageNumber={page}")
+            stale += [
+                known for known in batch
+                if (known["name"], known.get("version", "")) not in uploaded
+                and any(tag["name"].startswith("namespace:") for tag in known.get("tags", []))
+            ]
+            if len(batch) < 100:
+                break
+            page += 1
+        for known in stale:
+            try:
+                dtrack("PATCH", f"project/{known['uuid']}", {"active": False})
+            except urllib.error.HTTPError as error:
+                if error.code == 403:
+                    print("may not retire a project: the team lacks PORTFOLIO_MANAGEMENT_UPDATE")
+                    return 0, retired
+                print(f"FAILED to retire {known['name']}:{known['version']} HTTP {error.code}")
+                return len(stale) - retired, retired
+            retired += 1
+            print(f"RETIRED {known['name']}:{known['version']}")
+        return 0, retired
+
+
     def main():
         if not API_KEY:
             print("no API key yet: seed kv/dependency-track/sbom-upload, see docs/dependency-track.md")
@@ -265,7 +303,17 @@ data:
         )
         unmarked, marked = suppress()
         print(f"{marked} false positives suppressed, {unmarked} rules not applied")
-        return 1 if failed or unmarked else 0
+        # Only after a night in which every upload went through: a run that
+        # found no reports would otherwise retire the whole portfolio.
+        kept = 0
+        if projects and not failed and not skipped:
+            try:
+                kept, retired = retire(set(projects))
+                print(f"{retired} projects retired, {kept} not")
+            except (urllib.error.URLError, TimeoutError) as error:
+                kept = 1
+                print(f"FAILED to retire {error}")
+        return 1 if failed or unmarked or kept else 0
 
 
     if __name__ == "__main__":
