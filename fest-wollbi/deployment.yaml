@@ -21,14 +21,14 @@ spec:
       automountServiceAccountToken: false
       securityContext:
         runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
         seccompProfile:
           type: RuntimeDefault
       containers:
         - name: fest-wollbi
-          image: ghcr.io/janwelker/fest-wollbi-ch:0.1.0
+          image: ghcr.io/janwelker/fest-wollbi-ch:0.1.1
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

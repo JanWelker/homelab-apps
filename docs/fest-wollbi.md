@@ -30,7 +30,7 @@ per [Conventions → Official upstream sources only](conventions.md#2-official-u
 | Setting | Why |
 | --- | --- |
 | Plain manifests around our own image | One Next.js process with one port and one database; the site repository's README is the whole deployment contract |
-| The namespace enforces `restricted` | The image runs as uid 1000 with a read-only root filesystem; the two things it writes, the uploads and Next.js' render cache, are volumes |
+| The namespace enforces `restricted` | The image is distroless and runs as uid 65532, its `nonroot` user, with a read-only root filesystem; the two things it writes, the uploads and Next.js' render cache, are volumes. There is no shell in it, so `kubectl exec` is for `node -e`, not for poking around |
 | `DATABASE_URL` from `fest-wollbi-db-app`, key `uri` | Payload wants one connection string and CloudNativePG assembles it; see [the contract](https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract) |
 | `PAYLOAD_SECRET` from OpenBao | It signs every editor session and encrypts what Payload keeps encrypted. Generated in the cluster it would change on every rebuild and log everyone out |
 | `NEXT_PUBLIC_SERVER_URL` | The origin Payload trusts for CSRF and builds absolute URLs from. TLS ends at the Gateway, so the pod's own address is the wrong answer — see [Behind the Gateway](conventions.md#behind-the-gateway) |
