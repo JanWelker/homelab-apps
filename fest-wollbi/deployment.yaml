@@ -1,0 +1,112 @@
+---
+# Why each setting is what it is: docs/fest-wollbi.md#configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fest-wollbi
+  namespace: fest-wollbi
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: fest-wollbi
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fest-wollbi
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: fest-wollbi
+          image: ghcr.io/janwelker/fest-wollbi-ch:0.1.2
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            - name: TZ
+              value: Europe/Zurich
+            # CloudNativePG assembles the connection string; nothing copies it.
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: fest-wollbi-db-app
+                  key: uri
+            - name: PAYLOAD_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: fest-wollbi-config
+                  key: payload-secret
+            # TLS ends at the Gateway, so the origin Payload trusts for CSRF
+            # is the public one. docs/conventions.md#behind-the-gateway
+            - name: NEXT_PUBLIC_SERVER_URL
+              value: https://fest.wollbi.ch
+            # Read by the seed route, and only on an empty database.
+            - name: SEED_ADMIN_EMAIL
+              value: fest@wollbi.ch
+            - name: SEED_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fest-wollbi-config
+                  key: admin-password
+          volumeMounts:
+            - name: media
+              mountPath: /app/media
+            # Next.js writes its render cache at runtime; the root filesystem
+            # is read-only, so it needs somewhere to put it.
+            - name: next-cache
+              mountPath: /app/.next/cache
+            - name: tmp
+              mountPath: /tmp
+          # /healthz answers without touching the database: a database outage
+          # should show as an empty page, not as a restart loop.
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 5
+            failureThreshold: 60
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+      volumes:
+        - name: media
+          persistentVolumeClaim:
+            claimName: fest-wollbi-media
+        - name: next-cache
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

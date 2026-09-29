@@ -1,0 +1,61 @@
+---
+# The Pelican content, imported once. The route is part of the image, so this
+# is a curl rather than a second image to keep in step; it refuses without
+# the secret and does nothing once a page exists, which is what makes it safe
+# to run after every sync. docs/fest-wollbi.md#seeding
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: fest-wollbi-seed
+  namespace: fest-wollbi
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fest-wollbi-seed
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: seed
+          image: docker.io/curlimages/curl:8.22.0@sha256:58adaa4e8dca9c988bae2aba4ab3434a0bb2da16bbe3f92dec39ec7785166777
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              curl -fsS --max-time 600 --retry 10 --retry-delay 15 \
+                --retry-all-errors -X POST \
+                -H "x-seed-token: $PAYLOAD_SECRET" \
+                http://fest-wollbi:3000/seed
+              echo
+          env:
+            - name: PAYLOAD_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: fest-wollbi-config
+                  key: payload-secret
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi

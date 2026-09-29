@@ -1,0 +1,30 @@
+---
+# Two rules on one hostname. The site is public -- it is an invitation to the
+# neighbours -- so / reaches the app directly; /admin goes through the
+# Authentik outpost, in front of Payload's own login. A longer path prefix
+# wins in Gateway API, so the order of these rules does not matter.
+# docs/fest-wollbi.md#configuration
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: fest-wollbi
+  namespace: fest-wollbi
+spec:
+  parentRefs:
+    - name: apps-gateway
+      namespace: kube-system
+      sectionName: https
+  hostnames:
+    - "fest.wollbi.ch"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /admin
+      backendRefs:
+        - name: authentik-server
+          namespace: authentik
+          port: 80
+    - backendRefs:
+        - name: fest-wollbi
+          port: 3000
