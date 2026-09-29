@@ -77,7 +77,7 @@ each distinct image, once, to `PUT /api/v1/bom` with `autoCreate` and
 | Namespaces become `namespace:<name>` tags on the project | Where a finding runs is the first question when it fires |
 | Reads `report.components` from the report, unchanged | Trivy Operator already writes CycloneDX; Dependency-Track accepts the same document, `specVersion` 1.7 included |
 | The `ClusterRole` that lets it list reports is the platform's | The `apps` project may not create cluster-scoped RBAC, and who may read Trivy's findings is the platform's call. It is `sbom-readers.yaml` next to the operator in the homelab repository |
-| The API key is `optional` on the container | A missing Secret would leave the pod in `CreateContainerConfigError`, and a `Forbid` CronJob never runs again behind a Job that never finishes. The script exits 1 with the reason instead |
+| The API key is `optional` on the container, and its `ExternalSecret` is at sync wave 1 | A missing Secret would leave the pod in `CreateContainerConfigError`, and a `Forbid` CronJob never runs again behind a Job that never finishes; the script exits 1 with the reason instead. The wave is the same argument one level up: this is the one secret only a running Dependency-Track can issue, so it is fetched after the application, never in a wave that gates it. `make bao-secrets` writes the path empty rather than leaving it absent, for the same reason |
 | Runs before the platform's `findings-history` job at 06:30 | Both read the same reports; neither depends on the other |
 
 An image that is bumped leaves its old version behind as a project.
@@ -197,5 +197,10 @@ portfolio count should match that number.
 - **A job that reports `no API key yet`** is the [first-login](#first-login)
   step not done, or the `ExternalSecret` not refreshed since it was; the
   Secret carries a `data-hash` annotation that moves when the value does.
+- **A sync that stops at the database** with `could not get secret data from
+  provider` is `kv/dependency-track/sbom-upload` missing entirely. Run
+  `make bao-secrets` in the platform repository, which writes the path empty
+  when there is no key yet; an absent path fails the `ExternalSecret`, and a
+  failed resource stops the wave it is in.
 - **Old image versions pile up as projects.** The job never deletes; the
   retention setting under Maintenance does.
