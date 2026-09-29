@@ -6,17 +6,17 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Home Assistant on the cluster: plain manifests around the official image, two kinds of state in two places, and an Authentik proxy in front of its own login.">
+        <meta name="description" content="Dependency-Track on the cluster: the official chart, an external CloudNativePG database, Authentik OIDC, and a nightly job that feeds it every SBOM Trivy Operator already produces.">
       
       
       
-        <link rel="canonical" href="https://homelab-apps.wlkr.ch/home-assistant/">
+        <link rel="canonical" href="https://homelab-apps.wlkr.ch/dependency-track/">
       
       
-        <link rel="prev" href="../flowscape/">
+        <link rel="prev" href="../conventions/">
       
       
-        <link rel="next" href="../kneadtime/">
+        <link rel="next" href="../flowscape/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Home Assistant - Homelab Applications</title>
+        <title>Dependency-Track - Homelab Applications</title>
       
     
     
@@ -88,7 +88,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#home-assistant" class="md-skip">
+        <a href="#dependency-track" class="md-skip">
           Skip to content
         </a>
       
@@ -123,7 +123,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Home Assistant
+              Dependency-Track
             
           </span>
         </div>
@@ -241,9 +241,11 @@
   
   
   
+    
   
-    <li class="md-tabs__item">
-      <a href="../dependency-track/" class="md-tabs__link">
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="././" class="md-tabs__link">
         
   
   Dependency-Track
@@ -273,11 +275,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="././" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../home-assistant/" class="md-tabs__link">
         
   
   Home Assistant
@@ -441,58 +441,6 @@
       
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../dependency-track/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Dependency-Track
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../flowscape/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Flowscape
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
     
   
   
@@ -512,7 +460,7 @@
   <span class="md-ellipsis">
     
   
-  Home Assistant
+  Dependency-Track
 
     
   </span>
@@ -529,7 +477,7 @@
   <span class="md-ellipsis">
     
   
-  Home Assistant
+  Dependency-Track
 
     
   </span>
@@ -566,17 +514,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#state" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        State
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -599,6 +536,39 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#sbom-upload" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        SBOM upload
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oidc" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        OIDC
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Secrets
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -612,6 +582,34 @@
       </span>
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#first-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        First login
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reading-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Reading it
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -641,6 +639,58 @@
   
 </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flowscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Flowscape
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../home-assistant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home Assistant
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -775,17 +825,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#state" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        State
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -808,6 +847,39 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#sbom-upload" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        SBOM upload
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oidc" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        OIDC
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Secrets
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -821,6 +893,34 @@
       </span>
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#first-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        First login
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reading-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Reading it
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -861,7 +961,7 @@
                 
                   
   
-    <a href="https://github.com/JanWelker/homelab-apps/edit/main/docs/home-assistant.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/JanWelker/homelab-apps/edit/main/docs/dependency-track.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
     </a>
@@ -870,18 +970,29 @@
     
       
     
-    <a href="https://github.com/JanWelker/homelab-apps/raw/main/docs/home-assistant.md" title="View source of this page" class="md-content__button md-icon">
+    <a href="https://github.com/JanWelker/homelab-apps/raw/main/docs/dependency-track.md" title="View source of this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-code-2" viewBox="0 0 24 24"><path d="M4 12.15V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2h-3.35"/><path d="M14 2v5a1 1 0 0 0 1 1h5M5 16l-3 3 3 3M9 22l3-3-3-3"/></svg>
     </a>
   
 
 
-<h1 id="home-assistant">Home Assistant<a class="headerlink" href="#home-assistant" title="Permanent link">&para;</a></h1>
-<p><a href="https://www.home-assistant.io/">Home Assistant</a> runs the house. Upstream
-publishes no Helm chart and the community ones are repackagers, so this is a
-Deployment, a Service, a PVC and a ConfigMap around the official image, per
-<a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>.</p>
+<h1 id="dependency-track">Dependency-Track<a class="headerlink" href="#dependency-track" title="Permanent link">&para;</a></h1>
+<p><a href="https://dependencytrack.org/">Dependency-Track</a> keeps a software bill of
+materials for every image the cluster runs and re-checks each one against the
+vulnerability feeds every day, so a new CVE shows up against images that were
+already scanned, not only the next time Trivy looks. Upstream publishes the
+<a href="https://github.com/DependencyTrack/helm-charts/tree/main/charts/dependency-track"><code>dependency-track</code> chart</a>,
+so this is that chart with an external database, per
+<a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>;
+the network policy, the database, the Authentik blueprint and the upload job
+come from a second source pointing at this repository.</p>
+<p>The SBOMs are not generated here. The platform's
+<a href="https://homelab.wlkr.ch/platform/trivy-operator/">Trivy Operator</a> writes one
+CycloneDX <code>SbomReport</code> per running container, and the <a href="#sbom-upload">upload job</a>
+hands them over once a night. Trivy answers what is in the images today;
+Dependency-Track answers what changed, which images share a component, and
+whether a policy holds across the portfolio.</p>
 <h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -893,54 +1004,32 @@ Deployment, a Service, a PVC and a ConfigMap around the official image, per
 <tbody>
 <tr>
 <td>URL</td>
-<td><a href="https://home.k8s.wlkr.ch">home.k8s.wlkr.ch</a></td>
+<td><a href="https://sbom.k8s.wlkr.ch">sbom.k8s.wlkr.ch</a></td>
 </tr>
 <tr>
 <td>Authentication</td>
-<td>Authentik proxy outpost, in front of Home Assistant's own login</td>
+<td>Authentik OIDC, code flow with PKCE; <code>admin</code> kept as break-glass</td>
 </tr>
 <tr>
 <td>Storage</td>
-<td><code>rook-ceph-block</code> PVC for <code>/config</code></td>
+<td>A PVC for uploaded BOM files and the mirrored feeds</td>
 </tr>
 <tr>
 <td>Database</td>
-<td>CloudNativePG <code>Cluster</code> <code>home-assistant-db</code>, for the recorder</td>
+<td>CloudNativePG <code>Cluster</code> <code>dependency-track-db</code></td>
+</tr>
+<tr>
+<td>Secrets</td>
+<td><code>kv/dependency-track/config</code> and <code>kv/dependency-track/sbom-upload</code> in OpenBao</td>
 </tr>
 <tr>
 <td>Files</td>
-<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/home-assistant"><code>home-assistant/</code></a></td>
-</tr>
-</tbody>
-</table>
-<h2 id="state">State<a class="headerlink" href="#state" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>State</th>
-<th>Where</th>
-<th>Rebuildable?</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Registries, users, tokens, integration config (<code>/config/.storage</code>)</td>
-<td>The <code>home-assistant-config</code> PVC</td>
-<td><strong>No.</strong> Losing it means re-pairing every device; the nightly <a href="https://homelab.wlkr.ch/operations/backups/">Velero snapshot</a> is the only copy</td>
-</tr>
-<tr>
-<td>History and long-term statistics</td>
-<td>PostgreSQL, via CloudNativePG</td>
-<td>Only from the same Velero snapshot, which is crash-consistent, not point in time</td>
-</tr>
-<tr>
-<td><code>configuration.yaml</code></td>
-<td>A ConfigMap, in Git</td>
-<td>Yes</td>
+<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/dependency-track"><code>dependency-track/</code></a></td>
 </tr>
 </tbody>
 </table>
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
+<p>The chart values in <code>application.yaml</code> that are not defaults:</p>
 <table>
 <thead>
 <tr>
@@ -950,56 +1039,46 @@ Deployment, a Service, a PVC and a ConfigMap around the official image, per
 </thead>
 <tbody>
 <tr>
-<td>Plain manifests, no chart</td>
-<td>Home Assistant is one stateful process with one volume and one port; a Deployment is less work than auditing a third-party chart on every bump</td>
+<td><code>database.existingSecret: dependency-track-db-app</code></td>
+<td>CloudNativePG's generated credentials carry the <code>username</code> and <code>password</code> keys the chart mounts as files; see <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract">the contract</a>. The JDBC URL names the <code>-rw</code> Service</td>
 </tr>
 <tr>
-<td><code>strategy: Recreate</code>, one replica</td>
-<td>The <code>/config</code> PVC is <code>ReadWriteOnce</code>, and two Home Assistant processes against one <code>/config</code> corrupt the <code>.storage</code> registries</td>
+<td><code>secretManagement.database.kek</code> from <code>dependency-track-config</code></td>
+<td>The key that encrypts every secret Dependency-Track stores in its database, API tokens for the feeds included. It must survive a rebuild, so it is generated into OpenBao, never by the chart. See <a href="#secrets">Secrets</a></td>
 </tr>
 <tr>
-<td><code>revisionHistoryLimit: 2</code></td>
-<td>Superseded ReplicaSets keep their Trivy config-audit reports until they are garbage-collected; the Kubernetes default keeps ten</td>
+<td><code>fileStorage.local.existingClaim</code></td>
+<td>The chart's own PVC carries only <code>helm.sh/resource-policy: keep</code>, which a prune ignores; <code>pvc.yaml</code> carries <code>Prune=false</code> like every other volume here</td>
 </tr>
 <tr>
-<td>Seccomp only; the namespace enforces <code>baseline</code></td>
-<td>The image runs as root under s6 and writes <code>/config</code>, and upstream does not support running it otherwise, so <code>runAsNonRoot</code> and a read-only root do not apply</td>
+<td><code>DT_TELEMETRY_SUBMISSION_DEFAULT_ENABLED: "false"</code></td>
+<td>No phone-home. The property seeds the setting once, so it has to be off before the first start; the egress policy would drop the request anyway</td>
 </tr>
 <tr>
-<td>An init container from the same image seeds <code>/config</code> on every start</td>
-<td><code>configuration.yaml</code> includes <code>automations.yaml</code>, <code>scripts.yaml</code> and <code>scenes.yaml</code> so the UI editors can save; on a fresh volume they do not exist and Home Assistant fails to start rather than create them. Same image as the main container because Renovate updates every occurrence in one pull request, so the two cannot drift</td>
+<td><code>DT_OIDC_*</code> and the frontend's <code>OIDC_*</code></td>
+<td>Both halves must name the same issuer and client ID; the API server validates the ID token the browser obtained. <code>preferred_username</code> is Authentik's username claim, and <code>groups</code> arrives with the <code>profile</code> scope, so team membership follows Authentik's groups. See <a href="#oidc">OIDC</a></td>
 </tr>
 <tr>
-<td>A long <code>startupProbe</code></td>
-<td>Home Assistant loads every integration before it serves anything, minutes rather than seconds on a cold start with a populated registry. The startup probe buys that time without making the liveness probe useless afterwards</td>
+<td><code>apiServer.web.resources</code>, 1Gi requested, 3Gi limit</td>
+<td>The JVM sizes its heap from the limit. Upstream recommends 8Gi for production; the portfolio here is a few hundred small images</td>
 </tr>
 <tr>
-<td>Recorder on CloudNativePG, not SQLite</td>
-<td>SQLite's locking on a network block device is the usual cause of a Home Assistant that feels slow. <code>purge_keep_days</code> is raised because the default of 10 is shorter than the moment you look for a graph. See <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract">the contract</a></td>
+<td><code>serviceMonitor.namespace: dependency-track</code></td>
+<td>The chart defaults to the <code>monitoring</code> namespace, which the <code>apps</code> project may not write to. Prometheus reads it from here like every other application's</td>
 </tr>
 <tr>
-<td><code>secrets.yaml</code> written by the init container on every start</td>
-<td>Home Assistant has no <code>!env_var</code> tag, so the database URL reaches <code>configuration.yaml</code> through <code>!secret</code>, from CloudNativePG's Secret, which the operator rotates. The value is written through <code>json.dumps</code> so it is valid YAML whatever the generated password contains. Anything added to that file by hand is lost at the next restart; secrets belong in <a href="https://homelab.wlkr.ch/platform/openbao/">OpenBao</a></td>
+<td><code>httpRoute</code> on <code>apps-gateway</code></td>
+<td>The chart's route sends <code>/api</code> to the API server and everything else to the frontend on one hostname, so the frontend's <code>API_BASE_URL</code> stays empty and the browser uses relative URLs</td>
 </tr>
 <tr>
-<td><code>use_x_forwarded_for</code> with the pod CIDR in <code>trusted_proxies</code></td>
-<td>Requests arrive from Cilium's Envoy and the outpost. Without it every request has one source address, so the ban list and rate limiting count the household as one user</td>
-</tr>
-<tr>
-<td><code>HTTPRoute</code> targets <code>authentik-server</code>, not the app</td>
-<td>The outpost authenticates and forwards to <code>home-assistant.home-assistant.svc:8123</code>. Home Assistant is the one proxied app with a login of its own, so browser users log in twice: defence in depth, not SSO. The cross-namespace <code>backendRef</code> works only because the platform's <code>referencegrant.yaml</code> names this namespace. Pointing the route at the Home Assistant Service instead silently removes the whole authentication layer, so it deserves a second look in review</td>
-</tr>
-<tr>
-<td><code>frontend.extra_module_url</code>, with <code>umami.js</code> from the ConfigMap mounted under <code>/config/www</code></td>
-<td>The Umami snippet. The frontend loads the URL through <code>import()</code>, and the tracker reads its website ID off its own <code>&lt;script&gt;</code> tag, so the module appends that tag rather than being it. See <a href="../umami/#usage">Umami → Usage</a></td>
+<td><code>revisionHistoryLimit: 2</code> on both Deployments</td>
+<td>Superseded ReplicaSets keep their Trivy config-audit reports until garbage collection; the chart keeps five</td>
 </tr>
 </tbody>
 </table>
 <h3 id="network-policy">Network policy<a class="headerlink" href="#network-policy" title="Permanent link">&para;</a></h3>
-<p>Every rule in <code>home-assistant/networkpolicy.yaml</code>, and why it is there. The
-shape is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → Ship a <code>CiliumNetworkPolicy</code></a>;
-rollout and debugging are in
-<a href="https://homelab.wlkr.ch/platform/security-policies/#network-policies">Security Policies</a>.</p>
+<p>Every rule in <code>dependency-track/networkpolicy.yaml</code>, and why it is there. The
+shape is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → Ship a <code>CiliumNetworkPolicy</code></a>.</p>
 <table>
 <thead>
 <tr>
@@ -1009,24 +1088,32 @@ rollout and debugging are in
 </thead>
 <tbody>
 <tr>
-<td>Ingress on 8123 from the Authentik server pods only</td>
-<td>The outpost is the only path to the UI. No <code>fromEntities: ingress</code>, so a request straight from the Gateway cannot skip it. Nothing else in the cluster has a reason to connect: this namespace holds a long-lived token for every device in the house. With the rule missing, the hostname answers with a gateway error after a successful Authentik login</td>
+<td>Ingress on 8080 from <code>ingress</code></td>
+<td>The Gateway reaches the API server and the frontend directly; the login is OIDC, so no outpost sits in front</td>
 </tr>
 <tr>
-<td>Ingress from Prometheus on 9187, <code>GET /metrics</code> only</td>
-<td>The database's metrics; a week of Hubble records showed no other request</td>
+<td>Ingress from Prometheus on 9000 and 9187, <code>GET /metrics</code> only</td>
+<td>The API server's management port and the database's exporter</td>
 </tr>
 <tr>
 <td>Ingress from <code>cnpg-system</code> on 8000</td>
-<td>The operator polls the instance manager there; without the rule the <code>Cluster</code> never goes Healthy and the sync deadlocks. See <a href="../nextcloud/#sync-stuck-on-the-database">Sync stuck on the database</a></td>
+<td>The operator polls the instance manager there; without the rule the <code>Cluster</code> never goes Healthy. See <a href="../nextcloud/#sync-stuck-on-the-database">Sync stuck on the database</a></td>
 </tr>
 <tr>
-<td>Egress to <code>*.home-assistant.io</code></td>
-<td>The alerts feed and version data. An integration that talks to a device or a cloud is a line here first</td>
+<td>Egress from the API server to Authentik</td>
+<td>Discovery, the signing keys and the userinfo endpoint, on the public name, for the same reason Nextcloud dials it: the <code>iss</code> claim is that name</td>
 </tr>
 <tr>
-<td>Egress to the multicast and limited-broadcast ranges on 5353 and 1900</td>
-<td>The mDNS and SSDP discovery sockets keep sending, and the overlay carries it nowhere. Allowed only so it does not fill the drop log</td>
+<td>Egress from the API server to <code>nvd.nist.gov</code>, <code>storage.googleapis.com</code>, <code>api.github.com</code>, <code>epss.empiricalsecurity.com</code></td>
+<td>The feeds the internal analyzer mirrors: NVD, OSV, GitHub Advisories, EPSS. GitHub stays off until a token is entered in the UI; the rule is there so entering one is the only step</td>
+</tr>
+<tr>
+<td>Egress from the API server to <code>proxy.golang.org</code>, <code>registry.npmjs.org</code>, <code>pypi.org</code>, <code>repo1.maven.org</code>, <code>api.nuget.org</code>, <code>crates.io</code>, <code>rubygems.org</code></td>
+<td>The registries Dependency-Track asks for the latest version of a component, for the ecosystems the images here contain. The other default repositories are disabled at <a href="#first-login">first login</a> rather than allowed</td>
+</tr>
+<tr>
+<td>Egress from the upload job to <code>kube-apiserver</code></td>
+<td>It lists the <code>SbomReport</code> objects; the API it posts to is in the namespace</td>
 </tr>
 <tr>
 <td>Egress from the database pod to <code>kube-apiserver</code></td>
@@ -1034,34 +1121,185 @@ rollout and debugging are in
 </tr>
 </tbody>
 </table>
+<h3 id="sbom-upload">SBOM upload<a class="headerlink" href="#sbom-upload" title="Permanent link">&para;</a></h3>
+<p><code>sbom-upload.yaml</code> is a CronJob, a ConfigMap holding the script, and a
+ServiceAccount. At 05:00 it lists every <code>SbomReport</code> in the cluster and sends
+each distinct image, once, to <code>PUT /api/v1/bom</code> with <code>autoCreate</code> and
+<code>isLatest</code>, so the newest tag of an image is the version the portfolio shows.</p>
+<table>
+<thead>
+<tr>
+<th>Detail</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Project name is the image reference without its tag, version is the tag</td>
+<td>A project's version history is then Renovate's bump history, and two namespaces running the same image share one project</td>
+</tr>
+<tr>
+<td>Namespaces become <code>namespace:&lt;name&gt;</code> tags on the project</td>
+<td>Where a finding runs is the first question when it fires</td>
+</tr>
+<tr>
+<td>Reads <code>report.components</code> from the report, unchanged</td>
+<td>Trivy Operator already writes CycloneDX; Dependency-Track accepts the same document, <code>specVersion</code> 1.7 included</td>
+</tr>
+<tr>
+<td>The <code>ClusterRole</code> that lets it list reports is the platform's</td>
+<td>The <code>apps</code> project may not create cluster-scoped RBAC, and who may read Trivy's findings is the platform's call. It is <code>sbom-readers.yaml</code> next to the operator in the homelab repository</td>
+</tr>
+<tr>
+<td>The API key is <code>optional</code> on the container</td>
+<td>A missing Secret would leave the pod in <code>CreateContainerConfigError</code>, and a <code>Forbid</code> CronJob never runs again behind a Job that never finishes. The script exits 1 with the reason instead</td>
+</tr>
+<tr>
+<td>Runs before the platform's <code>findings-history</code> job at 06:30</td>
+<td>Both read the same reports; neither depends on the other</td>
+</tr>
+</tbody>
+</table>
+<p>An image that is bumped leaves its old version behind as a project.
+Administration → Configuration → Maintenance sets how many versions of a
+project to keep, which is where that is bounded, not in the job.</p>
+<h3 id="oidc">OIDC<a class="headerlink" href="#oidc" title="Permanent link">&para;</a></h3>
+<p>The provider is <code>dependency-track/authentik-blueprint.yaml</code>, a ConfigMap
+targeted at the <code>authentik</code> namespace, mounted and discovered the way
+<a href="../nextcloud/#oidc">Nextcloud's</a> is. What differs:</p>
+<table>
+<thead>
+<tr>
+<th>Blueprint field</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>client_type: public</code>, no <code>client_secret</code></td>
+<td>The frontend is a browser application and authenticates with authorization code plus PKCE; there is nowhere to keep a secret and the API server only validates the resulting ID token</td>
+</tr>
+<tr>
+<td><code>redirect_uris</code> ends in <code>/static/oidc-callback.html</code></td>
+<td>The page the frontend ships for the return leg</td>
+</tr>
+<tr>
+<td><code>client_id</code> from <code>!Env</code></td>
+<td>Authentik reads it from its own <code>ExternalSecret</code> on <code>kv/dependency-track/config</code>, the same value both Deployments read</td>
+</tr>
+</tbody>
+</table>
+<p>The issuer is <code>https://auth.k8s.wlkr.ch/application/o/dependency-track/</code>,
+trailing slash included: Dependency-Track compares the discovered issuer
+with the configured one character for character, and Authentik's carries
+the slash. Use <code>auth.k8s.wlkr.ch</code>, Authentik's only hostname; see
+<a href="https://homelab.wlkr.ch/platform/authentik/#one-hostname">One hostname</a>.</p>
+<h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
+<p>Two paths, both written by <code>make bao-secrets</code> in the platform repository.</p>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Key</th>
+<th>Read by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kv/dependency-track/config</code></td>
+<td><code>kek</code></td>
+<td>The API server, as the key encryption key for the secrets it stores</td>
+</tr>
+<tr>
+<td><code>kv/dependency-track/config</code></td>
+<td><code>oidc-client-id</code></td>
+<td>The API server, the frontend <strong>and</strong> Authentik, through two <code>ExternalSecret</code>s</td>
+</tr>
+<tr>
+<td><code>kv/dependency-track/sbom-upload</code></td>
+<td><code>api-key</code></td>
+<td>The upload job</td>
+</tr>
+</tbody>
+</table>
+<p>The API key is its own path because Dependency-Track issues it, after the
+first start, and a <code>bao kv put</code> replaces a path wholesale: writing it later
+into the first path would have rotated the KEK. The script asks for it and
+accepts an empty answer, so a fresh cluster still seeds everything else
+without one. The database password is not here; CloudNativePG generates it.</p>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<p>The ConfigMap is mounted over <code>/config/configuration.yaml</code>, so Git is the
-source of truth and the UI cannot edit it; everything Home Assistant writes for
-itself stays on the PVC underneath. The file is read once at startup, so a
-merged change does nothing until the pod restarts:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>home-assistant<span class="w"> </span>rollout<span class="w"> </span>restart<span class="w"> </span>deploy/home-assistant
+<h3 id="first-login">First login<a class="headerlink" href="#first-login" title="Permanent link">&para;</a></h3>
+<p>The first start seeds <code>admin</code> with the password <code>admin</code> and asks for a new
+one. Keep the account as break-glass; everything after is Authentik.</p>
+<ol>
+<li>Administration → Access Management → OpenID Connect Groups: add the
+   Authentik group that should administer, and map it to the
+   <code>Administrators</code> team. Team synchronization then grants it on the next
+   Authentik login.</li>
+<li>
+<p>Administration → Access Management → Teams: a team <code>sbom-upload</code> with the
+   <code>BOM_UPLOAD</code> and <code>PROJECT_CREATION_UPLOAD</code> permissions, and an API key on
+   it. <code>make bao-secrets</code> in the platform repository writes it to
+   <code>kv/dependency-track/sbom-upload</code>; the job picks it up at its next run,
+   or sooner:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>dependency-track<span class="w"> </span>create<span class="w"> </span>job<span class="w"> </span>--from<span class="o">=</span>cronjob/sbom-upload<span class="w"> </span>sbom-upload-now
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>dependency-track<span class="w"> </span>logs<span class="w"> </span>job/sbom-upload-now
 </span></code></pre></div>
-<p>The UI's own restart button does the same from inside.</p>
+</li>
+<li>
+<p>Administration → Vulnerability Sources: OSV is off by default. Enable it
+   with the <code>Debian</code>, <code>Alpine</code>, <code>Go</code>, <code>npm</code>, <code>PyPI</code>, <code>Maven</code>, <code>NuGet</code>,
+   <code>crates.io</code> and <code>RubyGems</code> ecosystems; NVD and EPSS are on already.
+   GitHub Advisories needs a token.</p>
+</li>
+<li>Administration → Repositories: disable the repositories the
+   <a href="#network-policy">egress policy</a> does not allow, or every analysis logs a
+   failed lookup for them.</li>
+</ol>
+<h3 id="reading-it">Reading it<a class="headerlink" href="#reading-it" title="Permanent link">&para;</a></h3>
+<p>The portfolio is one project per image; the <code>namespace:</code> tags say where it
+runs. A vulnerability's Affected Projects view is the cross-image question
+Trivy's per-container reports cannot answer directly. The same objects are
+in the API:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Every project and its version, newest upload first</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-Api-Key: </span><span class="nv">$KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"https://sbom.k8s.wlkr.ch/api/v1/project?sortName=lastBomImport&amp;sortOrder=desc"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.[] | [.name, .version, .lastBomImport] | @tsv'</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># Findings for one project</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-Api-Key: </span><span class="nv">$KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"https://sbom.k8s.wlkr.ch/api/v1/finding/project/&lt;uuid&gt;"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.[] | [.vulnerability.severity, .vulnerability.vulnId, .component.purl] | @tsv'</span>
+</span></code></pre></div>
 <h2 id="health-check">Health check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>home-assistant<span class="w"> </span>get<span class="w"> </span>pods,pvc
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>home-assistant<span class="w"> </span>get<span class="w"> </span>cluster<span class="w"> </span>home-assistant-db
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>dependency-track<span class="w"> </span>get<span class="w"> </span>pods,cronjob
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>dependency-track<span class="w"> </span>get<span class="w"> </span>cluster<span class="w"> </span>dependency-track-db
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>curl<span class="w"> </span>-s<span class="w"> </span>https://sbom.k8s.wlkr.ch/api/version<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>.version
 </span></code></pre></div>
-<p>The database should report <code>Cluster in healthy state</code>. A pod stuck in <code>Init</code>
-is waiting on it: the init container cannot write <code>secrets.yaml</code> until
-CloudNativePG has produced the Secret.</p>
+<p>The database should report <code>Cluster in healthy state</code>, the version endpoint
+answers without a login, and the last <code>sbom-upload</code> job should have
+succeeded with a line like <code>75 images, 0 failed</code>. In the UI, the Dashboard's
+portfolio count should match that number.</p>
 <h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
 <div class="admonition warning">
-<p class="admonition-title">The API is not behind Authentik</p>
-<p>The companion apps and every webhook authenticate with a long-lived token and cannot complete an interactive login, so <code>skip_path_regex</code> on the provider lets <code>/api/</code>, <code>/auth/token</code> and the external-auth callback through. Home Assistant's own accounts are the only thing guarding those paths. Revoking an Authentik account does not revoke a Home Assistant token; do that under Settings → People.</p>
+<p class="admonition-title">The KEK is the database</p>
+<p>Every secret Dependency-Track stores, feed tokens and notification
+credentials among them, is encrypted with the key in
+<code>kv/dependency-track/config</code>. Rewriting that path leaves the database
+unreadable in those places; <code>make bao-secrets</code> asks for a typed
+confirmation before it does. A restore of the database is only a restore
+together with the key.</p>
 </div>
 <ul>
-<li><strong>No local device discovery.</strong> mDNS and SSDP need host networking, which
-  needs a <code>privileged</code> namespace. Add devices by IP, or through an integration
-  that does not rely on broadcast, and add the address to the egress policy.</li>
-<li><strong>No USB devices.</strong> A Zigbee or Z-Wave stick pins the pod to one machine.
-  Use a network-attached coordinator instead.</li>
-<li><strong>The cluster is now a dependency of the lights.</strong> A Ceph rebalance that
-  pauses I/O pauses Home Assistant with it.</li>
+<li><strong>A login that fails on <code>iss</code></strong> is a mismatch between the issuer in
+  <code>application.yaml</code> and Authentik's, usually the trailing slash. Both
+  Deployments carry the value; change it in one place.</li>
+<li><strong>A first login that lands nowhere</strong> is a user with no team. Provisioning
+  creates the account; the group mapping in <a href="#first-login">First login</a> is
+  what grants it anything.</li>
+<li><strong>A job that reports <code>no API key yet</code></strong> is the <a href="#first-login">first-login</a>
+  step not done, or the <code>ExternalSecret</code> not refreshed since it was; the
+  Secret carries a <code>data-hash</code> annotation that moves when the value does.</li>
+<li><strong>Old image versions pile up as projects.</strong> The job never deletes; the
+  retention setting under Maintenance does.</li>
 </ul>
 
 
@@ -1105,7 +1343,7 @@ CloudNativePG has produced the Secret.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../flowscape/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Flowscape">
+          <a href="../conventions/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Conventions">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
@@ -1115,20 +1353,20 @@ CloudNativePG has produced the Secret.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Flowscape
+                Conventions
               </div>
             </div>
           </a>
         
         
           
-          <a href="../kneadtime/" class="md-footer__link md-footer__link--next" aria-label="Next: Knead Time">
+          <a href="../flowscape/" class="md-footer__link md-footer__link--next" aria-label="Next: Flowscape">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Knead Time
+                Flowscape
               </div>
             </div>
             <div class="md-footer__button md-icon">

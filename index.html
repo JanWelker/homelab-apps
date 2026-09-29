@@ -243,6 +243,22 @@
   
   
     <li class="md-tabs__item">
+      <a href="./dependency-track/" class="md-tabs__link">
+        
+  
+  Dependency-Track
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
       <a href="./flowscape/" class="md-tabs__link">
         
   
@@ -510,6 +526,32 @@
     
   
   Conventions
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./dependency-track/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Dependency-Track
 
     
   </span>
@@ -797,6 +839,13 @@ runs on top.</p>
 </thead>
 <tbody>
 <tr>
+<td><a href="dependency-track/">Dependency-Track</a></td>
+<td><a href="https://sbom.k8s.wlkr.ch">sbom.k8s.wlkr.ch</a></td>
+<td>A PVC for uploaded BOMs and mirrored feeds</td>
+<td>CloudNativePG</td>
+<td>Authentik OIDC</td>
+</tr>
+<tr>
 <td><a href="flowscape/">Flowscape</a></td>
 <td><a href="https://flowscape.k8s.wlkr.ch">flowscape.k8s.wlkr.ch</a></td>
 <td>None</td>
@@ -849,8 +898,9 @@ platform Application carries. Why the split exists is in
 <h2 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h2>
 <p>Every application goes through
 <a href="https://homelab.wlkr.ch/platform/authentik/">Authentik</a>, in the shape each one
-supports. <a href="nextcloud/">Nextcloud</a> speaks OIDC, so it is real single sign-on
-with the local login hidden. <a href="home-assistant/">Home Assistant</a> and
+supports. <a href="nextcloud/">Nextcloud</a> and <a href="dependency-track/">Dependency-Track</a>
+speak OIDC, so they are real single sign-on with one local admin kept as
+break-glass. <a href="home-assistant/">Home Assistant</a> and
 <a href="umami/">Umami</a> ship no OIDC provider, so the Authentik outpost sits in
 front of their own logins and browser users authenticate twice;
 <a href="flowscape/">Flowscape</a> has no login, so the outpost is the only one. All
