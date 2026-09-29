@@ -24,10 +24,15 @@ data:
     tag and versioned by the tag, so the version history of a project is
     the history of Renovate's bumps. An image is uploaded once however
     many namespaces run it; the namespaces become tags on the project.
+
+    A report outlives its workload: a ReplicaSet scaled to zero keeps its
+    SbomReport until it is garbage-collected. Those are skipped, so the
+    portfolio is what runs, and the highest running version is the latest.
     """
     import base64
     import json
     import os
+    import re
     import ssl
     import sys
     import urllib.error
@@ -44,27 +49,68 @@ data:
     API_KEY = os.environ.get("DTRACK_API_KEY", "")
 
 
-    def reports():
-        """Every SbomReport in the cluster, one page at a time.
-
-        Yields the whole custom resource: `item["report"]` is the operator's
-        report, and the CycloneDX document is `item["report"]["components"]`.
-        """
+    def pages(path, limit):
+        """Every object of one kind in the cluster, one page at a time."""
         with open(f"{SA}/token", encoding="utf-8") as handle:
             headers = {"Authorization": f"Bearer {handle.read()}"}
         context = ssl.create_default_context(cafile=f"{SA}/ca.crt")
         cont = ""
         while True:
-            query = urllib.parse.urlencode({"limit": 20, "continue": cont})
-            request = urllib.request.Request(
-                f"{API}{GROUP}/sbomreports?{query}", headers=headers
-            )
+            query = urllib.parse.urlencode({"limit": limit, "continue": cont})
+            request = urllib.request.Request(f"{API}{path}?{query}", headers=headers)
             with urllib.request.urlopen(request, context=context) as response:
                 page = json.load(response)
             yield from page["items"]
             cont = page["metadata"].get("continue", "")
             if not cont:
                 return
+
+
+    def reports():
+        """Every SbomReport, as the whole custom resource.
+
+        `item["report"]` is the operator's report, and the CycloneDX
+        document is `item["report"]["components"]`.
+        """
+        return pages(f"{GROUP}/sbomreports", 20)
+
+
+    def idle_replicasets():
+        """(namespace, name) of every ReplicaSet scaled to zero.
+
+        None when the list is refused, which is the platform's grant not
+        being there yet: the job then uploads every report, as it did
+        before it could tell.
+        """
+        try:
+            return {
+                (item["metadata"]["namespace"], item["metadata"]["name"])
+                for item in pages("/apis/apps/v1/replicasets", 200)
+                if not item["spec"].get("replicas")
+            }
+        except urllib.error.HTTPError as error:
+            if error.code != 403:
+                raise
+            print("may not list ReplicaSets: superseded revisions are uploaded too")
+            return None
+
+
+    def owner(item):
+        """(kind, namespace, name) of the workload a report was written for."""
+        labels = item["metadata"].get("labels", {})
+        return (
+            labels.get("trivy-operator.resource.kind", ""),
+            item["metadata"]["namespace"],
+            labels.get("trivy-operator.resource.name", ""),
+        )
+
+
+    def ordered(version):
+        """A sort key that puts v1.10.0 after v1.9.0."""
+        return [
+            (0, int(part), "") if part.isdigit() else (1, 0, part)
+            for part in re.findall(r"\d+|[^\d]+", version)
+        ]
 
 
     def project(item):
@@ -84,13 +130,13 @@ data:
         return name, tag or (digest or artifact.get("digest", ""))[:19]
 
 
-    def upload(name, version, namespaces, bom):
+    def upload(name, version, namespaces, bom, latest):
         body = json.dumps({
             "projectName": name,
             "projectVersion": version,
             "projectTags": [{"name": f"namespace:{ns}"} for ns in sorted(namespaces)],
             "autoCreate": True,
-            "isLatest": True,
+            "isLatest": latest,
             "bom": base64.b64encode(json.dumps(bom).encode()).decode(),
         }).encode()
         request = urllib.request.Request(
@@ -107,7 +153,13 @@ data:
             return 1
         images = {}
         skipped = 0
+        superseded = 0
+        idle = idle_replicasets() or set()
         for item in reports():
+            kind, namespace, name = owner(item)
+            if kind == "ReplicaSet" and (namespace, name) in idle:
+                superseded += 1
+                continue
             # A report still being written has no document yet. One of those
             # is not a reason to abandon the other few hundred.
             if "components" not in item.get("report", {}):
@@ -119,11 +171,21 @@ data:
             entry = images.setdefault(key, {"item": item, "namespaces": set()})
             entry["namespaces"].add(item["metadata"]["namespace"])
         failed = 0
+        # One tag can be two digests, a CronJob that has not run since the
+        # bump next to one that has. They are one project version, so they
+        # are one upload, tagged with every namespace that runs either.
+        projects = {}
         for entry in images.values():
-            name, version = project(entry["item"])
+            known = projects.setdefault(project(entry["item"]), entry)
+            known["namespaces"] |= entry["namespaces"]
+        newest = {}
+        for name, version in projects:
+            if name not in newest or ordered(version) > ordered(newest[name]):
+                newest[name] = version
+        for (name, version), entry in sorted(projects.items()):
             bom = entry["item"]["report"]["components"]
             try:
-                upload(name, version, entry["namespaces"], bom)
+                upload(name, version, entry["namespaces"], bom, version == newest[name])
             except urllib.error.HTTPError as error:
                 failed += 1
                 detail = error.read().decode(errors="replace")[:200]
@@ -131,7 +193,10 @@ data:
             except (urllib.error.URLError, TimeoutError) as error:
                 failed += 1
                 print(f"FAILED {name}:{version} {error}")
-        print(f"{len(images)} images, {failed} failed, {skipped} reports skipped")
+        print(
+            f"{len(projects)} images, {failed} failed, {skipped} reports skipped, "
+            f"{superseded} from superseded revisions"
+        )
         return 1 if failed else 0
 
 
