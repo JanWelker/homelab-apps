@@ -95,6 +95,7 @@ targeted at the `authentik` namespace, mounted and discovered the way
 | `client_type: public`, no `client_secret` | The frontend is a browser application and authenticates with authorization code plus PKCE; there is nowhere to keep a secret and the API server only validates the resulting ID token |
 | `redirect_uris` ends in `/static/oidc-callback.html` | The page the frontend ships for the return leg |
 | `client_id` from `!Env` | Authentik reads it from its own `ExternalSecret` on `kv/dependency-track/config`, the same value both Deployments read |
+| A `dependency-track-admins` group | Mapped to the `Administrators` team, so the `groups` claim is what grants admin, in the shape [ArgoCD and Grafana](https://homelab.wlkr.ch/platform/authentik/#groups-and-roles) already use. The group is in the blueprint because it is the contract; who is in it stays in Authentik and out of Git |
 
 The issuer is `https://auth.k8s.wlkr.ch/application/o/dependency-track/`,
 trailing slash included: Dependency-Track compares the discovered issuer
@@ -125,10 +126,16 @@ without one. The database password is not here; CloudNativePG generates it.
 The first start seeds `admin` with the password `admin` and asks for a new
 one. Keep the account as break-glass; everything after is Authentik.
 
-1. Administration → Access Management → OpenID Connect Groups: add the
-   Authentik group that should administer, and map it to the
-   `Administrators` team. Team synchronization then grants it on the next
-   Authentik login.
+1. Add yourself to `dependency-track-admins` in Authentik. The blueprint
+   creates the group and the mapping to the `Administrators` team is under
+   Administration → Access Management → OpenID Connect Groups; team
+   synchronization grants it on the next login.
+
+    !!! danger "A team with no mapped group is emptied at every login"
+        `synchronizeTeamMembership` removes an OIDC user from every team
+        that has no mapped OpenID Connect group, so adding someone to a team
+        by hand holds only until they log in again. The mapping, not the
+        membership, is what lasts.
 2. Administration → Access Management → Teams: a team `sbom-upload` with the
    `BOM_UPLOAD` and `PROJECT_CREATION_UPLOAD` permissions, and an API key on
    it. `make bao-secrets` in the platform repository writes it to

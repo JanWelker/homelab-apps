@@ -45,7 +45,11 @@ data:
 
 
     def reports():
-        """Every SbomReport in the cluster, one page at a time."""
+        """Every SbomReport in the cluster, one page at a time.
+
+        Yields the whole custom resource: `item["report"]` is the operator's
+        report, and the CycloneDX document is `item["report"]["components"]`.
+        """
         with open(f"{SA}/token", encoding="utf-8") as handle:
             headers = {"Authorization": f"Bearer {handle.read()}"}
         context = ssl.create_default_context(cafile=f"{SA}/ca.crt")
@@ -63,15 +67,15 @@ data:
                 return
 
 
-    def project(report):
+    def project(item):
         """(name, version) for an image: the reference without its tag, and the tag.
 
         The BOM's metadata component carries the full reference; the
         report's own artifact fields put the reference in `tag` when the
         image was pinned by digest, so they are only the fallback.
         """
-        artifact = report["report"]["artifact"]
-        metadata = report["report"]["components"].get("metadata", {})
+        artifact = item["report"]["artifact"]
+        metadata = item["report"]["components"].get("metadata", {})
         reference = metadata.get("component", {}).get("name") or artifact["repository"]
         reference, _, digest = reference.partition("@")
         name, tag = reference, ""
@@ -102,15 +106,22 @@ data:
             print("no API key yet: seed kv/dependency-track/sbom-upload, see docs/dependency-track.md")
             return 1
         images = {}
-        for report in reports():
-            artifact = report["report"]["artifact"]
+        skipped = 0
+        for item in reports():
+            # A report still being written has no document yet. One of those
+            # is not a reason to abandon the other few hundred.
+            if "components" not in item.get("report", {}):
+                skipped += 1
+                print(f"SKIPPED {item['metadata']['namespace']}/{item['metadata']['name']}: no BOM in the report")
+                continue
+            artifact = item["report"]["artifact"]
             key = artifact.get("digest") or f"{artifact['repository']}:{artifact.get('tag')}"
-            entry = images.setdefault(key, {"report": report, "namespaces": set()})
-            entry["namespaces"].add(report["metadata"]["namespace"])
+            entry = images.setdefault(key, {"item": item, "namespaces": set()})
+            entry["namespaces"].add(item["metadata"]["namespace"])
         failed = 0
         for entry in images.values():
-            name, version = project(entry["report"])
-            bom = entry["report"]["components"]
+            name, version = project(entry["item"])
+            bom = entry["item"]["report"]["components"]
             try:
                 upload(name, version, entry["namespaces"], bom)
             except urllib.error.HTTPError as error:
@@ -120,7 +131,7 @@ data:
             except (urllib.error.URLError, TimeoutError) as error:
                 failed += 1
                 print(f"FAILED {name}:{version} {error}")
-        print(f"{len(images)} images, {failed} failed")
+        print(f"{len(images)} images, {failed} failed, {skipped} reports skipped")
         return 1 if failed else 0
 
 
