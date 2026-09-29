@@ -203,7 +203,7 @@ data:
                 # Not a failure: the uploads are done, and a job that fails
                 # nightly until someone grants a permission is only noise.
                 if error.code == 403:
-                    print("may not record an analysis: the team lacks VULNERABILITY_ANALYSIS")
+                    print("may not record an analysis: the team lacks VULNERABILITY_ANALYSIS_UPDATE")
                     return 0, marked
                 print(f"FAILED {rule['vulnerability']} HTTP {error.code}")
                 return len(rules), marked
