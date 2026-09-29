@@ -1,0 +1,87 @@
+---
+# Paperless needs a broker for its task queue; there is no setting that
+# removes it. docs/paperless-ngx.md#configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paperless-ngx-redis
+  namespace: paperless-ngx
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: paperless-ngx-redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: paperless-ngx-redis
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: redis
+          image: docker.io/library/redis:8.10.2-alpine@sha256:3811787313eba226a2ef38658c6ccb91cd5e110edc89c37767de373120a0e5a0
+          args:
+            - redis-server
+            - --save
+            - "60"
+            - "1"
+            - --appendonly
+            - "no"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          ports:
+            - name: redis
+              containerPort: 6379
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: redis
+            periodSeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: paperless-ngx-redis
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paperless-ngx-redis
+  namespace: paperless-ngx
+spec:
+  selector:
+    app.kubernetes.io/name: paperless-ngx-redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+      protocol: TCP
