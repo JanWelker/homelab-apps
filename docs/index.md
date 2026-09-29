@@ -19,6 +19,7 @@ runs on top.
 | [Flowscape](flowscape.md) | [flowscape.k8s.wlkr.ch](https://flowscape.k8s.wlkr.ch) | None | None | Authentik proxy |
 | [Home Assistant](home-assistant.md) | [home.k8s.wlkr.ch](https://home.k8s.wlkr.ch) | A PVC for `/config` | CloudNativePG, for the recorder | Authentik proxy, in front of its own login |
 | [Nextcloud](nextcloud.md) | [cloud.k8s.wlkr.ch](https://cloud.k8s.wlkr.ch) | A PVC for files | CloudNativePG | Authentik OIDC |
+| [OpenClaw](openclaw.md) | [claw.k8s.wlkr.ch](https://claw.k8s.wlkr.ch) | One PVC: state, workspace and channel credentials | None | Authentik proxy, in front of its own token |
 | [Umami](umami.md) | [analytics.k8s.wlkr.ch](https://analytics.k8s.wlkr.ch) | None | CloudNativePG | Authentik proxy, in front of its own login; the tracker paths are public |
 
 ## How a directory becomes an application
