@@ -1151,8 +1151,8 @@ each distinct image, once, to <code>PUT /api/v1/bom</code> with <code>autoCreate
 <td>The <code>apps</code> project may not create cluster-scoped RBAC, and who may read Trivy's findings is the platform's call. It is <code>sbom-readers.yaml</code> next to the operator in the homelab repository</td>
 </tr>
 <tr>
-<td>The API key is <code>optional</code> on the container</td>
-<td>A missing Secret would leave the pod in <code>CreateContainerConfigError</code>, and a <code>Forbid</code> CronJob never runs again behind a Job that never finishes. The script exits 1 with the reason instead</td>
+<td>The API key is <code>optional</code> on the container, and its <code>ExternalSecret</code> is at sync wave 1</td>
+<td>A missing Secret would leave the pod in <code>CreateContainerConfigError</code>, and a <code>Forbid</code> CronJob never runs again behind a Job that never finishes; the script exits 1 with the reason instead. The wave is the same argument one level up: this is the one secret only a running Dependency-Track can issue, so it is fetched after the application, never in a wave that gates it. <code>make bao-secrets</code> writes the path empty rather than leaving it absent, for the same reason</td>
 </tr>
 <tr>
 <td>Runs before the platform's <code>findings-history</code> job at 06:30</td>
@@ -1298,6 +1298,11 @@ together with the key.</p>
 <li><strong>A job that reports <code>no API key yet</code></strong> is the <a href="#first-login">first-login</a>
   step not done, or the <code>ExternalSecret</code> not refreshed since it was; the
   Secret carries a <code>data-hash</code> annotation that moves when the value does.</li>
+<li><strong>A sync that stops at the database</strong> with <code>could not get secret data from
+  provider</code> is <code>kv/dependency-track/sbom-upload</code> missing entirely. Run
+  <code>make bao-secrets</code> in the platform repository, which writes the path empty
+  when there is no key yet; an absent path fails the <code>ExternalSecret</code>, and a
+  failed resource stops the wave it is in.</li>
 <li><strong>Old image versions pile up as projects.</strong> The job never deletes; the
   retention setting under Maintenance does.</li>
 </ul>
