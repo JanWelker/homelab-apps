@@ -1,8 +1,9 @@
 ---
-# Two rules on one hostname. The site is public -- it is an invitation to the
-# neighbours -- so / reaches the app directly; /admin goes through the
-# Authentik outpost, in front of Payload's own login. A longer path prefix
-# wins in Gateway API, so the order of these rules does not matter.
+# The site is public -- it is an invitation to the neighbours -- so / reaches
+# the app directly; /admin goes through the Authentik outpost, in front of
+# Payload's own login. The outpost completes the login on this hostname under
+# /outpost.goauthentik.io, so that prefix must reach it too. A longer path
+# prefix wins in Gateway API, so the order of these rules does not matter.
 # docs/advent-wollbi.md#configuration
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
@@ -21,6 +22,9 @@ spec:
         - path:
             type: PathPrefix
             value: /admin
+        - path:
+            type: PathPrefix
+            value: /outpost.goauthentik.io
       backendRefs:
         - name: authentik-server
           namespace: authentik

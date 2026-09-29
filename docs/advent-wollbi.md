@@ -35,7 +35,7 @@ so its upstream is our own — per
 | `PAYLOAD_SECRET` from OpenBao | It signs every editor session. Generated in the cluster it would change on every rebuild and log everyone out |
 | `NEXT_PUBLIC_SERVER_URL` | The origin Payload trusts for CSRF and builds absolute URLs from. TLS ends at the Gateway, so the pod's own address is the wrong answer — see [Behind the Gateway](conventions.md#behind-the-gateway) |
 | An `emptyDir` on `/app/.next/cache` | Next.js writes its render cache at runtime and the root filesystem is read-only. It is a cache: losing it on a restart costs one slow first request |
-| Two rules on one `HTTPRoute` | The site is an invitation to the neighbours, so `/` reaches the app directly. `/admin` goes through the outpost. A longer path prefix wins in Gateway API, so the order of the rules does not matter. The cross-namespace `backendRef` works only because the platform's `referencegrant.yaml` names this namespace |
+| Two rules on one `HTTPRoute` | The site is an invitation to the neighbours, so `/` reaches the app directly. `/admin` goes through the outpost, and so does `/outpost.goauthentik.io`, where the outpost finishes the login on this hostname. A longer path prefix wins in Gateway API, so the order of the rules does not matter. The cross-namespace `backendRef` works only because the platform's `referencegrant.yaml` names this namespace |
 | The media collection accepts PDFs and `text/calendar` | The flyer and the `.ics` are content here, not attachments; as uploads the CMS knows about them, where the Pelican site had them as links in prose that outlive the file |
 | `/healthz` answers without the database | A database outage should show as an empty page, not as a pod the kubelet restarts in a loop |
 
