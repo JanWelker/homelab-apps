@@ -18,6 +18,7 @@ runs on top.
 | [Dependency-Track](dependency-track.md) | [sbom.k8s.wlkr.ch](https://sbom.k8s.wlkr.ch) | A PVC for uploaded BOMs and mirrored feeds | CloudNativePG | Authentik OIDC |
 | [Flowscape](flowscape.md) | [flowscape.k8s.wlkr.ch](https://flowscape.k8s.wlkr.ch) | None | None | Authentik proxy |
 | [Home Assistant](home-assistant.md) | [home.k8s.wlkr.ch](https://home.k8s.wlkr.ch) | A PVC for `/config` | CloudNativePG, for the recorder | Authentik proxy, in front of its own login |
+| [Jellyfin](jellyfin.md) | [media.k8s.wlkr.ch](https://media.k8s.wlkr.ch) | Three PVCs: the library, the configuration, the transcode cache | None; SQLite on the configuration volume | Authentik proxy, in front of its own login |
 | [Nextcloud](nextcloud.md) | [cloud.k8s.wlkr.ch](https://cloud.k8s.wlkr.ch) | A PVC for files | CloudNativePG | Authentik OIDC |
 | [Umami](umami.md) | [analytics.k8s.wlkr.ch](https://analytics.k8s.wlkr.ch) | None | CloudNativePG | Authentik proxy, in front of its own login; the tracker paths are public |
 
