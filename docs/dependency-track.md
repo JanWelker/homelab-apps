@@ -96,9 +96,22 @@ uploads the job records each as a suppressed `FALSE_POSITIVE` analysis.
 | A finding raised by tonight's upload is suppressed tomorrow | Dependency-Track analyses a BOM after it has accepted it, and the job does not wait |
 | Without `VULNERABILITY_ANALYSIS_UPDATE` the job says so and succeeds | The uploads are what the job is for |
 
-An image that is bumped leaves its old version behind as a project.
-Administration → Configuration → Maintenance sets how many versions of a
-project to keep, which is where that is bounded, not in the job.
+### Retired projects
+
+A project the job created and did not upload in a run is marked inactive,
+since its image no longer runs. Administration → Configuration →
+Maintenance then deletes it: retention there only ever acts on inactive
+projects.
+
+| Detail | Why |
+| --- | --- |
+| Only after a run with no failed upload and no skipped report | A run that found nothing to upload would retire the portfolio |
+| Only projects with a `namespace:` tag | That is the job's mark; a project created by hand is not the job's to retire |
+| Every upload asks for an active project | An image that runs again after a rollback is part of the portfolio again |
+| Without `PORTFOLIO_MANAGEMENT_UPDATE` the job says so and succeeds | The uploads are what the job is for |
+
+How many retired versions of a project stay is the retention setting's
+to say, not the job's.
 
 ### OIDC
 
@@ -153,8 +166,9 @@ one. Keep the account as break-glass; everything after is Authentik.
         by hand holds only until they log in again. The mapping, not the
         membership, is what lasts.
 2. Administration → Access Management → Teams: a team `sbom-upload` with the
-   `BOM_UPLOAD`, `PROJECT_CREATION_UPLOAD`, `VIEW_PORTFOLIO` and
-   `VULNERABILITY_ANALYSIS_UPDATE` permissions, and an API key on
+   `BOM_UPLOAD`, `PROJECT_CREATION_UPLOAD`, `VIEW_PORTFOLIO`,
+   `VULNERABILITY_ANALYSIS_UPDATE` and `PORTFOLIO_MANAGEMENT_UPDATE`
+   permissions, and an API key on
    it. `make bao-secrets` in the platform repository writes it to
    `kv/dependency-track/sbom-upload`; the job picks it up at its next run,
    or sooner:
@@ -180,7 +194,10 @@ one. Keep the account as break-glass; everything after is Authentik.
 
     OSV mirrors at 03:00 and NVD at 04:00, so findings appear the morning
     after the source is switched on, not the minute it is.
-4. Administration → Repositories: disable the repositories the
+4. Administration → Configuration → Maintenance: enable inactive project
+   deletion, by versions. Without it a [retired](#retired-projects) project
+   stays forever.
+5. Administration → Repositories: disable the repositories the
    [egress policy](#network-policy) does not allow, or every analysis logs a
    failed lookup for them.
 
@@ -239,5 +256,6 @@ portfolio count should match that number.
   `make bao-secrets` in the platform repository, which writes the path empty
   when there is no key yet; an absent path fails the `ExternalSecret`, and a
   failed resource stops the wave it is in.
-- **Old image versions pile up as projects.** The job never deletes; the
-  retention setting under Maintenance does.
+- **Old image versions pile up as projects** when inactive project
+  deletion is off under Maintenance, or the team lacks the permission to
+  [retire](#retired-projects) them. The job never deletes.
