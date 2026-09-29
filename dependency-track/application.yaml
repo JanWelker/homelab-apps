@@ -1,0 +1,110 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dependency-track
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/manifest-generate-paths: .
+    link.argocd.argoproj.io/external-link: https://sbom.k8s.wlkr.ch
+spec:
+  project: apps
+  sources:
+    # Why each value is what it is: docs/dependency-track.md#configuration
+    - repoURL: https://dependencytrack.github.io/helm-charts
+      chart: dependency-track
+      targetRevision: 2.5.0
+      helm:
+        valuesObject:
+          database:
+            jdbcUrl: "jdbc:postgresql://dependency-track-db-rw:5432/dtrack?reWriteBatchedInserts=true"
+            # CloudNativePG's generated credentials, keys username and password.
+            existingSecret:
+              name: dependency-track-db-app
+
+          secretManagement:
+            database:
+              kek:
+                existingSecret:
+                  name: dependency-track-config
+                  key: kek
+
+          fileStorage:
+            local:
+              # pvc.yaml, so it carries Prune=false like every other volume.
+              existingClaim: dependency-track-data
+
+          apiServer:
+            extraEnv:
+              - name: DT_TELEMETRY_SUBMISSION_DEFAULT_ENABLED
+                value: "false"
+              - name: DT_OIDC_ENABLED
+                value: "true"
+              - name: DT_OIDC_ISSUER
+                value: https://auth.k8s.wlkr.ch/application/o/dependency-track/
+              - name: DT_OIDC_CLIENT_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: dependency-track-config
+                    key: oidc-client-id
+              - name: DT_OIDC_USERNAME_CLAIM
+                value: preferred_username
+              - name: DT_OIDC_USER_PROVISIONING
+                value: "true"
+              - name: DT_OIDC_TEAM_SYNCHRONIZATION
+                value: "true"
+            web:
+              revisionHistoryLimit: 2
+              resources:
+                requests:
+                  cpu: 250m
+                  memory: 1Gi
+                limits:
+                  memory: 3Gi
+            serviceMonitor:
+              enabled: true
+              # The chart defaults to the monitoring namespace, which the
+              # apps project may not write to.
+              namespace: dependency-track
+
+          frontend:
+            revisionHistoryLimit: 2
+            extraEnv:
+              - name: OIDC_ISSUER
+                value: https://auth.k8s.wlkr.ch/application/o/dependency-track/
+              - name: OIDC_CLIENT_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: dependency-track-config
+                    key: oidc-client-id
+              - name: OIDC_LOGIN_BUTTON_TEXT
+                value: Authentik
+
+          httpRoute:
+            enabled: true
+            hostnames:
+              - sbom.k8s.wlkr.ch
+            parentRefs:
+              - name: apps-gateway
+                namespace: kube-system
+                sectionName: https
+    - repoURL: https://github.com/JanWelker/homelab-apps.git
+      targetRevision: HEAD
+      path: dependency-track
+      directory:
+        exclude: "application.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dependency-track
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 10
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m
+    syncOptions:
+      - ServerSideApply=true

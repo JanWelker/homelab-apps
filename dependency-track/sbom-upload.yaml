@@ -1,0 +1,196 @@
+---
+# Trivy Operator already writes one CycloneDX SbomReport per container; this
+# job hands every one of them to Dependency-Track once a night. The
+# ClusterRole that lets the ServiceAccount list them is the platform's:
+# payload/platform/trivy-operator/sbom-readers.yaml in the homelab
+# repository. docs/dependency-track.md#sbom-upload
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sbom-upload
+  namespace: dependency-track
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sbom-upload
+  namespace: dependency-track
+data:
+  upload.py: |
+    """Upload every Trivy Operator SbomReport to Dependency-Track.
+
+    One project per image, named after the image reference without its
+    tag and versioned by the tag, so the version history of a project is
+    the history of Renovate's bumps. An image is uploaded once however
+    many namespaces run it; the namespaces become tags on the project.
+    """
+    import base64
+    import json
+    import os
+    import ssl
+    import sys
+    import urllib.error
+    import urllib.parse
+    import urllib.request
+
+    SA = "/var/run/secrets/kubernetes.io/serviceaccount"
+    API = (
+        f"https://{os.environ['KUBERNETES_SERVICE_HOST']}"
+        f":{os.environ['KUBERNETES_SERVICE_PORT']}"
+    )
+    GROUP = "/apis/aquasecurity.github.io/v1alpha1"
+    DTRACK = os.environ["DTRACK_URL"]
+    API_KEY = os.environ.get("DTRACK_API_KEY", "")
+
+
+    def reports():
+        """Every SbomReport in the cluster, one page at a time."""
+        with open(f"{SA}/token", encoding="utf-8") as handle:
+            headers = {"Authorization": f"Bearer {handle.read()}"}
+        context = ssl.create_default_context(cafile=f"{SA}/ca.crt")
+        cont = ""
+        while True:
+            query = urllib.parse.urlencode({"limit": 20, "continue": cont})
+            request = urllib.request.Request(
+                f"{API}{GROUP}/sbomreports?{query}", headers=headers
+            )
+            with urllib.request.urlopen(request, context=context) as response:
+                page = json.load(response)
+            yield from page["items"]
+            cont = page["metadata"].get("continue", "")
+            if not cont:
+                return
+
+
+    def project(report):
+        """(name, version) for an image: the reference without its tag, and the tag.
+
+        The BOM's metadata component carries the full reference; the
+        report's own artifact fields put the reference in `tag` when the
+        image was pinned by digest, so they are only the fallback.
+        """
+        artifact = report["report"]["artifact"]
+        metadata = report["report"]["components"].get("metadata", {})
+        reference = metadata.get("component", {}).get("name") or artifact["repository"]
+        reference, _, digest = reference.partition("@")
+        name, tag = reference, ""
+        if ":" in reference.rsplit("/", 1)[-1]:
+            name, _, tag = reference.rpartition(":")
+        return name, tag or (digest or artifact.get("digest", ""))[:19]
+
+
+    def upload(name, version, namespaces, bom):
+        body = json.dumps({
+            "projectName": name,
+            "projectVersion": version,
+            "projectTags": [{"name": f"namespace:{ns}"} for ns in sorted(namespaces)],
+            "autoCreate": True,
+            "isLatest": True,
+            "bom": base64.b64encode(json.dumps(bom).encode()).decode(),
+        }).encode()
+        request = urllib.request.Request(
+            f"{DTRACK}/api/v1/bom", data=body, method="PUT",
+            headers={"Content-Type": "application/json", "X-Api-Key": API_KEY},
+        )
+        with urllib.request.urlopen(request, timeout=120) as response:
+            return response.status
+
+
+    def main():
+        if not API_KEY:
+            print("no API key yet: seed kv/dependency-track/sbom-upload, see docs/dependency-track.md")
+            return 1
+        images = {}
+        for report in reports():
+            artifact = report["report"]["artifact"]
+            key = artifact.get("digest") or f"{artifact['repository']}:{artifact.get('tag')}"
+            entry = images.setdefault(key, {"report": report, "namespaces": set()})
+            entry["namespaces"].add(report["metadata"]["namespace"])
+        failed = 0
+        for entry in images.values():
+            name, version = project(entry["report"])
+            bom = entry["report"]["components"]
+            try:
+                upload(name, version, entry["namespaces"], bom)
+            except urllib.error.HTTPError as error:
+                failed += 1
+                detail = error.read().decode(errors="replace")[:200]
+                print(f"FAILED {name}:{version} HTTP {error.code} {detail}")
+            except (urllib.error.URLError, TimeoutError) as error:
+                failed += 1
+                print(f"FAILED {name}:{version} {error}")
+        print(f"{len(images)} images, {failed} failed")
+        return 1 if failed else 0
+
+
+    if __name__ == "__main__":
+        sys.exit(main())
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sbom-upload
+  namespace: dependency-track
+spec:
+  # After Trivy's overnight rebuild of the reports, before the platform's
+  # findings-history run reads them at 06:30.
+  schedule: "0 5 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            # Selected by the network policy; job-name alone is not stable.
+            app.kubernetes.io/name: sbom-upload
+        spec:
+          serviceAccountName: sbom-upload
+          automountServiceAccountToken: true
+          restartPolicy: Never
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 65534
+            runAsGroup: 65534
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: sbom-upload
+              image: docker.io/library/python:3.14-slim@sha256:caaf356f40667c496d405780745b9ac25771c189a51dfcc42430d531ea09f8a2
+              command: ["python3", "/scripts/upload.py"]
+              env:
+                - name: PYTHONDONTWRITEBYTECODE
+                  value: "1"
+                - name: DTRACK_URL
+                  value: http://dependency-track-api-server:8080
+                # Optional, so the pod starts and says what is missing
+                # instead of hanging in CreateContainerConfigError, which
+                # a Forbid CronJob never recovers from.
+                - name: DTRACK_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: sbom-upload
+                      key: api-key
+                      optional: true
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  memory: 512Mi
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                  readOnly: true
+          volumes:
+            - name: scripts
+              configMap:
+                name: sbom-upload
