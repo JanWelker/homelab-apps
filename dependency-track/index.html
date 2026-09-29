@@ -559,6 +559,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#retired-projects" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Retired projects
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#oidc" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -874,6 +885,17 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         False positives
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retired-projects" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Retired projects
       </span>
     </span>
   </a>
@@ -1224,9 +1246,39 @@ uploads the job records each as a suppressed <code>FALSE_POSITIVE</code> analysi
 </tr>
 </tbody>
 </table>
-<p>An image that is bumped leaves its old version behind as a project.
-Administration → Configuration → Maintenance sets how many versions of a
-project to keep, which is where that is bounded, not in the job.</p>
+<h3 id="retired-projects">Retired projects<a class="headerlink" href="#retired-projects" title="Permanent link">&para;</a></h3>
+<p>A project the job created and did not upload in a run is marked inactive,
+since its image no longer runs. Administration → Configuration →
+Maintenance then deletes it: retention there only ever acts on inactive
+projects.</p>
+<table>
+<thead>
+<tr>
+<th>Detail</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Only after a run with no failed upload and no skipped report</td>
+<td>A run that found nothing to upload would retire the portfolio</td>
+</tr>
+<tr>
+<td>Only projects with a <code>namespace:</code> tag</td>
+<td>That is the job's mark; a project created by hand is not the job's to retire</td>
+</tr>
+<tr>
+<td>Every upload asks for an active project</td>
+<td>An image that runs again after a rollback is part of the portfolio again</td>
+</tr>
+<tr>
+<td>Without <code>PORTFOLIO_MANAGEMENT_UPDATE</code> the job says so and succeeds</td>
+<td>The uploads are what the job is for</td>
+</tr>
+</tbody>
+</table>
+<p>How many retired versions of a project stay is the retention setting's
+to say, not the job's.</p>
 <h3 id="oidc">OIDC<a class="headerlink" href="#oidc" title="Permanent link">&para;</a></h3>
 <p>The provider is <code>dependency-track/authentik-blueprint.yaml</code>, a ConfigMap
 targeted at the <code>authentik</code> namespace, mounted and discovered the way
@@ -1314,8 +1366,9 @@ membership, is what lasts.</p>
 </div>
 <ol>
 <li>Administration → Access Management → Teams: a team <code>sbom-upload</code> with the
-   <code>BOM_UPLOAD</code>, <code>PROJECT_CREATION_UPLOAD</code>, <code>VIEW_PORTFOLIO</code> and
-   <code>VULNERABILITY_ANALYSIS_UPDATE</code> permissions, and an API key on
+   <code>BOM_UPLOAD</code>, <code>PROJECT_CREATION_UPLOAD</code>, <code>VIEW_PORTFOLIO</code>,
+   <code>VULNERABILITY_ANALYSIS_UPDATE</code> and <code>PORTFOLIO_MANAGEMENT_UPDATE</code>
+   permissions, and an API key on
    it. <code>make bao-secrets</code> in the platform repository writes it to
    <code>kv/dependency-track/sbom-upload</code>; the job picks it up at its next run,
    or sooner:</li>
@@ -1341,7 +1394,10 @@ vulnerabilities is this, not a clean estate.</p>
 </div>
 <p>OSV mirrors at 03:00 and NVD at 04:00, so findings appear the morning
 after the source is switched on, not the minute it is.
-4. Administration → Repositories: disable the repositories the
+4. Administration → Configuration → Maintenance: enable inactive project
+   deletion, by versions. Without it a <a href="#retired-projects">retired</a> project
+   stays forever.
+5. Administration → Repositories: disable the repositories the
    <a href="#network-policy">egress policy</a> does not allow, or every analysis logs a
    failed lookup for them.</p>
 </li>
@@ -1394,8 +1450,9 @@ together with the key.</p>
   <code>make bao-secrets</code> in the platform repository, which writes the path empty
   when there is no key yet; an absent path fails the <code>ExternalSecret</code>, and a
   failed resource stops the wave it is in.</li>
-<li><strong>Old image versions pile up as projects.</strong> The job never deletes; the
-  retention setting under Maintenance does.</li>
+<li><strong>Old image versions pile up as projects</strong> when inactive project
+  deletion is off under Maintenance, or the team lacks the permission to
+  <a href="#retired-projects">retire</a> them. The job never deletes.</li>
 </ul>
 
 
