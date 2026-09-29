@@ -1187,6 +1187,10 @@ targeted at the <code>authentik</code> namespace, mounted and discovered the way
 <td><code>client_id</code> from <code>!Env</code></td>
 <td>Authentik reads it from its own <code>ExternalSecret</code> on <code>kv/dependency-track/config</code>, the same value both Deployments read</td>
 </tr>
+<tr>
+<td>A <code>dependency-track-admins</code> group</td>
+<td>Mapped to the <code>Administrators</code> team, so the <code>groups</code> claim is what grants admin, in the shape <a href="https://homelab.wlkr.ch/platform/authentik/#groups-and-roles">ArgoCD and Grafana</a> already use. The group is in the blueprint because it is the contract; who is in it stays in Authentik and out of Git</td>
+</tr>
 </tbody>
 </table>
 <p>The issuer is <code>https://auth.k8s.wlkr.ch/application/o/dependency-track/</code>,
@@ -1232,16 +1236,25 @@ without one. The database password is not here; CloudNativePG generates it.</p>
 <p>The first start seeds <code>admin</code> with the password <code>admin</code> and asks for a new
 one. Keep the account as break-glass; everything after is Authentik.</p>
 <ol>
-<li>Administration → Access Management → OpenID Connect Groups: add the
-   Authentik group that should administer, and map it to the
-   <code>Administrators</code> team. Team synchronization then grants it on the next
-   Authentik login.</li>
 <li>
-<p>Administration → Access Management → Teams: a team <code>sbom-upload</code> with the
+<p>Add yourself to <code>dependency-track-admins</code> in Authentik. The blueprint
+   creates the group and the mapping to the <code>Administrators</code> team is under
+   Administration → Access Management → OpenID Connect Groups; team
+   synchronization grants it on the next login.</p>
+<div class="admonition danger">
+<p class="admonition-title">A team with no mapped group is emptied at every login</p>
+<p><code>synchronizeTeamMembership</code> removes an OIDC user from every team
+that has no mapped OpenID Connect group, so adding someone to a team
+by hand holds only until they log in again. The mapping, not the
+membership, is what lasts.</p>
+</div>
+<ol>
+<li>Administration → Access Management → Teams: a team <code>sbom-upload</code> with the
    <code>BOM_UPLOAD</code> and <code>PROJECT_CREATION_UPLOAD</code> permissions, and an API key on
    it. <code>make bao-secrets</code> in the platform repository writes it to
    <code>kv/dependency-track/sbom-upload</code>; the job picks it up at its next run,
-   or sooner:</p>
+   or sooner:</li>
+</ol>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>dependency-track<span class="w"> </span>create<span class="w"> </span>job<span class="w"> </span>--from<span class="o">=</span>cronjob/sbom-upload<span class="w"> </span>sbom-upload-now
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>dependency-track<span class="w"> </span>logs<span class="w"> </span>job/sbom-upload-now
 </span></code></pre></div>
