@@ -20,6 +20,7 @@ Kubeadm, Cilium, Rook-Ceph, ArgoCD and everything under them — is in
 | Flowscape | `flowscape.k8s.wlkr.ch` ([live demo](https://janwelker.github.io/flowscape/)) | Authentik proxy | [`flowscape/`](flowscape/) | [docs](https://homelab-apps.wlkr.ch/flowscape/) |
 | Home Assistant | `home.k8s.wlkr.ch` | Authentik proxy | [`home-assistant/`](home-assistant/) | [docs](https://homelab-apps.wlkr.ch/home-assistant/) |
 | Nextcloud | `cloud.k8s.wlkr.ch` | Authentik OIDC | [`nextcloud/`](nextcloud/) | [docs](https://homelab-apps.wlkr.ch/nextcloud/) |
+| Open WebUI | `chat.k8s.wlkr.ch` | Authentik OIDC | [`open-webui/`](open-webui/) | [docs](https://homelab-apps.wlkr.ch/open-webui/) |
 | Umami | `analytics.k8s.wlkr.ch` | Authentik proxy | [`umami/`](umami/) | [docs](https://homelab-apps.wlkr.ch/umami/) |
 | Wollbi Adventsfenster | `advent.wollbi.ch` | Public; Authentik proxy on `/admin` | [`advent-wollbi/`](advent-wollbi/) | [docs](https://homelab-apps.wlkr.ch/advent-wollbi/) |
 | Wollbi-Fescht | `fest.wollbi.ch` | Public; Authentik proxy on `/admin` | [`fest-wollbi/`](fest-wollbi/) | [docs](https://homelab-apps.wlkr.ch/fest-wollbi/) |

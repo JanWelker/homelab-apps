@@ -1,0 +1,173 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: open-webui
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/manifest-generate-paths: .
+    link.argocd.argoproj.io/external-link: https://chat.k8s.wlkr.ch
+spec:
+  project: apps
+  sources:
+    # Why each value is what it is: docs/open-webui.md#configuration
+    - repoURL: https://helm.openwebui.com
+      chart: open-webui
+      targetRevision: 16.6.0
+      helm:
+        valuesObject:
+          # The bundled model runner, the pipelines sidecar and Tika all stay
+          # off: the models are remote APIs and nothing here runs inference.
+          ollama:
+            enabled: false
+          pipelines:
+            enabled: false
+          tika:
+            enabled: false
+
+          # One replica, so the in-memory manager is enough and the chart's
+          # Redis is not deployed.
+          websocket:
+            enabled: true
+            manager: ""
+            redis:
+              enabled: false
+
+          # One replica on a ReadWriteOnce volume: a Deployment that replaces
+          # the pod before releasing the disk would never come up.
+          workload:
+            kind: Deployment
+          strategy:
+            type: Recreate
+          replicaCount: 1
+          revisionHistoryLimit: 2
+
+          serviceAccount:
+            automountServiceAccountToken: false
+
+          podSecurityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+            seccompProfile:
+              type: RuntimeDefault
+
+          containerSecurityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+
+          persistence:
+            enabled: true
+            # pvc.yaml, so it carries Prune=false like every other volume.
+            existingClaim: open-webui-data
+
+          sso:
+            enabled: true
+            enableSignup: true
+            enableGroupManagement: true
+            oidc:
+              enabled: true
+              providerName: Authentik
+              providerUrl: https://auth.k8s.wlkr.ch/application/o/open-webui/.well-known/openid-configuration
+              clientExistingSecret: open-webui-oidc
+              clientIdExistingSecretKey: client-id
+              clientExistingSecretKey: client-secret
+              scopes: "openid email profile"
+
+          # The chart's own keys, so the default OPENAI_API_KEY it would
+          # otherwise render is replaced rather than shadowed by a duplicate.
+          enableOpenaiApi: true
+          openaiBaseApiUrl: https://api.openai.com/v1
+          openaiApiKeyExistingSecret: open-webui-config
+          openaiApiKeyExistingSecretKey: openai-api-key
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          # The first start runs the migrations before the server answers.
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            failureThreshold: 60
+
+          extraEnvVars:
+            - name: WEBUI_URL
+              value: https://chat.k8s.wlkr.ch
+            # The local form would be a second way in past Authentik.
+            - name: ENABLE_LOGIN_FORM
+              value: "false"
+            - name: ENABLE_SIGNUP
+              value: "false"
+            # CloudNativePG assembles the connection string; nothing copies it.
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: open-webui-db-app
+                  key: uri
+            - name: WEBUI_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: open-webui-config
+                  key: webui-secret-key
+            # No phone-home and no telemetry.
+            - name: ENABLE_VERSION_UPDATE_CHECK
+              value: "false"
+            - name: SCARF_NO_ANALYTICS
+              value: "true"
+            - name: DO_NOT_TRACK
+              value: "true"
+            - name: ANONYMIZED_TELEMETRY
+              value: "false"
+
+          route:
+            enabled: true
+            hostnames:
+              - chat.k8s.wlkr.ch
+            parentRefs:
+              - name: apps-gateway
+                namespace: kube-system
+                sectionName: https
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+
+    - repoURL: https://github.com/JanWelker/homelab-apps.git
+      targetRevision: HEAD
+      path: open-webui
+      directory:
+        exclude: "application.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: open-webui
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 10
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m
+    syncOptions:
+      - ServerSideApply=true
