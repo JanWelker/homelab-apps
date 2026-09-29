@@ -548,6 +548,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#false-positives" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        False positives
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#oidc" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -852,6 +863,17 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         SBOM upload
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#false-positives" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        False positives
       </span>
     </span>
   </a>
@@ -1172,6 +1194,36 @@ each distinct image that is running, once, to <code>PUT /api/v1/bom</code> with
 </tr>
 </tbody>
 </table>
+<h3 id="false-positives">False positives<a class="headerlink" href="#false-positives" title="Permanent link">&para;</a></h3>
+<p><code>false-positives.json</code> in the same ConfigMap names findings that are not
+findings: a project, an advisory, a component and the reason. After the
+uploads the job records each as a suppressed <code>FALSE_POSITIVE</code> analysis.</p>
+<table>
+<thead>
+<tr>
+<th>Detail</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The job records them, not a person</td>
+<td>An analysis belongs to one project version, so every new tag of the image arrives with the finding open again</td>
+</tr>
+<tr>
+<td>A rule names the component by PURL without its version</td>
+<td>The version moves with the image; the name is what collides</td>
+</tr>
+<tr>
+<td>A finding raised by tonight's upload is suppressed tomorrow</td>
+<td>Dependency-Track analyses a BOM after it has accepted it, and the job does not wait</td>
+</tr>
+<tr>
+<td>Without <code>VULNERABILITY_ANALYSIS</code> the job says so and succeeds</td>
+<td>The uploads are what the job is for</td>
+</tr>
+</tbody>
+</table>
 <p>An image that is bumped leaves its old version behind as a project.
 Administration → Configuration → Maintenance sets how many versions of a
 project to keep, which is where that is bounded, not in the job.</p>
@@ -1262,7 +1314,8 @@ membership, is what lasts.</p>
 </div>
 <ol>
 <li>Administration → Access Management → Teams: a team <code>sbom-upload</code> with the
-   <code>BOM_UPLOAD</code> and <code>PROJECT_CREATION_UPLOAD</code> permissions, and an API key on
+   <code>BOM_UPLOAD</code>, <code>PROJECT_CREATION_UPLOAD</code>, <code>VIEW_PORTFOLIO</code> and
+   <code>VULNERABILITY_ANALYSIS</code> permissions, and an API key on
    it. <code>make bao-secrets</code> in the platform repository writes it to
    <code>kv/dependency-track/sbom-upload</code>; the job picks it up at its next run,
    or sooner:</li>
