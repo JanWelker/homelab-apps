@@ -1036,7 +1036,7 @@ per <a href="../conventions/#2-official-upstream-sources-only">Conventions → O
 </tr>
 <tr>
 <td>The namespace enforces <code>restricted</code></td>
-<td>The image runs as uid 1000 with a read-only root filesystem; the two things it writes, the uploads and Next.js' render cache, are volumes</td>
+<td>The image is distroless and runs as uid 65532, its <code>nonroot</code> user, with a read-only root filesystem; the two things it writes, the uploads and Next.js' render cache, are volumes. There is no shell in it, so <code>kubectl exec</code> is for <code>node -e</code>, not for poking around</td>
 </tr>
 <tr>
 <td><code>DATABASE_URL</code> from <code>fest-wollbi-db-app</code>, key <code>uri</code></td>
