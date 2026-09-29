@@ -94,7 +94,7 @@ uploads the job records each as a suppressed `FALSE_POSITIVE` analysis.
 | The job records them, not a person | An analysis belongs to one project version, so every new tag of the image arrives with the finding open again |
 | A rule names the component by PURL without its version | The version moves with the image; the name is what collides |
 | A finding raised by tonight's upload is suppressed tomorrow | Dependency-Track analyses a BOM after it has accepted it, and the job does not wait |
-| Without `VULNERABILITY_ANALYSIS` the job says so and succeeds | The uploads are what the job is for |
+| Without `VULNERABILITY_ANALYSIS_UPDATE` the job says so and succeeds | The uploads are what the job is for |
 
 An image that is bumped leaves its old version behind as a project.
 Administration → Configuration → Maintenance sets how many versions of a
@@ -154,7 +154,7 @@ one. Keep the account as break-glass; everything after is Authentik.
         membership, is what lasts.
 2. Administration → Access Management → Teams: a team `sbom-upload` with the
    `BOM_UPLOAD`, `PROJECT_CREATION_UPLOAD`, `VIEW_PORTFOLIO` and
-   `VULNERABILITY_ANALYSIS` permissions, and an API key on
+   `VULNERABILITY_ANALYSIS_UPDATE` permissions, and an API key on
    it. `make bao-secrets` in the platform repository writes it to
    `kv/dependency-track/sbom-upload`; the job picks it up at its next run,
    or sooner:
