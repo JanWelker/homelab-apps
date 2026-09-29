@@ -1124,8 +1124,8 @@ shape is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → 
 <h3 id="sbom-upload">SBOM upload<a class="headerlink" href="#sbom-upload" title="Permanent link">&para;</a></h3>
 <p><code>sbom-upload.yaml</code> is a CronJob, a ConfigMap holding the script, and a
 ServiceAccount. At 05:00 it lists every <code>SbomReport</code> in the cluster and sends
-each distinct image, once, to <code>PUT /api/v1/bom</code> with <code>autoCreate</code> and
-<code>isLatest</code>, so the newest tag of an image is the version the portfolio shows.</p>
+each distinct image that is running, once, to <code>PUT /api/v1/bom</code> with
+<code>autoCreate</code>.</p>
 <table>
 <thead>
 <tr>
@@ -1143,11 +1143,23 @@ each distinct image, once, to <code>PUT /api/v1/bom</code> with <code>autoCreate
 <td>Where a finding runs is the first question when it fires</td>
 </tr>
 <tr>
+<td>Reports owned by a ReplicaSet scaled to zero are skipped</td>
+<td>A report outlives its workload until the ReplicaSet is garbage-collected, and a superseded revision is not part of what runs. If the platform's grant lacks <code>replicasets</code>, the job says so and uploads everything</td>
+</tr>
+<tr>
+<td><code>isLatest</code> goes to the highest version that is running</td>
+<td>Two versions of one image can run at once, and the flag otherwise lands on whichever was uploaded last</td>
+</tr>
+<tr>
+<td>Two digests under one tag are one upload</td>
+<td>They are one project version; the namespaces of both become its tags</td>
+</tr>
+<tr>
 <td>Reads <code>report.components</code> from the report, unchanged</td>
 <td>Trivy Operator already writes CycloneDX; Dependency-Track accepts the same document, <code>specVersion</code> 1.7 included</td>
 </tr>
 <tr>
-<td>The <code>ClusterRole</code> that lets it list reports is the platform's</td>
+<td>The <code>ClusterRole</code> that lets it list reports and ReplicaSets is the platform's</td>
 <td>The <code>apps</code> project may not create cluster-scoped RBAC, and who may read Trivy's findings is the platform's call. It is <code>sbom-readers.yaml</code> next to the operator in the homelab repository</td>
 </tr>
 <tr>
@@ -1301,7 +1313,8 @@ in the API:</p>
 </span></code></pre></div>
 <p>The database should report <code>Cluster in healthy state</code>, the version endpoint
 answers without a login, and the last <code>sbom-upload</code> job should have
-succeeded with a line like <code>75 images, 0 failed</code>. In the UI, the Dashboard's
+succeeded with a line like <code>66 images, 0 failed, 0 reports skipped, 110 from
+superseded revisions</code>. In the UI, the Dashboard's
 portfolio count should match that number.</p>
 <h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
 <div class="admonition warning">
