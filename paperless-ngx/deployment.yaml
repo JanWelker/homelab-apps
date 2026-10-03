@@ -1,0 +1,163 @@
+---
+# Why each setting is what it is: docs/paperless-ngx.md#configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paperless-ngx
+  namespace: paperless-ngx
+spec:
+  replicas: 1
+  revisionHistoryLimit: 2
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: paperless-ngx
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: paperless-ngx
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: paperless-ngx
+          image: ghcr.io/paperless-ngx/paperless-ngx:3.2.1@sha256:5fa76604a81df6945086e0837b14b56543d137e8ce4f311cc5d9ebe907e74e79
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          env:
+            - name: PAPERLESS_REDIS
+              value: redis://paperless-ngx-redis:6379
+            - name: PAPERLESS_DBHOST
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-db-app
+                  key: host
+            - name: PAPERLESS_DBPORT
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-db-app
+                  key: port
+            - name: PAPERLESS_DBNAME
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-db-app
+                  key: dbname
+            - name: PAPERLESS_DBUSER
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-db-app
+                  key: username
+            - name: PAPERLESS_DBPASS
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-db-app
+                  key: password
+            - name: PAPERLESS_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-config
+                  key: secret-key
+
+            # The break-glass account. Created on the first start only.
+            - name: PAPERLESS_ADMIN_USER
+              value: admin
+            - name: PAPERLESS_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-config
+                  key: admin-password
+
+            # Authentik is the normal login; see docs/paperless-ngx.md#oidc
+            - name: PAPERLESS_APPS
+              value: allauth.socialaccount.providers.openid_connect
+            - name: PAPERLESS_SOCIALACCOUNT_PROVIDERS
+              valueFrom:
+                secretKeyRef:
+                  name: paperless-ngx-oidc
+                  key: socialaccount-providers
+            - name: PAPERLESS_SOCIAL_AUTO_SIGNUP
+              value: "true"
+            - name: PAPERLESS_DISABLE_REGULAR_LOGIN
+              value: "true"
+            - name: PAPERLESS_REDIRECT_LOGIN_TO_SSO
+              value: "true"
+            - name: PAPERLESS_ACCOUNT_ALLOW_SIGNUPS
+              value: "false"
+            - name: PAPERLESS_ACCOUNT_DEFAULT_HTTP_PROTOCOL
+              value: https
+
+            # Behind the Gateway; see docs/conventions.md#behind-the-gateway
+            - name: PAPERLESS_URL
+              value: https://paperless.k8s.wlkr.ch
+            - name: PAPERLESS_CSRF_TRUSTED_ORIGINS
+              value: https://paperless.k8s.wlkr.ch
+            - name: PAPERLESS_USE_X_FORWARD_HOST
+              value: "true"
+            - name: PAPERLESS_USE_X_FORWARD_PORT
+              value: "true"
+            - name: PAPERLESS_PROXY_SSL_HEADER
+              value: '["HTTP_X_FORWARDED_PROTO", "https"]'
+
+            - name: PAPERLESS_TIME_ZONE
+              value: Europe/Zurich
+            - name: PAPERLESS_OCR_LANGUAGE
+              value: deu+eng
+            - name: PAPERLESS_OCR_LANGUAGES
+              value: deu eng fra ita
+            # Inside the data volume, never inside media: a consumed file that
+            # lands in the archive twice is what that rule prevents.
+            - name: PAPERLESS_CONSUMPTION_DIR
+              value: /usr/src/paperless/data/consume
+            - name: PAPERLESS_EXPORT_DIR
+              value: /usr/src/paperless/data/export
+            - name: PAPERLESS_ENABLE_UPDATE_CHECK
+              value: "false"
+          volumeMounts:
+            - name: data
+              mountPath: /usr/src/paperless/data
+            - name: media
+              mountPath: /usr/src/paperless/media
+          # The first start migrates the schema and builds the index.
+          startupProbe:
+            httpGet:
+              path: /accounts/login/
+              port: http
+            periodSeconds: 10
+            failureThreshold: 60
+          livenessProbe:
+            httpGet:
+              path: /accounts/login/
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /accounts/login/
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 200m
+              memory: 1Gi
+            limits:
+              memory: 4Gi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: paperless-ngx-data
+        - name: media
+          persistentVolumeClaim:
+            claimName: paperless-ngx-media
