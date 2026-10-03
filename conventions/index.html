@@ -636,10 +636,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#routes-with-more-than-one-rule" class="md-nav__link">
+  <a href="#writing-an-httproute" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Routes with more than one rule
+        Writing an <code>HTTPRoute</code>
       </span>
     </span>
   </a>
@@ -1041,10 +1041,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#routes-with-more-than-one-rule" class="md-nav__link">
+  <a href="#writing-an-httproute" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Routes with more than one rule
+        Writing an <code>HTTPRoute</code>
       </span>
     </span>
   </a>
@@ -1256,11 +1256,30 @@ until someone ran <code>argocd app sync</code>.</p>
 </tr>
 </tbody>
 </table>
-<h2 id="routes-with-more-than-one-rule">Routes with more than one rule<a class="headerlink" href="#routes-with-more-than-one-rule" title="Permanent link">&para;</a></h2>
-<p>Write every rule's <code>matches</code> out, the catch-all's <code>PathPrefix /</code> included.
-The API server fills in that default when it is missing, and ArgoCD forgives
-it only on the first rule, so a route whose catch-all comes second reports
-<code>OutOfSync</code> forever.</p>
+<h2 id="writing-an-httproute">Writing an <code>HTTPRoute</code><a class="headerlink" href="#writing-an-httproute" title="Permanent link">&para;</a></h2>
+<p>The API server fills in defaults for what a route leaves out, and ArgoCD
+reports every filled-in field as drift unless the platform tells it to look
+away. It looks away for less than you might expect:</p>
+<table>
+<thead>
+<tr>
+<th>Write out</th>
+<th>Because ArgoCD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>group: gateway.networking.k8s.io</code> and <code>kind: Gateway</code> on each <code>parentRefs</code> entry</td>
+<td>ignores neither</td>
+</tr>
+<tr>
+<td>Every rule's <code>matches</code>, the catch-all's <code>PathPrefix /</code> included, once a route has more than one rule</td>
+<td>forgives a missing <code>matches</code> only on the first rule</td>
+</tr>
+</tbody>
+</table>
+<p>A route that leaves either out reports <code>OutOfSync</code> forever while working
+fine.</p>
 <h2 id="behind-the-gateway">Behind the Gateway<a class="headerlink" href="#behind-the-gateway" title="Permanent link">&para;</a></h2>
 <p>Traffic arrives from Cilium's Envoy inside the pod CIDR (<code>10.244.0.0/16</code>), not
 from the client, and TLS is terminated at the Gateway. An application that
