@@ -636,6 +636,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#routes-with-more-than-one-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Routes with more than one rule
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#behind-the-gateway" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1030,6 +1041,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#routes-with-more-than-one-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Routes with more than one rule
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#behind-the-gateway" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1234,6 +1256,11 @@ until someone ran <code>argocd app sync</code>.</p>
 </tr>
 </tbody>
 </table>
+<h2 id="routes-with-more-than-one-rule">Routes with more than one rule<a class="headerlink" href="#routes-with-more-than-one-rule" title="Permanent link">&para;</a></h2>
+<p>Write every rule's <code>matches</code> out, the catch-all's <code>PathPrefix /</code> included.
+The API server fills in that default when it is missing, and ArgoCD forgives
+it only on the first rule, so a route whose catch-all comes second reports
+<code>OutOfSync</code> forever.</p>
 <h2 id="behind-the-gateway">Behind the Gateway<a class="headerlink" href="#behind-the-gateway" title="Permanent link">&para;</a></h2>
 <p>Traffic arrives from Cilium's Envoy inside the pod CIDR (<code>10.244.0.0/16</code>), not
 from the client, and TLS is terminated at the Gateway. An application that
