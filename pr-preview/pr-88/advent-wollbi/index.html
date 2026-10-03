@@ -16,6 +16,8 @@
         <link rel="prev" href="../umami/">
       
       
+        <link rel="next" href="../fest-wollbi/">
+      
       
         
       
@@ -343,6 +345,22 @@
         
   
   Wollbi Adventsfenster
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../fest-wollbi/" class="md-tabs__link">
+        
+  
+  Wollbi-Fescht
 
       </a>
     </li>
@@ -791,6 +809,32 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fest-wollbi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Wollbi-Fescht
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -1036,7 +1080,7 @@ so its upstream is our own — per
 </tr>
 <tr>
 <td>The namespace enforces <code>restricted</code></td>
-<td>The image runs as uid 1000 with a read-only root filesystem; the two things it writes, the uploads and Next.js' render cache, are volumes</td>
+<td>The image is distroless and runs as uid 65532, its <code>nonroot</code> user, with a read-only root filesystem; the two things it writes, the uploads and Next.js' render cache, are volumes. There is no shell in it, so <code>kubectl exec</code> is for <code>node -e</code>, not for poking around</td>
 </tr>
 <tr>
 <td><code>DATABASE_URL</code> from <code>advent-wollbi-db-app</code>, key <code>uri</code></td>
@@ -1056,7 +1100,7 @@ so its upstream is our own — per
 </tr>
 <tr>
 <td>Two rules on one <code>HTTPRoute</code></td>
-<td>The site is an invitation to the neighbours, so <code>/</code> reaches the app directly. <code>/admin</code> goes through the outpost. A longer path prefix wins in Gateway API, so the order of the rules does not matter. The cross-namespace <code>backendRef</code> works only because the platform's <code>referencegrant.yaml</code> names this namespace</td>
+<td>The site is an invitation to the neighbours, so <code>/</code> reaches the app directly. <code>/admin</code> goes through the outpost, and so does <code>/outpost.goauthentik.io</code>, where the outpost finishes the login on this hostname. A longer path prefix wins in Gateway API, so the order of the rules does not matter. The cross-namespace <code>backendRef</code> works only because the platform's <code>referencegrant.yaml</code> names this namespace</td>
 </tr>
 <tr>
 <td>The media collection accepts PDFs and <code>text/calendar</code></td>
@@ -1235,6 +1279,22 @@ after it.</p>
             </div>
           </a>
         
+        
+          
+          <a href="../fest-wollbi/" class="md-footer__link md-footer__link--next" aria-label="Next: Wollbi-Fescht">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Wollbi-Fescht
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
         
       </nav>
     

@@ -6,17 +6,15 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Umami on the cluster: cookieless web analytics for every site, plain manifests around the official image, the dashboard behind the Authentik outpost and the tracker paths open.">
+        <meta name="description" content="fest.wollbi.ch on the cluster: the Wollbi-Fescht site as Payload CMS on Next.js, public at the root and behind the Authentik outpost at /admin.">
       
       
       
-        <link rel="canonical" href="https://homelab-apps.wlkr.ch/umami/">
+        <link rel="canonical" href="https://homelab-apps.wlkr.ch/fest-wollbi/">
       
       
-        <link rel="prev" href="../nextcloud/">
+        <link rel="prev" href="../advent-wollbi/">
       
-      
-        <link rel="next" href="../advent-wollbi/">
       
       
         
@@ -27,7 +25,7 @@
     
     
       
-        <title>Umami - Homelab Applications</title>
+        <title>Wollbi-Fescht - Homelab Applications</title>
       
     
     
@@ -88,7 +86,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#umami" class="md-skip">
+        <a href="#wollbi-fescht" class="md-skip">
           Skip to content
         </a>
       
@@ -123,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Umami
+              Wollbi-Fescht
             
           </span>
         </div>
@@ -321,11 +319,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="././" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../umami/" class="md-tabs__link">
         
   
   Umami
@@ -355,9 +351,11 @@
   
   
   
+    
   
-    <li class="md-tabs__item">
-      <a href="../fest-wollbi/" class="md-tabs__link">
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="././" class="md-tabs__link">
         
   
   Wollbi-Fescht
@@ -603,6 +601,58 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../umami/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Umami
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advent-wollbi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Wollbi Adventsfenster
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -622,7 +672,7 @@
   <span class="md-ellipsis">
     
   
-  Umami
+  Wollbi-Fescht
 
     
   </span>
@@ -639,7 +689,7 @@
   <span class="md-ellipsis">
     
   
-  Umami
+  Wollbi-Fescht
 
     
   </span>
@@ -688,6 +738,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#seeding" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Seeding
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#network-policy" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -716,21 +777,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#first-login" class="md-nav__link">
+  <a href="#editing" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        First login
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#adding-a-site" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Adding a site
+        Editing
       </span>
     </span>
   </a>
@@ -779,58 +829,6 @@
   
 </nav>
       
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../advent-wollbi/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Wollbi Adventsfenster
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../fest-wollbi/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Wollbi-Fescht
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -899,6 +897,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#seeding" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Seeding
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#network-policy" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -927,21 +936,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#first-login" class="md-nav__link">
+  <a href="#editing" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        First login
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#adding-a-site" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Adding a site
+        Editing
       </span>
     </span>
   </a>
@@ -1001,7 +999,7 @@
                 
                   
   
-    <a href="https://github.com/JanWelker/homelab-apps/edit/main/docs/umami.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/JanWelker/homelab-apps/edit/main/docs/fest-wollbi.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
     </a>
@@ -1010,20 +1008,22 @@
     
       
     
-    <a href="https://github.com/JanWelker/homelab-apps/raw/main/docs/umami.md" title="View source of this page" class="md-content__button md-icon">
+    <a href="https://github.com/JanWelker/homelab-apps/raw/main/docs/fest-wollbi.md" title="View source of this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-code-2" viewBox="0 0 24 24"><path d="M4 12.15V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2h-3.35"/><path d="M14 2v5a1 1 0 0 0 1 1h5M5 16l-3 3 3 3M9 22l3-3-3-3"/></svg>
     </a>
   
 
 
-<h1 id="umami">Umami<a class="headerlink" href="#umami" title="Permanent link">&para;</a></h1>
-<p><a href="https://umami.is/">Umami</a> counts the visits to every site: the two
-documentation sites, the GitHub Pages projects, Nextcloud and Home Assistant.
-It sets no cookie and stores no address, so the sites need no consent banner.
-Upstream publishes an image and no chart, so this is a Deployment, a Service
-and an HTTPRoute around the official image, per
-<a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>.</p>
+<h1 id="wollbi-fescht">Wollbi-Fescht<a class="headerlink" href="#wollbi-fescht" title="Permanent link">&para;</a></h1>
+<p><a href="https://fest.wollbi.ch">fest.wollbi.ch</a> is the invitation to the street's
+summer party, and the archive of every invitation since 1987. It was a
+Pelican site until the pages became rows in a database: the content is now
+edited at <code>/admin</code> and the repository holds the application, not the text.
+The image is built in
+<a href="https://github.com/JanWelker/fest.wollbi.ch">JanWelker/fest.wollbi.ch</a>,
+which makes this the second application here whose upstream is our own —
+per <a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>.</p>
 <h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1035,27 +1035,31 @@ and an HTTPRoute around the official image, per
 <tbody>
 <tr>
 <td>URL</td>
-<td><a href="https://analytics.k8s.wlkr.ch">analytics.k8s.wlkr.ch</a></td>
+<td><a href="https://fest.wollbi.ch">fest.wollbi.ch</a> — public, no login</td>
 </tr>
 <tr>
 <td>Authentication</td>
-<td>Authentik proxy outpost, in front of Umami's own login; <code>/script.js</code> and <code>/api/send</code> pass through</td>
+<td>Authentik proxy outpost on <code>/admin</code> only, in front of Payload's own login</td>
 </tr>
 <tr>
 <td>Storage</td>
-<td>None outside the database</td>
+<td>A PVC for what editors upload after the seed</td>
 </tr>
 <tr>
 <td>Database</td>
-<td>CloudNativePG <code>Cluster</code> <code>umami-db</code></td>
+<td>CloudNativePG <code>Cluster</code> <code>fest-wollbi-db</code></td>
 </tr>
 <tr>
 <td>Secrets</td>
-<td><code>kv/umami/config</code> in OpenBao</td>
+<td><code>kv/fest-wollbi/config</code> in OpenBao</td>
 </tr>
 <tr>
 <td>Files</td>
-<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/umami"><code>umami/</code></a></td>
+<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/fest-wollbi"><code>fest-wollbi/</code></a></td>
+</tr>
+<tr>
+<td>Source</td>
+<td><a href="https://github.com/JanWelker/fest.wollbi.ch">JanWelker/fest.wollbi.ch</a></td>
 </tr>
 </tbody>
 </table>
@@ -1069,49 +1073,59 @@ and an HTTPRoute around the official image, per
 </thead>
 <tbody>
 <tr>
-<td>Plain manifests, no chart</td>
-<td>One stateless process with one port and one database; the community charts are repackagers</td>
+<td>Plain manifests around our own image</td>
+<td>One Next.js process with one port and one database; the site repository's README is the whole deployment contract</td>
 </tr>
 <tr>
 <td>The namespace enforces <code>restricted</code></td>
-<td>The image runs as uid 1001, needs no capability, and writes only Next.js' cache, which is an <code>emptyDir</code> next to <code>/tmp</code></td>
+<td>The image is distroless and runs as uid 65532, its <code>nonroot</code> user, with a read-only root filesystem; the two things it writes, the uploads and Next.js' render cache, are volumes. There is no shell in it, so <code>kubectl exec</code> is for <code>node -e</code>, not for poking around</td>
 </tr>
 <tr>
-<td><code>automountServiceAccountToken: false</code></td>
-<td>Umami never talks to the API server</td>
+<td><code>DATABASE_URL</code> from <code>fest-wollbi-db-app</code>, key <code>uri</code></td>
+<td>Payload wants one connection string and CloudNativePG assembles it; see <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract">the contract</a></td>
 </tr>
 <tr>
-<td><code>DATABASE_URL</code> from <code>umami-db-app</code>, key <code>uri</code></td>
-<td>Umami wants one connection string, and CloudNativePG assembles it; see <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract">the contract</a></td>
+<td><code>PAYLOAD_SECRET</code> from OpenBao</td>
+<td>It signs every editor session and encrypts what Payload keeps encrypted. Generated in the cluster it would change on every rebuild and log everyone out</td>
 </tr>
 <tr>
-<td><code>APP_SECRET</code> and <code>TWO_FACTOR_ENCRYPTION_KEY</code> from OpenBao</td>
-<td>The first signs every dashboard session and the second encrypts TOTP secrets; both must survive a rebuild, so neither is generated in the cluster. See <a href="#secrets">Secrets</a></td>
+<td><code>NEXT_PUBLIC_SERVER_URL</code></td>
+<td>The origin Payload trusts for CSRF and builds absolute URLs from. TLS ends at the Gateway, so the pod's own address is the wrong answer — see <a href="../conventions/#behind-the-gateway">Behind the Gateway</a></td>
 </tr>
 <tr>
-<td><code>DISABLE_UPDATES</code>, <code>DISABLE_TELEMETRY</code>, <code>PRIVATE_MODE</code></td>
-<td>No phone-home: no version check, no usage report, no favicon fetch for each tracked site. The egress policy allows nothing outside the cluster, so these are what keep the log free of drops</td>
+<td>An <code>emptyDir</code> on <code>/app/.next/cache</code></td>
+<td>Next.js writes its render cache at runtime and the root filesystem is read-only. It is a cache: losing it on a restart costs one slow first request</td>
 </tr>
 <tr>
-<td>Probes on <code>/api/heartbeat</code>, a long <code>startupProbe</code></td>
-<td>The first start runs the Prisma migrations before the server answers</td>
+<td>Two rules on one <code>HTTPRoute</code></td>
+<td>The site is an invitation to the neighbours, so <code>/</code> reaches the app directly. <code>/admin</code> goes through the outpost, and so does <code>/outpost.goauthentik.io</code>, where the outpost finishes the login on this hostname; without it the login ends on a 404 from the site. A longer path prefix wins in Gateway API, so the order of the rules does not matter. The cross-namespace <code>backendRef</code> works only because the platform's <code>referencegrant.yaml</code> names this namespace</td>
 </tr>
 <tr>
-<td><code>revisionHistoryLimit: 2</code></td>
-<td>Superseded ReplicaSets keep their Trivy config-audit reports until garbage collection; the default keeps ten</td>
-</tr>
-<tr>
-<td><code>HTTPRoute</code> targets <code>authentik-server</code>, not the app</td>
-<td>The outpost authenticates and forwards to <code>umami.umami.svc:3000</code>. The provider's <code>skip_path_regex</code>, in the platform repository, exempts exactly <code>/script.js</code> and <code>/api/send</code>: the tracker every visitor loads and the endpoint it posts to. Everything else, the dashboard and the rest of the API, is behind the login. The cross-namespace <code>backendRef</code> works only because the platform's <code>referencegrant.yaml</code> names this namespace; pointing the route at the Umami Service removes the authentication layer, so it deserves a second look in review</td>
-</tr>
-<tr>
-<td>No <code>CLIENT_IP_HEADER</code></td>
-<td>The Gateway's Envoy appends the visitor to <code>X-Forwarded-For</code> and the outpost passes it on; Umami reads that header by default. Only the country is stored, from the bundled GeoLite database, never the address</td>
+<td><code>/healthz</code> answers without the database</td>
+<td>A database outage should show as an empty page, not as a pod the kubelet restarts in a loop</td>
 </tr>
 </tbody>
 </table>
+<h3 id="seeding">Seeding<a class="headerlink" href="#seeding" title="Permanent link">&para;</a></h3>
+<p>The Pelican content is imported once, by a <code>PostSync</code> hook that <code>curl</code>s a
+route inside the image. The route is part of the build, so there is no second
+image to keep in step; it refuses without the secret the pod already holds,
+and does nothing once a page exists. That is what makes it safe to run after
+every sync rather than once by hand.</p>
+<p>What it does, in order, and only on an empty database:</p>
+<ol>
+<li>Creates the first editor from <code>SEED_ADMIN_EMAIL</code> and the password in
+   OpenBao.</li>
+<li>Imports every file in the site repository's <code>public/seed/images/</code> as
+   media — including the ones no page references, because the archive is the
+   reason the site exists.</li>
+<li>Writes the three pages: Willkommen, Info and the Einladungsarchiv.</li>
+</ol>
+<p>Afterwards the database is the source of truth and the seed is a no-op.</p>
 <h3 id="network-policy">Network policy<a class="headerlink" href="#network-policy" title="Permanent link">&para;</a></h3>
-<p>Every rule in <code>umami/networkpolicy.yaml</code>, and why it is there. The shape is
+<p>Every rule in
+<a href="https://github.com/JanWelker/homelab-apps/blob/main/fest-wollbi/networkpolicy.yaml"><code>fest-wollbi/networkpolicy.yaml</code></a>,
+and why it is there. The shape is
 <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → Ship a <code>CiliumNetworkPolicy</code></a>;
 rollout and debugging are in
 <a href="https://homelab.wlkr.ch/platform/security-policies/#network-policies">Security Policies</a>.</p>
@@ -1124,20 +1138,24 @@ rollout and debugging are in
 </thead>
 <tbody>
 <tr>
-<td>Ingress on 3000 from the Authentik server pods only</td>
-<td>The outpost proxies the tracker paths as well as the dashboard, so the Gateway never talks to the pod. No <code>fromEntities: ingress</code>, so a request straight from the Gateway cannot skip the login</td>
+<td>Ingress on 3000 from <code>ingress</code></td>
+<td>The public site. This is the one application here that is meant to be read by people Authentik has never heard of</td>
+</tr>
+<tr>
+<td>Ingress on 3000 from the Authentik server pods, with an L7 <code>http</code> rule</td>
+<td><code>/admin</code> through the outpost</td>
 </tr>
 <tr>
 <td>Ingress from Prometheus on 9187, <code>GET /metrics</code> only</td>
-<td>The database's metrics. Umami itself exposes none</td>
+<td>The database's metrics. Payload exposes none</td>
 </tr>
 <tr>
 <td>Ingress from <code>cnpg-system</code> on 8000</td>
 <td>The operator polls the instance manager there; without the rule the <code>Cluster</code> never goes Healthy and the sync deadlocks. See <a href="../nextcloud/#sync-stuck-on-the-database">Sync stuck on the database</a></td>
 </tr>
 <tr>
-<td>Egress to the namespace only</td>
-<td>The database. With the three phone-home switches off, nothing else is dialled</td>
+<td>Egress to the namespace, and nothing else at all</td>
+<td>The site renders from its own database and serves its own uploads. There is no <code>toFQDNs</code> block, which is the shortest way to say a public site never calls out</td>
 </tr>
 <tr>
 <td>Egress from the database pod to <code>kube-apiserver</code></td>
@@ -1146,55 +1164,12 @@ rollout and debugging are in
 </tbody>
 </table>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<h3 id="first-login">First login<a class="headerlink" href="#first-login" title="Permanent link">&para;</a></h3>
-<p>Umami creates <code>admin</code> with the password <code>umami</code> on its first start. Change it
-under Profile before adding a website; it is the only account, and the only
-credential Umami keeps that OpenBao does not.</p>
-<h3 id="adding-a-site">Adding a site<a class="headerlink" href="#adding-a-site" title="Permanent link">&para;</a></h3>
-<ol>
-<li>Settings → Websites → Add website: a name and the hostname. The website
-   ID it shows is not a secret; it goes into Git with the snippet.</li>
-<li>
-<p>Put the snippet in the site's <code>&lt;head&gt;</code>, with <code>data-domains</code> set to the
-   hostname it should report from:</p>
-<div class="language-html highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">&lt;</span><span class="nt">script</span> <span class="na">defer</span> <span class="na">src</span><span class="o">=</span><span class="s">"https://analytics.k8s.wlkr.ch/script.js"</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  <span class="na">data-website-id</span><span class="o">=</span><span class="s">"&lt;id&gt;"</span> <span class="na">data-domains</span><span class="o">=</span><span class="s">"&lt;hostname&gt;"</span><span class="p">&gt;&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
-</span></code></pre></div>
-</li>
-</ol>
-<p><code>data-domains</code> is what keeps a local <code>zensical serve</code> or <code>npm run dev</code> out of
-the numbers: the tracker checks the page's hostname before it sends anything.
-A PR preview under the production hostname is not excluded and counts as a
-page there.</p>
-<p>Where the snippet lives per site:</p>
-<table>
-<thead>
-<tr>
-<th>Site</th>
-<th>Where</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>This site and the <a href="https://homelab.wlkr.ch/">platform documentation</a></td>
-<td><code>overrides/partials/integrations/analytics/custom.html</code>, wired by <code>[project.extra.analytics] provider = "custom"</code> in <code>zensical.toml</code></td>
-</tr>
-<tr>
-<td>A SvelteKit or Vite site on GitHub Pages</td>
-<td><code>src/app.html</code> or <code>index.html</code></td>
-</tr>
-<tr>
-<td><a href="../nextcloud/">Nextcloud</a></td>
-<td>The <code>jsloader</code> app, configured by the startup hook: it injects the snippet on every page and adds the analytics host to the Content Security Policy, which Nextcloud otherwise pins to itself</td>
-</tr>
-<tr>
-<td><a href="../home-assistant/">Home Assistant</a></td>
-<td><code>frontend.extra_module_url</code> in <code>configuration.yaml</code>, pointing at a module in the ConfigMap that appends the <code>&lt;script&gt;</code> tag; a module is loaded through <code>import()</code>, which is not how the tracker expects to be run</td>
-</tr>
-</tbody>
-</table>
+<h3 id="editing">Editing<a class="headerlink" href="#editing" title="Permanent link">&para;</a></h3>
+<p><code>https://fest.wollbi.ch/admin</code> — Authentik first, then Payload's own login.
+Pages are made of three blocks, which are the three shapes the Pelican pages
+had: prose, a run of images under a heading, and a download.</p>
 <h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
-<p><code>kv/umami/config</code> holds two values, generated by <code>make bao-secrets</code> in the
+<p><code>kv/fest-wollbi/config</code> holds two values, written by <code>make bao-secrets</code> in the
 platform repository, both at once because a <code>bao kv put</code> replaces a path
 wholesale.</p>
 <table>
@@ -1206,43 +1181,39 @@ wholesale.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>app-secret</code></td>
-<td><code>APP_SECRET</code>: signs the dashboard sessions</td>
+<td><code>payload-secret</code></td>
+<td><code>PAYLOAD_SECRET</code>: signs the editor sessions, and the token the seed hook authenticates with</td>
 </tr>
 <tr>
-<td><code>two-factor-encryption-key</code></td>
-<td><code>TWO_FACTOR_ENCRYPTION_KEY</code>: encrypts TOTP secrets at rest</td>
+<td><code>admin-password</code></td>
+<td>The first editor's password, read only while the database is empty</td>
 </tr>
 </tbody>
 </table>
-<p>The <code>ExternalSecret</code> sits at sync wave <code>-1</code>, with the database and ahead of
-the Deployment that reads it, and keeps its Secret when deleted
-(<code>deletionPolicy: Retain</code>). The database password is not here; CloudNativePG
-generates it and nothing outside the cluster needs it.</p>
 <h2 id="health-check">Health check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>umami<span class="w"> </span>get<span class="w"> </span>pods
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>umami<span class="w"> </span>get<span class="w"> </span>cluster<span class="w"> </span>umami-db
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>curl<span class="w"> </span>-sI<span class="w"> </span>https://analytics.k8s.wlkr.ch/script.js<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-1
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>fest-wollbi<span class="w"> </span>get<span class="w"> </span>pods
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>fest-wollbi<span class="w"> </span>get<span class="w"> </span>cluster<span class="w"> </span>fest-wollbi-db
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>fest-wollbi<span class="w"> </span>logs<span class="w"> </span>job/fest-wollbi-seed
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>curl<span class="w"> </span>-sI<span class="w"> </span>https://fest.wollbi.ch/<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-1
 </span></code></pre></div>
-<p>The database should report <code>Cluster in healthy state</code> and the script should
-answer <code>200</code> without a redirect to <code>auth.k8s.wlkr.ch</code>. The dashboard's
-Realtime view is the end-to-end check: open one of the sites and the visit
-appears within seconds.</p>
+<p>The seed Job's log is the whole migration report: <code>{"seeded":true,...}</code> on the
+first run and <code>{"seeded":false,"reason":"pages already exist"}</code> on every one
+after it.</p>
 <h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
 <div class="admonition warning">
-<p class="admonition-title">Two logins, and the tracker paths behind neither</p>
-<p>Umami has a login of its own and no OIDC support, so, like Home Assistant, the outpost sits in front of it and browser users authenticate twice. <code>/script.js</code> and <code>/api/send</code> are exempt on the provider, which is what lets a visitor's browser post a page view; the collect endpoint accepts nothing but page views and events for a known website ID.</p>
+<p class="admonition-title">The hostname is not <code>k8s.wlkr.ch</code></p>
+<p>This is the first application on a second domain. It needs the <code>wollbi.ch</code> listener and certificate on the apps Gateway and <code>wollbi.ch</code> in external-dns' <code>domainFilters</code>, all in the platform repository. Without them the route exists, resolves to nothing and serves no certificate.</p>
 </div>
 <ul>
-<li><strong>A visit shows the cluster's country, or none.</strong> Umami takes the visitor
-  from <code>X-Forwarded-For</code>. If every visit resolves to the same place, the
-  header is not reaching the pod: see
-  <a href="../conventions/#behind-the-gateway">Behind the Gateway</a>.</li>
-<li><strong>Rewriting <code>kv/umami/config</code> logs everyone out.</strong> <code>make bao-secrets</code>
-  asks for a typed confirmation before it does; a rotated <code>APP_SECRET</code>
-  invalidates every session and a rotated 2FA key every second factor.</li>
-<li><strong><code>data-domains</code> is the only guard against noise.</strong> A snippet without it
-  reports from every copy of the site: a laptop, a preview, a fork.</li>
+<li><strong>A new field needs a migration.</strong> The Postgres adapter ignores schema push
+  in production, so a collection change that works on a laptop does nothing
+  here until <code>payload migrate:create</code> has been run and committed in the site
+  repository.</li>
+<li><strong>The uploads volume and the database are one backup.</strong> A restore of one
+  without the other leaves records pointing at files that are gone.</li>
+<li><strong>Rewriting <code>kv/fest-wollbi/config</code> logs the editors out</strong> and does not
+  change the first editor's password, which is read only while the database is
+  empty.</li>
 </ul>
 
 
@@ -1286,7 +1257,7 @@ appears within seconds.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../nextcloud/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Nextcloud">
+          <a href="../advent-wollbi/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Wollbi Adventsfenster">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
@@ -1296,27 +1267,11 @@ appears within seconds.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Nextcloud
-              </div>
-            </div>
-          </a>
-        
-        
-          
-          <a href="../advent-wollbi/" class="md-footer__link md-footer__link--next" aria-label="Next: Wollbi Adventsfenster">
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              <div class="md-ellipsis">
                 Wollbi Adventsfenster
               </div>
             </div>
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </div>
           </a>
+        
         
       </nav>
     
