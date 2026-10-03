@@ -25,6 +25,7 @@ nav = [
   { "Dependency-Track" = "dependency-track.md" },
   { "Flowscape" = "flowscape.md" },
   { "Home Assistant" = "home-assistant.md" },
+  { "Jellyfin" = "jellyfin.md" },
   { "Knead Time" = "kneadtime.md" },
   { "Nextcloud" = "nextcloud.md" },
   { "Umami" = "umami.md" },
