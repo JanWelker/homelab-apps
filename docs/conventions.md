@@ -174,12 +174,19 @@ The platform handles all of this; adding your own is the usual mistake:
 | Backups of a PVC | Nothing | Velero snapshots it nightly; restoring is in [Backups & Recovery](https://homelab.wlkr.ch/operations/backups/) |
 | Metrics | A `ServiceMonitor` or `PodMonitor` | Prometheus scrapes it |
 
-## Routes with more than one rule
+## Writing an `HTTPRoute`
 
-Write every rule's `matches` out, the catch-all's `PathPrefix /` included.
-The API server fills in that default when it is missing, and ArgoCD forgives
-it only on the first rule, so a route whose catch-all comes second reports
-`OutOfSync` forever.
+The API server fills in defaults for what a route leaves out, and ArgoCD
+reports every filled-in field as drift unless the platform tells it to look
+away. It looks away for less than you might expect:
+
+| Write out | Because ArgoCD |
+| --- | --- |
+| `group: gateway.networking.k8s.io` and `kind: Gateway` on each `parentRefs` entry | ignores neither |
+| Every rule's `matches`, the catch-all's `PathPrefix /` included, once a route has more than one rule | forgives a missing `matches` only on the first rule |
+
+A route that leaves either out reports `OutOfSync` forever while working
+fine.
 
 ## Behind the Gateway
 
