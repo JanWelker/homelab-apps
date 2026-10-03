@@ -174,6 +174,13 @@ The platform handles all of this; adding your own is the usual mistake:
 | Backups of a PVC | Nothing | Velero snapshots it nightly; restoring is in [Backups & Recovery](https://homelab.wlkr.ch/operations/backups/) |
 | Metrics | A `ServiceMonitor` or `PodMonitor` | Prometheus scrapes it |
 
+## Routes with more than one rule
+
+Write every rule's `matches` out, the catch-all's `PathPrefix /` included.
+The API server fills in that default when it is missing, and ArgoCD forgives
+it only on the first rule, so a route whose catch-all comes second reports
+`OutOfSync` forever.
+
 ## Behind the Gateway
 
 Traffic arrives from Cilium's Envoy inside the pod CIDR (`10.244.0.0/16`), not
