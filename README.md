@@ -22,6 +22,7 @@ Kubeadm, Cilium, Rook-Ceph, ArgoCD and everything under them — is in
 | Nextcloud | `cloud.k8s.wlkr.ch` | Authentik OIDC | [`nextcloud/`](nextcloud/) | [docs](https://homelab-apps.wlkr.ch/nextcloud/) |
 | Umami | `analytics.k8s.wlkr.ch` | Authentik proxy | [`umami/`](umami/) | [docs](https://homelab-apps.wlkr.ch/umami/) |
 | Wollbi Adventsfenster | `advent.wollbi.ch` | Public; Authentik proxy on `/admin` | [`advent-wollbi/`](advent-wollbi/) | [docs](https://homelab-apps.wlkr.ch/advent-wollbi/) |
+| Wollbi-Fescht | `fest.wollbi.ch` | Public; Authentik proxy on `/admin` | [`fest-wollbi/`](fest-wollbi/) | [docs](https://homelab-apps.wlkr.ch/fest-wollbi/) |
 
 ## How it works
 

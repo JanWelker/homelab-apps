@@ -21,6 +21,7 @@ runs on top.
 | [Nextcloud](nextcloud.md) | [cloud.k8s.wlkr.ch](https://cloud.k8s.wlkr.ch) | A PVC for files | CloudNativePG | Authentik OIDC |
 | [Umami](umami.md) | [analytics.k8s.wlkr.ch](https://analytics.k8s.wlkr.ch) | None | CloudNativePG | Authentik proxy, in front of its own login; the tracker paths are public |
 | [Wollbi Adventsfenster](advent-wollbi.md) | [advent.wollbi.ch](https://advent.wollbi.ch) | A PVC for uploads | CloudNativePG | Public; Authentik proxy on `/admin` only |
+| [Wollbi-Fescht](fest-wollbi.md) | [fest.wollbi.ch](https://fest.wollbi.ch) | A PVC for uploads | CloudNativePG | Public; Authentik proxy on `/admin` only |
 
 ## How a directory becomes an application
 

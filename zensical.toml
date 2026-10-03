@@ -29,6 +29,7 @@ nav = [
   { "Nextcloud" = "nextcloud.md" },
   { "Umami" = "umami.md" },
   { "Wollbi Adventsfenster" = "advent-wollbi.md" },
+  { "Wollbi-Fescht" = "fest-wollbi.md" },
 ]
 
 # Umami, first-party on the cluster. The provider name selects
