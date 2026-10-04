@@ -1,0 +1,37 @@
+---
+# Seeded onto the volume once, by the init container, and never again: the
+# gateway rewrites this file itself. docs/openclaw.md#configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openclaw-seed
+  namespace: openclaw
+data:
+  openclaw.json: |
+    {
+      "gateway": {
+        "bind": "lan",
+        "port": 18789,
+        "auth": {
+          "mode": "token"
+        },
+        "controlUi": {
+          "allowedOrigins": [
+            "https://claw.k8s.wlkr.ch"
+          ]
+        }
+      },
+      "update": {
+        "checkOnStart": false
+      }
+    }
+  AGENTS.md: |
+    # Workspace
+
+    This workspace lives on a ReadWriteOnce volume in the `openclaw`
+    namespace of the homelab cluster. Nothing outside the pod reads it and
+    nothing backs it up but Velero's nightly snapshot of the claim.
+
+    The gateway may reach only the names listed in
+    `openclaw/networkpolicy.yaml`. A tool that dials anything else fails
+    with a timeout, not a refusal.
