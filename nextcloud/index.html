@@ -1156,7 +1156,7 @@ blueprint) come from a second source pointing at this repository.</p>
 </tr>
 <tr>
 <td><code>jsloader</code> installed and configured by the startup hook</td>
-<td>The Umami snippet on every page. Nextcloud pins its Content Security Policy to its own origin, so a script from <code>analytics.k8s.wlkr.ch</code> needs an app that adds the host to <code>script-src</code> and <code>connect-src</code>; <code>jsloader</code> does that from one admin setting, and the hook writes the setting so a rebuild has it too. Bump <code>cachebuster</code> when the snippet changes. See <a href="../umami/#usage">Umami → Usage</a></td>
+<td>The Umami snippet on every page. Nextcloud pins its Content Security Policy to its own origin, so a script from <code>analytics.k8s.wlkr.ch</code> needs an app that adds the host to <code>script-src</code> and <code>connect-src</code>; <code>jsloader</code> does that from one admin setting, and the hook writes the setting so a rebuild has it too. Bump <code>cachebuster</code> when the snippet changes. When no <code>jsloader</code> release supports the running Nextcloud, the hook logs it and starts the pod anyway, without the snippet, and enables it on the first start after a compatible release appears. See <a href="../umami/#usage">Umami → Usage</a></td>
 </tr>
 </tbody>
 </table>
