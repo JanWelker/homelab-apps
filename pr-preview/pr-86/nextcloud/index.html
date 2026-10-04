@@ -351,6 +351,38 @@
   
 
       
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../advent-wollbi/" class="md-tabs__link">
+        
+  
+  Wollbi Adventsfenster
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../fest-wollbi/" class="md-tabs__link">
+        
+  
+  Wollbi-Fescht
+
+      </a>
+    </li>
+  
+
+      
     </ul>
   </div>
 </nav>
@@ -810,6 +842,58 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advent-wollbi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Wollbi Adventsfenster
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fest-wollbi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Wollbi-Fescht
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -1111,10 +1195,6 @@ blueprint) come from a second source pointing at this repository.</p>
 <tr>
 <td><code>allow_local_remote_servers</code>, set by the startup hook</td>
 <td><code>auth.k8s.wlkr.ch</code> resolves to the Gateway's private address and Nextcloud's SSRF guard rejects it (<code>violates local access rules</code>) while <code>curl</code> from the same container works. Lifting it applies to every outbound request; the compensating controls are the egress half of <code>networkpolicy.yaml</code>, which names the only hosts the web pod may reach, and that federation and external storage are off. Pointing at the in-cluster Service instead would break the <code>iss</code> check</td>
-</tr>
-<tr>
-<td><code>jsloader</code> installed and configured by the startup hook</td>
-<td>The Umami snippet on every page. Nextcloud pins its Content Security Policy to its own origin, so a script from <code>analytics.k8s.wlkr.ch</code> needs an app that adds the host to <code>script-src</code> and <code>connect-src</code>; <code>jsloader</code> does that from one admin setting, and the hook writes the setting so a rebuild has it too. Bump <code>cachebuster</code> when the snippet changes. See <a href="../umami/#usage">Umami → Usage</a></td>
 </tr>
 </tbody>
 </table>
