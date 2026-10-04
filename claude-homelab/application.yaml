@@ -20,6 +20,13 @@ spec:
           access: read
         argocd:
           enabled: true
+        # Idle most of the time; see docs/claude-agents.md#configuration
+        resources:
+          requests:
+            cpu: 100m
+            memory: 768Mi
+          limits:
+            memory: 4Gi
         ssh:
           authorizedKeys:
             - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID3ZpwI02mjSUaGfrNWgFn9L6bBfzdTcZOtgkyfi6DLD
