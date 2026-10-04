@@ -291,6 +291,22 @@
   
   
     <li class="md-tabs__item">
+      <a href="./jellyfin/" class="md-tabs__link">
+        
+  
+  Jellyfin
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
       <a href="./kneadtime/" class="md-tabs__link">
         
   
@@ -686,6 +702,32 @@
   
   
     <li class="md-nav__item">
+      <a href="./jellyfin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Jellyfin
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="./kneadtime/" class="md-nav__link">
         
   
@@ -1025,6 +1067,13 @@ runs on top.</p>
 <td><a href="https://home.k8s.wlkr.ch">home.k8s.wlkr.ch</a></td>
 <td>A PVC for <code>/config</code></td>
 <td>CloudNativePG, for the recorder</td>
+<td>Authentik proxy, in front of its own login</td>
+</tr>
+<tr>
+<td><a href="jellyfin/">Jellyfin</a></td>
+<td><a href="https://media.k8s.wlkr.ch">media.k8s.wlkr.ch</a></td>
+<td>Three PVCs: the library, the configuration, the transcode cache</td>
+<td>None; SQLite on the configuration volume</td>
 <td>Authentik proxy, in front of its own login</td>
 </tr>
 <tr>
