@@ -1,0 +1,1673 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Long-running Claude Code agents on the cluster, one per session: an sshd and a tmux session on a volume, reached over TLS on the Gateway, with a deliberately small reach.">
+      
+      
+      
+        <link rel="canonical" href="https://homelab-apps.wlkr.ch/claude-agents/">
+      
+      
+        <link rel="prev" href="../conventions/">
+      
+      
+        <link rel="next" href="../dependency-track/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/logo.png">
+      <meta name="generator" content="zensical-0.0.63">
+    
+    
+      
+        <title>Claude agents - Homelab Applications</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../assets/stylesheets/modern/main.10763589.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../assets/stylesheets/modern/palette.812a03bb.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/fonts.css">
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+  
+
+
+  <script defer src="https://analytics.k8s.wlkr.ch/script.js" data-website-id="56b371f0-7926-4b5d-8562-0c31c7d4792b" data-domains="homelab-apps.wlkr.ch"></script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#claude-agents" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="./.." title="Homelab Applications" class="md-header__button md-logo" aria-label="Homelab Applications" data-md-component="logo">
+      
+  <img src="../assets/images/logo.png" alt="Homelab Applications">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Homelab Applications
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Claude agents
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Following your system theme -- switch to light"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Following your system theme -- switch to light" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-sun-moon" viewBox="0 0 24 24"><path d="M12 2v2M14.837 16.385a6 6 0 1 1-7.223-7.222c.624-.147.97.66.715 1.248a4 4 0 0 0 5.26 5.259c.589-.255 1.396.09 1.248.715M16 12a4 4 0 0 0-4-4M19 5l-1.256 1.256M20 12h2"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Pinned to light -- switch to dark"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Pinned to light -- switch to dark" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Pinned to dark -- follow your system theme"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Pinned to dark -- follow your system theme" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/JanWelker/homelab-apps" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    JanWelker/homelab-apps
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="./.." class="md-tabs__link">
+        
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../conventions/" class="md-tabs__link">
+        
+  
+  Conventions
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="././" class="md-tabs__link">
+        
+  
+  Claude agents
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../dependency-track/" class="md-tabs__link">
+        
+  
+  Dependency-Track
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../flowscape/" class="md-tabs__link">
+        
+  
+  Flowscape
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../home-assistant/" class="md-tabs__link">
+        
+  
+  Home Assistant
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../kneadtime/" class="md-tabs__link">
+        
+  
+  Knead Time
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../nextcloud/" class="md-tabs__link">
+        
+  
+  Nextcloud
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../umami/" class="md-tabs__link">
+        
+  
+  Umami
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../advent-wollbi/" class="md-tabs__link">
+        
+  
+  Wollbi Adventsfenster
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../fest-wollbi/" class="md-tabs__link">
+        
+  
+  Wollbi-Fescht
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="./.." title="Homelab Applications" class="md-nav__button md-logo" aria-label="Homelab Applications" data-md-component="logo">
+      
+  <img src="../assets/images/logo.png" alt="Homelab Applications">
+
+    </a>
+    Homelab Applications
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/JanWelker/homelab-apps" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    JanWelker/homelab-apps
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Conventions
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Claude agents
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Claude agents
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        At a glance
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sessions
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Configuration
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#network-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Network policy
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Usage
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ssh-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        SSH config
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#first-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        First login
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Secrets
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-the-github-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Creating the GitHub token
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Adding a session
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removing-a-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Removing a session
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sessions-without-a-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sessions without a repository
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acp-from-zed" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        ACP from Zed
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hosted-side-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Hosted side checklist
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#health-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Health check
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pitfalls" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Pitfalls
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dependency-track/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Dependency-Track
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flowscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Flowscape
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../home-assistant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home Assistant
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kneadtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Knead Time
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../nextcloud/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Nextcloud
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../umami/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Umami
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advent-wollbi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Wollbi Adventsfenster
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fest-wollbi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Wollbi-Fescht
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        At a glance
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sessions
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Configuration
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#network-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Network policy
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Usage
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ssh-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        SSH config
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#first-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        First login
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Secrets
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-the-github-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Creating the GitHub token
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Adding a session
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removing-a-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Removing a session
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sessions-without-a-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sessions without a repository
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acp-from-zed" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        ACP from Zed
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hosted-side-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Hosted side checklist
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#health-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Health check
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pitfalls" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Pitfalls
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+    <a href="https://github.com/JanWelker/homelab-apps/edit/main/docs/claude-agents.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/JanWelker/homelab-apps/raw/main/docs/claude-agents.md" title="View source of this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-code-2" viewBox="0 0 24 24"><path d="M4 12.15V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2h-3.35"/><path d="M14 2v5a1 1 0 0 0 1 1h5M5 16l-3 3 3 3M9 22l3-3-3-3"/></svg>
+    </a>
+  
+
+
+<h1 id="claude-agents">Claude agents<a class="headerlink" href="#claude-agents" title="Permanent link">&para;</a></h1>
+<p>Each session is a Claude Code instance that keeps running when the laptop is
+closed: a pod with <code>sshd</code>, a tmux session and a volume, reached at
+<code>&lt;session&gt;.ssh.wlkr.ch</code>. The same session is also driven from the Claude apps
+through Remote Control. The image and the Helm chart are the user's own,
+built in the <code>claude-agent</code> repository, which
+<a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>
+allows for the same reason as the Flowscape image. This repository holds the
+namespace, the two ServiceAccounts and one directory per session.</p>
+<h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hostname</td>
+<td><code>&lt;session&gt;.ssh.wlkr.ch</code>, a passthrough <code>TLSRoute</code> on <code>apps-gateway</code> that the chart renders; external-dns publishes it</td>
+</tr>
+<tr>
+<td>Authentication</td>
+<td>SSH public keys only; no password, no root</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>One PVC per session: <code>$HOME</code>, the clone, the Claude login and the conversation history</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>None</td>
+</tr>
+<tr>
+<td>Secrets</td>
+<td><code>kv/claude-&lt;session&gt;/github</code> and <code>kv/claude-agents/argocd</code> in OpenBao</td>
+</tr>
+<tr>
+<td>Files</td>
+<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-agents"><code>claude-agents/</code></a> for the namespace; one <code>claude-&lt;session&gt;/</code> per session, see <a href="#sessions">Sessions</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="sessions">Sessions<a class="headerlink" href="#sessions" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Session</th>
+<th>Repositories</th>
+<th>Cluster access</th>
+<th>Why it is its own session</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab"><code>homelab</code></a></td>
+<td><code>homelab</code>, <code>homelab-apps</code>, <code>claude-agent</code>, <code>flowscape</code>, <code>knead-time</code>, <code>fest.wollbi.ch</code>, <code>advent.wollbi.ch</code>, <code>renovate-config</code></td>
+<td>read, Argo CD</td>
+<td>Everything that runs on or ships to the cluster, so one agent sees both halves of a rollout</td>
+</tr>
+<tr>
+<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-sitzplan"><code>sitzplan</code></a></td>
+<td><code>sitzplan.schlumpf.me</code></td>
+<td>none</td>
+<td>Hosted outside the cluster; needs only npm besides GitHub</td>
+</tr>
+<tr>
+<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-virgil"><code>virgil</code></a></td>
+<td><code>virgil</code></td>
+<td>none</td>
+<td>An iOS app: the agent edits and opens pull requests, CI builds, because there is no Xcode on Linux</td>
+</tr>
+</tbody>
+</table>
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>claude-agents/</code> is plain manifests; each session is a separate Application on the OCI chart</td>
+<td>The namespace outlives any one session. Removing a session must not prune the namespace or the other sessions</td>
+</tr>
+<tr>
+<td>Session Applications have a single source and no <code>directory.exclude</code></td>
+<td><code>exclude</code> filters a Git directory source. An OCI chart has none, so there is nothing for <code>application.yaml</code> to be excluded from</td>
+</tr>
+<tr>
+<td>The namespace enforces <code>restricted</code></td>
+<td>The image runs as uid 1000 with every capability dropped and a read-only root filesystem</td>
+</tr>
+<tr>
+<td><code>claude-reader</code> and <code>claude-writer</code> are created here with <code>automountServiceAccountToken: false</code></td>
+<td>The platform binds them to the read and write ClusterRoles. A pod gets a token only by setting <code>kubernetes.access</code>, which keeps the choice visible in the session's own file</td>
+</tr>
+<tr>
+<td><code>kubernetes.access: read</code></td>
+<td>The sessions investigate and open pull requests; the cluster changes through Git and ArgoCD, not through the agent</td>
+</tr>
+<tr>
+<td><code>argocd.enabled: true</code></td>
+<td>Lets the agent read and sync applications with the <code>claude</code> account's token instead of guessing from the Git side</td>
+</tr>
+<tr>
+<td><code>repos</code> set per session</td>
+<td>Clones each repository once into <code>$HOME</code> and creates the GitHub token <code>ExternalSecret</code>; one token covers the list. Without repositories there is no clone, no token and no GitHub egress</td>
+</tr>
+<tr>
+<td><code>skills.repo: JanWelker/claude-skills</code></td>
+<td>The private repository behind the laptop's <code>~/.claude/skills</code>, cloned into the same place and pulled at every session start, so a session runs the same skills and can push changes to them</td>
+</tr>
+<tr>
+<td><code>extraEgressFQDNs</code> per session</td>
+<td>A session reaches the package registries its own build needs, and no others</td>
+</tr>
+<tr>
+<td><code>targetRevision</code> is the only version</td>
+<td>The chart's <code>appVersion</code> is the Claude Code version and the image tag defaults to it, so a Claude Code release is a chart release</td>
+</tr>
+<tr>
+<td>TLS ends in a <code>socat</code> sidecar from the same image, with a per-session <code>Certificate</code></td>
+<td>Cilium's Gateway only passes <code>TLSRoute</code> traffic through, it cannot terminate it; sshd itself listens on loopback only</td>
+</tr>
+<tr>
+<td><code>resources</code>: 768Mi requested, 4Gi limit</td>
+<td>An agent idles between prompts at a few hundred MiB; the chart's 2Gi request does not fit beside the rest of the workers. The limit leaves room for builds and subagents</td>
+</tr>
+<tr>
+<td><code>ssh.authorizedKeys</code> holds public keys</td>
+<td>They are public data: the same lines as <code>github.com/JanWelker.keys</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="network-policy">Network policy<a class="headerlink" href="#network-policy" title="Permanent link">&para;</a></h3>
+<p>Every rule in
+<a href="https://github.com/JanWelker/homelab-apps/blob/main/claude-agents/networkpolicy.yaml"><code>claude-agents/networkpolicy.yaml</code></a>,
+and why it is there. The shape is
+<a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → Ship a <code>CiliumNetworkPolicy</code></a>;
+rollout and debugging are in
+<a href="https://homelab.wlkr.ch/platform/security-policies/#network-policies">Security Policies</a>.
+The names an agent may reach live in each session's own policy, rendered by
+the chart from its values (<code>extraEgressFQDNs</code> adds to them).</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ingress on 2222 from the <code>ingress</code> entity</td>
+<td>The Gateway passes the TLS stream through by SNI to the pod's TLS sidecar, so the Gateway is the only way in</td>
+</tr>
+<tr>
+<td>Ingress from <code>host</code> and <code>remote-node</code></td>
+<td>The kubelet's TCP probes</td>
+</tr>
+<tr>
+<td>Ingress and egress within the namespace</td>
+<td>Sessions share the namespace; the policy does not split them further</td>
+</tr>
+<tr>
+<td>Default egress to the namespace only</td>
+<td>A session reaches nothing else unless its own policy says so. Those names (the Claude API, GitHub when <code>repo</code> is set, the Argo CD server) are the agent's reach, so adding one is reviewed like a firewall change</td>
+</tr>
+</tbody>
+</table>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
+<h3 id="ssh-config">SSH config<a class="headerlink" href="#ssh-config" title="Permanent link">&para;</a></h3>
+<p>One block covers every session, because the hostname is the only thing that
+differs:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Host *.ssh.wlkr.ch
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  User agent
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  ProxyCommand openssl s_client -quiet -verify_return_error -servername %h -connect %h:443
+</span></code></pre></div>
+<p><code>sshd</code> admits only the user <code>agent</code>. Then <code>ssh homelab.ssh.wlkr.ch</code> attaches to the tmux session <code>main</code>. With a
+command, <code>ssh homelab.ssh.wlkr.ch &lt;command&gt;</code> runs it directly, so <code>scp</code> and
+<code>rsync</code> work.</p>
+<h3 id="first-login">First login<a class="headerlink" href="#first-login" title="Permanent link">&para;</a></h3>
+<p>Once per session, after the first start:</p>
+<ol>
+<li><code>ssh &lt;session&gt;.ssh.wlkr.ch</code>.</li>
+<li>Claude Code asks how to log in: pick <strong>Claude account with subscription</strong>
+   and finish the browser flow.</li>
+</ol>
+<p>The login lives on the volume and survives restarts. Remote Control is on for
+every session through the image's managed settings; the session appears in
+the Claude apps as <code>claude-&lt;session&gt;</code>.</p>
+<h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
+<p>None is generated: each comes from an account outside the cluster. In the
+platform repository, <code>make claude-session-pat SESSION=&lt;session&gt;</code> writes a
+session's token and <code>make bao-secrets</code> the shared Argo CD one.</p>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Key</th>
+<th>Read as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kv/claude-&lt;session&gt;/github</code></td>
+<td><code>token</code></td>
+<td><code>GH_TOKEN</code>: the fine-grained token for that session's repositories. Only when <code>repos</code> is set</td>
+</tr>
+<tr>
+<td><code>kv/claude-agents/argocd</code></td>
+<td><code>token</code></td>
+<td>The Argo CD <code>claude</code> account's API token, from <code>argocd account generate-token --account claude</code>. Only when <code>argocd.enabled</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="creating-the-github-token">Creating the GitHub token<a class="headerlink" href="#creating-the-github-token" title="Permanent link">&para;</a></h3>
+<p>A fine-grained personal access token, one per session, so a leak costs that
+session's repositories only:</p>
+<ol>
+<li>GitHub → Settings → Developer settings → Fine-grained tokens → Generate.
+   A session that gains a repository keeps its token: edit it and add the
+   repository.</li>
+<li>Resource owner <code>JanWelker</code>; <strong>Only select repositories</strong>, and pick the
+   session's <code>repos</code> plus <code>claude-skills</code>.</li>
+<li>
+<p>Repository permissions:</p>
+<table>
+<thead>
+<tr>
+<th>Permission</th>
+<th>Access</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Contents</td>
+<td>Read and write</td>
+<td>Clone and push branches</td>
+</tr>
+<tr>
+<td>Pull requests</td>
+<td>Read and write</td>
+<td>Open and update pull requests</td>
+</tr>
+<tr>
+<td>Workflows</td>
+<td>Read and write</td>
+<td>A push that touches <code>.github/workflows/</code> is rejected without it</td>
+</tr>
+<tr>
+<td>Actions, Checks, Commit statuses</td>
+<td>Read</td>
+<td><code>gh run</code> and <code>gh pr checks</code></td>
+</tr>
+<tr>
+<td>Metadata</td>
+<td>Read</td>
+<td>Mandatory, added automatically</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p>Put the token into <code>kv/claude-&lt;session&gt;/github</code> (see above).</p>
+</li>
+</ol>
+<h3 id="adding-a-session">Adding a session<a class="headerlink" href="#adding-a-session" title="Permanent link">&para;</a></h3>
+<p>The <code>claude-session</code> skill walks through these steps.</p>
+<ol>
+<li>Copy a session directory, for example <code>claude-sitzplan/</code> to
+   <code>claude-&lt;session&gt;/</code>.</li>
+<li>In <code>application.yaml</code>, change <code>metadata.name</code>, <code>session</code>, <code>repos</code>, the
+   access toggles and <code>extraEgressFQDNs</code>.</li>
+<li>Create the token and write it to OpenBao before the merge, so the
+   <code>ExternalSecret</code> resolves on the first sync.</li>
+<li>Add the session to <a href="#sessions">Sessions</a> and merge. It answers at
+   <code>&lt;session&gt;.ssh.wlkr.ch</code> once the Application is Healthy; then do the
+   <a href="#first-login">first login</a>.</li>
+</ol>
+<h3 id="removing-a-session">Removing a session<a class="headerlink" href="#removing-a-session" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Delete <code>claude-&lt;session&gt;/</code> and its row in <a href="#sessions">Sessions</a>, and
+   merge.</li>
+<li>The ApplicationSet preserves resources on deletion, so remove them by
+   hand: <code>kubectl -n claude-agents delete all,configmap,externalsecret,certificate,secret,tlsroute,ciliumnetworkpolicy,serviceaccount -l app.kubernetes.io/instance=claude-&lt;session&gt;</code>,
+   then <code>secret/claude-&lt;session&gt;-tls</code>, which cert-manager creates without
+   that label.</li>
+<li>The volume is kept on purpose (<code>Prune=false</code>, <code>helm.sh/resource-policy:
+   keep</code>). Delete <code>pvc/claude-&lt;session&gt;</code> once nothing on it is needed.</li>
+<li>Remove the token: <code>make claude-session-pat SESSION=&lt;session&gt; DELETE=1</code> in
+   the platform repository, and revoke it on GitHub.</li>
+</ol>
+<p>Every session shares one <code>targetRevision</code> in practice: Renovate groups them
+into one pull request.</p>
+<h3 id="sessions-without-a-repository">Sessions without a repository<a class="headerlink" href="#sessions-without-a-repository" title="Permanent link">&para;</a></h3>
+<p>Leave <code>repos</code> empty. The pod then has no clone, no GitHub token
+and no GitHub egress, and the <code>kv/claude-&lt;session&gt;/github</code> path is not read.
+Use it for a scratch session that only needs the Claude API.</p>
+<h3 id="acp-from-zed">ACP from Zed<a class="headerlink" href="#acp-from-zed" title="Permanent link">&para;</a></h3>
+<p>Set <code>acp.enabled: true</code> in the session's values. Zed then starts the agent
+over the same SSH connection (<code>ssh &lt;session&gt;.ssh.wlkr.ch claude-code-acp</code>),
+which works because a command bypasses tmux.</p>
+<h3 id="hosted-side-checklist">Hosted side checklist<a class="headerlink" href="#hosted-side-checklist" title="Permanent link">&para;</a></h3>
+<p>What lives on Anthropic's and GitHub's side, not in this repository:</p>
+<ul>
+<li>[ ] The Claude GitHub App is installed on all repositories the sessions
+      touch.</li>
+<li>[ ] Auto-fix is enabled for pull requests the sessions open.</li>
+<li>[ ] Cloud environments exist for the repositories that need a hosted run.</li>
+<li>[ ] Routines run the sweeps that need no cluster access: Renovate pull
+      requests and merge conflicts.</li>
+</ul>
+<h2 id="health-check">Health check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>claude-agents<span class="w"> </span>get<span class="w"> </span>pods,statefulsets
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>claude-agents<span class="w"> </span>get<span class="w"> </span>tlsroute
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>openssl<span class="w"> </span>s_client<span class="w"> </span>-quiet<span class="w"> </span>-servername<span class="w"> </span>homelab.ssh.wlkr.ch<span class="w"> </span>-connect<span class="w"> </span>homelab.ssh.wlkr.ch:443<span class="w"> </span>&lt;/dev/null<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-1
+</span></code></pre></div>
+<p>The last command prints the SSH banner (<code>SSH-2.0-OpenSSH_...</code>) when the whole
+path works: DNS, certificate, Gateway, policy and <code>sshd</code>.</p>
+<h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>An update restarts the pod and ends the running turn.</strong> A new chart
+  version is a new pod. The conversation survives on the volume: the start
+  script runs <code>claude --continue</code>, which resumes it, but a turn in flight is
+  lost. Merge version bumps between turns.</li>
+<li><strong>Remote Control needs a full subscription login.</strong> <code>claude auth login</code>
+  works; a <code>setup-token</code> or an API key does not, and the session then shows
+  up nowhere in the apps.</li>
+<li><strong>The network policies are not enforced yet.</strong> While the platform runs with
+  <code>policyAuditMode</code>, Cilium logs what it would drop and drops nothing. Treat
+  the egress list as intent until that is switched off; see
+  <a href="https://homelab.wlkr.ch/platform/security-policies/#network-policies">Security Policies</a>.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../conventions/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Conventions">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Conventions
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../dependency-track/" class="md-footer__link md-footer__link--next" aria-label="Next: Dependency-Track">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Dependency-Track
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Jan Welker
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      
+      
+        
+        
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["content.action.edit","content.action.view","content.code.copy","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.prefetch","navigation.instant.progress","navigation.tabs","navigation.tabs.sticky","navigation.top","navigation.tracking","search.highlight","toc.follow"],"redirect":null,"search":"../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.8dcc8e9c.min.js"></script>
+      
+    
+  </body>
+</html>
