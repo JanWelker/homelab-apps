@@ -6,17 +6,15 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Paperless-ngx on the cluster: the household's paper scanned, OCR'd and searchable, plain manifests around the official image, CloudNativePG behind it and Authentik as the normal login.">
+        <meta name="description" content="fest.wollbi.ch on the cluster: the Wollbi-Fescht site as Payload CMS on Next.js, public at the root and behind the Authentik outpost at /admin.">
       
       
       
-        <link rel="canonical" href="https://homelab-apps.wlkr.ch/paperless-ngx/">
+        <link rel="canonical" href="https://homelab-apps.wlkr.ch/fest-wollbi/">
       
       
-        <link rel="prev" href="../nextcloud/">
+        <link rel="prev" href="../advent-wollbi/">
       
-      
-        <link rel="next" href="../umami/">
       
       
         
@@ -27,7 +25,7 @@
     
     
       
-        <title>Paperless-ngx - Homelab Applications</title>
+        <title>Wollbi-Fescht - Homelab Applications</title>
       
     
     
@@ -88,7 +86,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#paperless-ngx" class="md-skip">
+        <a href="#wollbi-fescht" class="md-skip">
           Skip to content
         </a>
       
@@ -123,7 +121,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Paperless-ngx
+              Wollbi-Fescht
             
           </span>
         </div>
@@ -321,11 +319,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="././" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../paperless-ngx/" class="md-tabs__link">
         
   
   Paperless-ngx
@@ -371,9 +367,11 @@
   
   
   
+    
   
-    <li class="md-tabs__item">
-      <a href="../fest-wollbi/" class="md-tabs__link">
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="././" class="md-tabs__link">
         
   
   Wollbi-Fescht
@@ -619,36 +617,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Paperless-ngx
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="././" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../paperless-ngx/" class="md-nav__link">
         
   
   
@@ -663,138 +635,6 @@
   
 
       </a>
-      
-        
-
-
-<nav class="md-nav md-nav--secondary" aria-label="On this page">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      On this page
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#at-a-glance" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        At a glance
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configuration" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Configuration
-      </span>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Configuration">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#oidc" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        OIDC
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#network-policy" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Network policy
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Usage
-      </span>
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Usage">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#getting-a-document-in" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Getting a document in
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#secrets" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Secrets
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#health-check" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Health check
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pitfalls" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Pitfalls
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -855,10 +695,36 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../fest-wollbi/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Wollbi-Fescht
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
         
   
   
@@ -873,6 +739,138 @@
   
 
       </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        At a glance
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Configuration
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#seeding" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Seeding
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#network-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Network policy
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Usage
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#editing" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Editing
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Secrets
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#health-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Health check
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pitfalls" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Pitfalls
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -941,10 +939,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#oidc" class="md-nav__link">
+  <a href="#seeding" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        OIDC
+        Seeding
       </span>
     </span>
   </a>
@@ -980,10 +978,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#getting-a-document-in" class="md-nav__link">
+  <a href="#editing" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Getting a document in
+        Editing
       </span>
     </span>
   </a>
@@ -1043,7 +1041,7 @@
                 
                   
   
-    <a href="https://github.com/JanWelker/homelab-apps/edit/main/docs/paperless-ngx.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/JanWelker/homelab-apps/edit/main/docs/fest-wollbi.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
     </a>
@@ -1052,20 +1050,22 @@
     
       
     
-    <a href="https://github.com/JanWelker/homelab-apps/raw/main/docs/paperless-ngx.md" title="View source of this page" class="md-content__button md-icon">
+    <a href="https://github.com/JanWelker/homelab-apps/raw/main/docs/fest-wollbi.md" title="View source of this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-code-2" viewBox="0 0 24 24"><path d="M4 12.15V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2h-3.35"/><path d="M14 2v5a1 1 0 0 0 1 1h5M5 16l-3 3 3 3M9 22l3-3-3-3"/></svg>
     </a>
   
 
 
-<h1 id="paperless-ngx">Paperless-ngx<a class="headerlink" href="#paperless-ngx" title="Permanent link">&para;</a></h1>
-<p><a href="https://docs.paperless-ngx.com/">Paperless-ngx</a> is where the household's
-paper goes: scanned, OCR'd, tagged and searchable, with the original PDF kept
-untouched beside the text. Upstream publishes an image and no chart — the
-charts that exist are repackagers — so this is a Deployment, a broker, a
-Service and an <code>HTTPRoute</code> around the official image, per
-<a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>.</p>
+<h1 id="wollbi-fescht">Wollbi-Fescht<a class="headerlink" href="#wollbi-fescht" title="Permanent link">&para;</a></h1>
+<p><a href="https://fest.wollbi.ch">fest.wollbi.ch</a> is the invitation to the street's
+summer party, and the archive of every invitation since 1987. It was a
+Pelican site until the pages became rows in a database: the content is now
+edited at <code>/admin</code> and the repository holds the application, not the text.
+The image is built in
+<a href="https://github.com/JanWelker/fest.wollbi.ch">JanWelker/fest.wollbi.ch</a>,
+which makes this the second application here whose upstream is our own —
+per <a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>.</p>
 <h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1077,31 +1077,31 @@ Service and an <code>HTTPRoute</code> around the official image, per
 <tbody>
 <tr>
 <td>URL</td>
-<td><a href="https://paperless.k8s.wlkr.ch">paperless.k8s.wlkr.ch</a></td>
+<td><a href="https://fest.wollbi.ch">fest.wollbi.ch</a> — public, no login</td>
 </tr>
 <tr>
 <td>Authentication</td>
-<td>Authentik OIDC, with one local <code>admin</code> kept as break-glass</td>
+<td>Authentik proxy outpost on <code>/admin</code> only, in front of Payload's own login</td>
 </tr>
 <tr>
 <td>Storage</td>
-<td>Two PVCs: the originals and the archive, and the index and the consume folder</td>
+<td>A PVC for what editors upload after the seed</td>
 </tr>
 <tr>
 <td>Database</td>
-<td>CloudNativePG <code>Cluster</code> <code>paperless-ngx-db</code></td>
-</tr>
-<tr>
-<td>Broker</td>
-<td>Redis, the official image, on its own small volume</td>
+<td>CloudNativePG <code>Cluster</code> <code>fest-wollbi-db</code></td>
 </tr>
 <tr>
 <td>Secrets</td>
-<td><code>kv/paperless-ngx/config</code> in OpenBao</td>
+<td><code>kv/fest-wollbi/config</code> in OpenBao</td>
 </tr>
 <tr>
 <td>Files</td>
-<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/paperless-ngx"><code>paperless-ngx/</code></a></td>
+<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/fest-wollbi"><code>fest-wollbi/</code></a></td>
+</tr>
+<tr>
+<td>Source</td>
+<td><a href="https://github.com/JanWelker/fest.wollbi.ch">JanWelker/fest.wollbi.ch</a></td>
 </tr>
 </tbody>
 </table>
@@ -1115,68 +1115,58 @@ Service and an <code>HTTPRoute</code> around the official image, per
 </thead>
 <tbody>
 <tr>
-<td>Plain manifests, no chart</td>
-<td>Paperless publishes no chart; the community ones repackage the same image with their own values</td>
+<td>Plain manifests around our own image</td>
+<td>One Next.js process with one port and one database; the site repository's README is the whole deployment contract</td>
 </tr>
 <tr>
-<td>The namespace enforces <code>baseline</code></td>
-<td>The image's entrypoint starts as root to take ownership of the volumes and drops to uid 1000 itself, which <code>restricted</code> forbids. <code>audit</code> and <code>warn</code> stay at <code>restricted</code>, so a change that no longer needs root is visible</td>
+<td>The namespace enforces <code>restricted</code></td>
+<td>The image is distroless and runs as uid 65532, its <code>nonroot</code> user, with a read-only root filesystem; the two things it writes, the uploads and Next.js' render cache, are volumes. There is no shell in it, so <code>kubectl exec</code> is for <code>node -e</code>, not for poking around</td>
 </tr>
 <tr>
-<td>A Redis of its own</td>
-<td>Paperless runs its consumption and its scheduled tasks through Celery, and there is no setting that removes the broker. It gets a small volume of its own, because a restart that loses the queue loses whatever was mid-consumption</td>
+<td><code>DATABASE_URL</code> from <code>fest-wollbi-db-app</code>, key <code>uri</code></td>
+<td>Payload wants one connection string and CloudNativePG assembles it; see <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract">the contract</a></td>
 </tr>
 <tr>
-<td>Database from <code>paperless-ngx-db-app</code></td>
-<td>Paperless wants the five fields rather than one URL, and CloudNativePG writes all five; see <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract">the contract</a></td>
+<td><code>PAYLOAD_SECRET</code> from OpenBao</td>
+<td>It signs every editor session and encrypts what Payload keeps encrypted. Generated in the cluster it would change on every rebuild and log everyone out</td>
 </tr>
 <tr>
-<td><code>PAPERLESS_SECRET_KEY</code> from OpenBao</td>
-<td>It signs the sessions; generated into the container it would change on every rebuild. See <a href="#secrets">Secrets</a></td>
+<td><code>NEXT_PUBLIC_SERVER_URL</code></td>
+<td>The origin Payload trusts for CSRF and builds absolute URLs from. TLS ends at the Gateway, so the pod's own address is the wrong answer — see <a href="../conventions/#behind-the-gateway">Behind the Gateway</a></td>
 </tr>
 <tr>
-<td>The consume and export folders inside the data volume</td>
-<td>Upstream's one hard rule about the consume folder is that it must not be inside the media folder, or a consumed file lands in the archive twice</td>
+<td>An <code>emptyDir</code> on <code>/app/.next/cache</code></td>
+<td>Next.js writes its render cache at runtime and the root filesystem is read-only. It is a cache: losing it on a restart costs one slow first request</td>
 </tr>
 <tr>
-<td><code>PAPERLESS_OCR_LANGUAGE: deu+eng</code>, <code>PAPERLESS_OCR_LANGUAGES</code> wider</td>
-<td>Most of the paper is German with English on top; the second variable installs the extra tesseract packages so a French or Italian document can be re-OCR'd without a new image</td>
+<td>Two rules on one <code>HTTPRoute</code></td>
+<td>The site is an invitation to the neighbours, so <code>/</code> reaches the app directly. <code>/admin</code> goes through the outpost, and so does <code>/outpost.goauthentik.io</code>, where the outpost finishes the login on this hostname; without it the login ends on a 404 from the site. A longer path prefix wins in Gateway API, so the order of the rules does not matter. The cross-namespace <code>backendRef</code> works only because the platform's <code>referencegrant.yaml</code> names this namespace</td>
 </tr>
 <tr>
-<td><code>PAPERLESS_USE_X_FORWARD_*</code> and <code>PAPERLESS_PROXY_SSL_HEADER</code></td>
-<td>Traffic arrives from Envoy inside the pod CIDR and TLS ends at the Gateway; without these Paperless builds <code>http://</code> links on an <code>https://</code> site. See <a href="../conventions/#behind-the-gateway">Behind the Gateway</a></td>
-</tr>
-<tr>
-<td>No Gotenberg and no Tika</td>
-<td>Those two exist to convert Office documents; what gets scanned here is PDFs and images, and each is another workload to keep patched. Adding them later is two Deployments and two variables</td>
-</tr>
-<tr>
-<td><code>PAPERLESS_ENABLE_UPDATE_CHECK: false</code></td>
-<td>No phone-home. The egress policy allows nothing but Authentik, so without it the drop log fills with version checks</td>
-</tr>
-<tr>
-<td><code>HTTPRoute</code> targets the app, not <code>authentik-server</code></td>
-<td>Paperless speaks OIDC, so the outpost is not in the path — <a href="../conventions/#6-authentication-is-authentiks-not-the-applications">Conventions → Authentication is Authentik's</a></td>
+<td><code>/healthz</code> answers without the database</td>
+<td>A database outage should show as an empty page, not as a pod the kubelet restarts in a loop</td>
 </tr>
 </tbody>
 </table>
-<h3 id="oidc">OIDC<a class="headerlink" href="#oidc" title="Permanent link">&para;</a></h3>
-<p>django-allauth, which Paperless uses, reads its whole provider configuration
-from one JSON document in <code>PAPERLESS_SOCIALACCOUNT_PROVIDERS</code> — client secret
-included. That document is assembled by the <code>ExternalSecret</code> template in
-<a href="https://github.com/JanWelker/homelab-apps/blob/main/paperless-ngx/secrets.yaml"><code>secrets.yaml</code></a>
-from the two values in OpenBao, so the secret never passes through Git.</p>
-<p><code>PAPERLESS_DISABLE_REGULAR_LOGIN</code> and <code>PAPERLESS_REDIRECT_LOGIN_TO_SSO</code> turn
-the login page into a redirect to Authentik. Neither disables the Django admin
-at <code>/admin/</code>, which is exactly what makes <code>admin</code> usable as break-glass.</p>
-<p>The provider's blueprint is
-<a href="https://github.com/JanWelker/homelab-apps/blob/main/paperless-ngx/authentik-blueprint.yaml"><code>authentik-blueprint.yaml</code></a>;
-the redirect URI is allauth's <code>/accounts/oidc/authentik/login/callback/</code> under
-the one hostname <code>auth.k8s.wlkr.ch</code>, see
-<a href="https://homelab.wlkr.ch/platform/authentik/#one-hostname">One hostname</a>.</p>
+<h3 id="seeding">Seeding<a class="headerlink" href="#seeding" title="Permanent link">&para;</a></h3>
+<p>The Pelican content is imported once, by a <code>PostSync</code> hook that <code>curl</code>s a
+route inside the image. The route is part of the build, so there is no second
+image to keep in step; it refuses without the secret the pod already holds,
+and does nothing once a page exists. That is what makes it safe to run after
+every sync rather than once by hand.</p>
+<p>What it does, in order, and only on an empty database:</p>
+<ol>
+<li>Creates the first editor from <code>SEED_ADMIN_EMAIL</code> and the password in
+   OpenBao.</li>
+<li>Imports every file in the site repository's <code>public/seed/images/</code> as
+   media — including the ones no page references, because the archive is the
+   reason the site exists.</li>
+<li>Writes the three pages: Willkommen, Info and the Einladungsarchiv.</li>
+</ol>
+<p>Afterwards the database is the source of truth and the seed is a no-op.</p>
 <h3 id="network-policy">Network policy<a class="headerlink" href="#network-policy" title="Permanent link">&para;</a></h3>
 <p>Every rule in
-<a href="https://github.com/JanWelker/homelab-apps/blob/main/paperless-ngx/networkpolicy.yaml"><code>paperless-ngx/networkpolicy.yaml</code></a>,
+<a href="https://github.com/JanWelker/homelab-apps/blob/main/fest-wollbi/networkpolicy.yaml"><code>fest-wollbi/networkpolicy.yaml</code></a>,
 and why it is there. The shape is
 <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → Ship a <code>CiliumNetworkPolicy</code></a>;
 rollout and debugging are in
@@ -1190,24 +1180,24 @@ rollout and debugging are in
 </thead>
 <tbody>
 <tr>
-<td>Ingress on 8000 from <code>ingress</code></td>
-<td>The Gateway reaches the app directly; the login is OIDC, so there is no outpost to route around</td>
+<td>Ingress on 3000 from <code>ingress</code></td>
+<td>The public site. This is the one application here that is meant to be read by people Authentik has never heard of</td>
+</tr>
+<tr>
+<td>Ingress on 3000 from the Authentik server pods, with an L7 <code>http</code> rule</td>
+<td><code>/admin</code> through the outpost</td>
 </tr>
 <tr>
 <td>Ingress from Prometheus on 9187, <code>GET /metrics</code> only</td>
-<td>The database's metrics. Paperless exposes none</td>
+<td>The database's metrics. Payload exposes none</td>
 </tr>
 <tr>
 <td>Ingress from <code>cnpg-system</code> on 8000</td>
 <td>The operator polls the instance manager there; without the rule the <code>Cluster</code> never goes Healthy and the sync deadlocks. See <a href="../nextcloud/#sync-stuck-on-the-database">Sync stuck on the database</a></td>
 </tr>
 <tr>
-<td>Egress to the namespace</td>
-<td>The database and the broker</td>
-</tr>
-<tr>
-<td>Egress to the Authentik server pods and <code>auth.k8s.wlkr.ch</code></td>
-<td>Discovery and the token exchange. It is the only name outside the cluster that the app may dial, which is the point: OCR is local and no document ever leaves</td>
+<td>Egress to the namespace, and nothing else at all</td>
+<td>The site renders from its own database and serves its own uploads. There is no <code>toFQDNs</code> block, which is the shortest way to say a public site never calls out</td>
 </tr>
 <tr>
 <td>Egress from the database pod to <code>kube-apiserver</code></td>
@@ -1216,32 +1206,13 @@ rollout and debugging are in
 </tbody>
 </table>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<h3 id="getting-a-document-in">Getting a document in<a class="headerlink" href="#getting-a-document-in" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Way</th>
-<th>How</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>The web UI</td>
-<td>Drag onto the dashboard; it lands in the consume folder and is picked up within seconds</td>
-</tr>
-<tr>
-<td>The consume folder</td>
-<td><code>kubectl -n paperless-ngx cp &lt;file&gt; deploy/paperless-ngx:/usr/src/paperless/data/consume/</code></td>
-</tr>
-<tr>
-<td>A scanner</td>
-<td>Anything that can write to the folder above; the mobile apps speak the API with a token from Settings → My Profile</td>
-</tr>
-</tbody>
-</table>
+<h3 id="editing">Editing<a class="headerlink" href="#editing" title="Permanent link">&para;</a></h3>
+<p><code>https://fest.wollbi.ch/admin</code> — Authentik first, then Payload's own login.
+Pages are made of three blocks, which are the three shapes the Pelican pages
+had: prose, a run of images under a heading, and a download.</p>
 <h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
-<p><code>kv/paperless-ngx/config</code> holds four values, written by <code>make bao-secrets</code> in
-the platform repository, all at once because a <code>bao kv put</code> replaces a path
+<p><code>kv/fest-wollbi/config</code> holds two values, written by <code>make bao-secrets</code> in the
+platform repository, both at once because a <code>bao kv put</code> replaces a path
 wholesale.</p>
 <table>
 <thead>
@@ -1252,47 +1223,39 @@ wholesale.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>secret-key</code></td>
-<td><code>PAPERLESS_SECRET_KEY</code>: signs the sessions</td>
+<td><code>payload-secret</code></td>
+<td><code>PAYLOAD_SECRET</code>: signs the editor sessions, and the token the seed hook authenticates with</td>
 </tr>
 <tr>
 <td><code>admin-password</code></td>
-<td>The break-glass <code>admin</code> account, read only when Paperless first starts</td>
-</tr>
-<tr>
-<td><code>oidc-client-id</code></td>
-<td>Part of the assembled provider JSON, and the same value on Authentik's side</td>
-</tr>
-<tr>
-<td><code>oidc-client-secret</code></td>
-<td>Likewise</td>
+<td>The first editor's password, read only while the database is empty</td>
 </tr>
 </tbody>
 </table>
 <h2 id="health-check">Health check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>paperless-ngx<span class="w"> </span>get<span class="w"> </span>pods
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>paperless-ngx<span class="w"> </span>get<span class="w"> </span>cluster<span class="w"> </span>paperless-ngx-db
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>paperless-ngx<span class="w"> </span>logs<span class="w"> </span>deploy/paperless-ngx<span class="w"> </span>-c<span class="w"> </span>paperless-ngx<span class="w"> </span>--tail<span class="o">=</span><span class="m">20</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>curl<span class="w"> </span>-sI<span class="w"> </span>https://paperless.k8s.wlkr.ch/accounts/login/<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-1
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>fest-wollbi<span class="w"> </span>get<span class="w"> </span>pods
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>fest-wollbi<span class="w"> </span>get<span class="w"> </span>cluster<span class="w"> </span>fest-wollbi-db
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>fest-wollbi<span class="w"> </span>logs<span class="w"> </span>job/fest-wollbi-seed
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>curl<span class="w"> </span>-sI<span class="w"> </span>https://fest.wollbi.ch/<span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-1
 </span></code></pre></div>
-<p>The database should report <code>Cluster in healthy state</code>. A document that sits in
-the consume folder and never appears is the broker: check that the Redis pod
-is Running before anything else.</p>
+<p>The seed Job's log is the whole migration report: <code>{"seeded":true,...}</code> on the
+first run and <code>{"seeded":false,"reason":"pages already exist"}</code> on every one
+after it.</p>
 <h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
 <div class="admonition warning">
-<p class="admonition-title">An SSO user arrives with no permissions</p>
-<p><code>PAPERLESS_SOCIAL_AUTO_SIGNUP</code> creates the account on first login, but it is an ordinary user who can see nothing. Grant it what it needs as <code>admin</code> through <code>/admin/</code>, or the person sees an empty, apparently broken Paperless.</p>
+<p class="admonition-title">The hostname is not <code>k8s.wlkr.ch</code></p>
+<p>This is the first application on a second domain. It needs the <code>wollbi.ch</code> listener and certificate on the apps Gateway and <code>wollbi.ch</code> in external-dns' <code>domainFilters</code>, all in the platform repository. Without them the route exists, resolves to nothing and serves no certificate.</p>
 </div>
 <ul>
-<li><strong>The break-glass login is <code>/admin/</code>, not the front page.</strong> The normal login
-  redirects to Authentik; <code>admin</code> signs in at
-  <code>https://paperless.k8s.wlkr.ch/admin/</code> with the password from OpenBao.</li>
-<li><strong>Rewriting <code>kv/paperless-ngx/config</code> does not change the admin password.</strong>
-  It is read only when Paperless first creates the account. The new value gets
-  written down and the old one still logs you in — reset it in <code>/admin/</code>.</li>
-<li><strong>The index is rebuildable, the originals are not.</strong> Both volumes carry
-  <code>Prune=false</code>, but only the media one is irreplaceable; <code>document_index
-  reindex</code> rebuilds the other from it.</li>
+<li><strong>A new field needs a migration.</strong> The Postgres adapter ignores schema push
+  in production, so a collection change that works on a laptop does nothing
+  here until <code>payload migrate:create</code> has been run and committed in the site
+  repository.</li>
+<li><strong>The uploads volume and the database are one backup.</strong> A restore of one
+  without the other leaves records pointing at files that are gone.</li>
+<li><strong>Rewriting <code>kv/fest-wollbi/config</code> logs the editors out</strong> and does not
+  change the first editor's password, which is read only while the database is
+  empty.</li>
 </ul>
 
 
@@ -1336,7 +1299,7 @@ is Running before anything else.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../nextcloud/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Nextcloud">
+          <a href="../advent-wollbi/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Wollbi Adventsfenster">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
@@ -1346,27 +1309,11 @@ is Running before anything else.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Nextcloud
+                Wollbi Adventsfenster
               </div>
             </div>
           </a>
         
-        
-          
-          <a href="../umami/" class="md-footer__link md-footer__link--next" aria-label="Next: Umami">
-            <div class="md-footer__title">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              <div class="md-ellipsis">
-                Umami
-              </div>
-            </div>
-            <div class="md-footer__button md-icon">
-              
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </div>
-          </a>
         
       </nav>
     
