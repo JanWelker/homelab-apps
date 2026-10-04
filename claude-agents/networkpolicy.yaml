@@ -9,7 +9,7 @@ metadata:
     argocd.argoproj.io/sync-wave: "-2"
 spec:
   description: >-
-    Default-deny ingress. The Gateway reaches sshd on 2222, the namespace
+    Default-deny ingress. The Gateway reaches the TLS sidecar on 2222, the namespace
     itself and the node's health probes.
   endpointSelector: {}
   ingress:

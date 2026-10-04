@@ -17,7 +17,7 @@ namespace, the two ServiceAccounts and one directory per session.
 
 | | |
 | --- | --- |
-| Hostname | `<session>.ssh.wlkr.ch`, a `TLSRoute` on `apps-gateway` that the chart renders |
+| Hostname | `<session>.ssh.wlkr.ch`, a passthrough `TLSRoute` on `apps-gateway` that the chart renders; external-dns publishes it |
 | Authentication | SSH public keys only; no password, no root |
 | Storage | One PVC per session: `$HOME`, the clone, the Claude login and the conversation history |
 | Database | None |
@@ -36,6 +36,7 @@ namespace, the two ServiceAccounts and one directory per session.
 | `argocd.enabled: true` | Lets the agent read and sync applications with the `claude` account's token instead of guessing from the Git side |
 | `repo` set per session | Clones the repository once and creates the GitHub token `ExternalSecret`. Without it there is no clone, no token and no GitHub egress |
 | `targetRevision` is the only version | The chart's `appVersion` is the Claude Code version and the image tag defaults to it, so a Claude Code release is a chart release |
+| TLS ends in a `socat` sidecar from the same image, with a per-session `Certificate` | Cilium's Gateway only passes `TLSRoute` traffic through, it cannot terminate it; sshd itself listens on loopback only |
 | `ssh.authorizedKeys` holds public keys | They are public data: the same lines as `github.com/JanWelker.keys` |
 
 ### Network policy
@@ -51,8 +52,8 @@ the chart from its values (`extraEgressFQDNs` adds to them).
 
 | Rule | Why |
 | --- | --- |
-| Ingress on 2222 from the `ingress` entity | The Gateway terminates TLS and forwards the plain SSH stream to the pod, so the Gateway is the only way in |
-| Ingress from `host` and `remote-node` | The kubelet's TCP probe on 2222 |
+| Ingress on 2222 from the `ingress` entity | The Gateway passes the TLS stream through by SNI to the pod's TLS sidecar, so the Gateway is the only way in |
+| Ingress from `host` and `remote-node` | The kubelet's TCP probes |
 | Ingress and egress within the namespace | Sessions share the namespace; the policy does not split them further |
 | Default egress to the namespace only | A session reaches nothing else unless its own policy says so. Those names (the Claude API, GitHub when `repo` is set, the Argo CD server) are the agent's reach, so adding one is reviewed like a firewall change |
 
