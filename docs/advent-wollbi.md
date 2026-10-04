@@ -87,9 +87,8 @@ had: prose, a run of images under a heading, and a download.
 
 ### Secrets
 
-`kv/advent-wollbi/config` holds two values, written by `make bao-secrets` in
-the platform repository, both at once because a `bao kv put` replaces a path
-wholesale.
+`kv/advent-wollbi/config` holds two values, written once by the `PushSecret` in
+`secrets.yaml` and never overwritten — see [Generated secrets](https://homelab.wlkr.ch/platform/openbao/#generated-secrets).
 
 | Key | Read as |
 | --- | --- |

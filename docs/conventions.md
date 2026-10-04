@@ -144,9 +144,14 @@ through, and a client that mixes names fails every login — see
 ### 7. Real secrets come from OpenBao
 
 An `ExternalSecret` reading `kv/<app>/config`, with a comment at the top of
-the file naming what seeds it: `make bao-secrets` in the platform repository,
-which runs `scripts/bao-secrets.sh` and writes every application's path.
-Database passwords are the exception, because CloudNativePG generates them
+the file naming what writes it. Random values — session keys, admin
+passwords, OIDC client pairs — come from a `Password` generator and a
+`PushSecret` at the end of the same `secrets.yaml`, at sync wave `-2` so they
+land before the `ExternalSecret` at `-1` — see [Generated secrets](https://homelab.wlkr.ch/platform/openbao/#generated-secrets). A value from an
+account outside the cluster, such as a model API key, is typed in with
+`make bao-secrets` in the platform repository, into a path of its own: a
+`bao kv put` replaces a path wholesale and would take the generated keys with
+it. Database passwords are neither, because CloudNativePG generates them
 (rule 3).
 
 OIDC client credentials go in the application's own `kv/<app>/config`, never

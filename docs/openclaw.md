@@ -19,7 +19,7 @@ chart, so this is plain manifests shaped after that reference, per
 | Authentication | Authentik proxy outpost, in front of the gateway's own shared-secret token |
 | Storage | One PVC: the config file, the channel credentials, the workspace and the session history |
 | Database | None |
-| Secrets | `kv/openclaw/config` in OpenBao |
+| Secrets | `kv/openclaw/config` and `kv/openclaw/anthropic` in OpenBao |
 | Files | [`openclaw/`](https://github.com/JanWelker/homelab-apps/tree/main/openclaw) |
 
 ## Configuration
@@ -82,14 +82,16 @@ that fails, which reads as a wrong credential.
 
 ### Secrets
 
-`kv/openclaw/config` holds two values, written by `make bao-secrets` in the
-platform repository, both at once because a `bao kv put` replaces a path
-wholesale.
+Two paths. `kv/openclaw/config` is generated: written once by the
+`PushSecret` in `secrets.yaml` and never overwritten — see [Generated secrets](https://homelab.wlkr.ch/platform/openbao/#generated-secrets).
+`kv/openclaw/anthropic` is typed in with `make bao-secrets` in the platform
+repository, its own path because a `bao kv put` replaces a path wholesale and
+would take the generated token with it.
 
-| Key | Read as |
-| --- | --- |
-| `gateway-token` | `OPENCLAW_GATEWAY_TOKEN`: the control UI's shared secret |
-| `anthropic-api-key` | `ANTHROPIC_API_KEY`: the model the agent thinks with, the one value here that is typed in rather than generated |
+| Path | Key | Read as |
+| --- | --- | --- |
+| `kv/openclaw/config` | `gateway-token` | `OPENCLAW_GATEWAY_TOKEN`: the control UI's shared secret |
+| `kv/openclaw/anthropic` | `api-key` | `ANTHROPIC_API_KEY`: the model the agent thinks with |
 
 Everything else OpenClaw holds — channel credentials, tool tokens — it stores
 itself, on the volume. Those are not in OpenBao and are not in Git; the volume

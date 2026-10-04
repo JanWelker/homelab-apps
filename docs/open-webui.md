@@ -19,7 +19,7 @@ chart, so this is that chart with values, per
 | Authentication | Authentik OIDC; the local login form is off and there is no local account |
 | Storage | A PVC for uploads and the retrieval index |
 | Database | CloudNativePG `Cluster` `open-webui-db` |
-| Secrets | `kv/open-webui/config` in OpenBao |
+| Secrets | `kv/open-webui/config` and `kv/open-webui/openai` in OpenBao |
 | Files | [`open-webui/`](https://github.com/JanWelker/homelab-apps/tree/main/open-webui) |
 
 ## Configuration
@@ -85,21 +85,23 @@ endpoint and OpenRouter. Two steps, in this order:
    it the connection test fails with a timeout that looks like a wrong key.
 2. Settings → Connections → add the base URL and the key.
 
-The key that is in Git's reach — the one in `kv/open-webui/config` — is only
+The key that is in Git's reach — the one in `kv/open-webui/openai` — is only
 the default OpenAI one. Keys added through the UI are stored in the database.
 
 ### Secrets
 
-`kv/open-webui/config` holds four values, written by `make bao-secrets` in the
-platform repository, all at once because a `bao kv put` replaces a path
-wholesale.
+Two paths. `kv/open-webui/config` is generated: written once by the
+`PushSecret` in `secrets.yaml` and never overwritten — see [Generated secrets](https://homelab.wlkr.ch/platform/openbao/#generated-secrets).
+`kv/open-webui/openai` is typed in with `make bao-secrets` in the platform
+repository, its own path because a `bao kv put` replaces a path wholesale and
+would take the generated keys with it.
 
-| Key | Read as |
-| --- | --- |
-| `webui-secret-key` | `WEBUI_SECRET_KEY`: signs the session cookies |
-| `openai-api-key` | `OPENAI_API_KEY`: the default provider's key, the one value here that is typed in rather than generated |
-| `oidc-client-id` | `OAUTH_CLIENT_ID`, and the same value on Authentik's side |
-| `oidc-client-secret` | `OAUTH_CLIENT_SECRET`, likewise |
+| Path | Key | Read as |
+| --- | --- | --- |
+| `kv/open-webui/config` | `webui-secret-key` | `WEBUI_SECRET_KEY`: signs the session cookies |
+| `kv/open-webui/config` | `oidc-client-id` | `OAUTH_CLIENT_ID`, and the same value on Authentik's side |
+| `kv/open-webui/config` | `oidc-client-secret` | `OAUTH_CLIENT_SECRET`, likewise |
+| `kv/open-webui/openai` | `api-key` | `OPENAI_API_KEY`: the default provider's key |
 
 ## Health check
 
