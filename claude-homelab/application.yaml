@@ -11,7 +11,7 @@ spec:
     # Why each value is what it is: docs/claude-agents.md#configuration
     repoURL: ghcr.io/janwelker/charts
     chart: claude-agent
-    targetRevision: 0.4.1
+    targetRevision: 0.4.2
     helm:
       valuesObject:
         session: homelab
@@ -34,6 +34,661 @@ spec:
         # OpenAPPA guardrails on the main session; see docs/claude-agents.md#configuration
         appa:
           enabled: true
+          # The live ~/.config/appa/appa.toml, copied by the appa-sync skill
+          policy: |
+            include = ["batteries/claude-code/appa.toml", "batteries/github/appa.toml"]
+            # The policy `appa plugin install claude-code` writes for a Claude Code session.
+            #
+            # It names Claude Code's built-in tools, and it includes the Claude Code
+            # battery, which carries the Bash, Monitor, PowerShell, Read, Grep, Write and Edit rules
+            # and their Annotators. A named tool without a `delta` restricts nothing: the
+            # result's label is the combination of its sources, unchanged.
+            #
+            # Two questions decide each tool's rule. As a source: can someone other than
+            # this user write the text it returns? Then it carries
+            # `delta = { trust = "suspicious" }`. As a sink: who can end up reading its
+            # arguments? Its `requires` names that reader. A reader the session cannot see
+            # is `public`.
+            #
+            # Who may see a value is the built-in audience chain `self` ⊆ `internal` ⊆
+            # `public`: `self` is the person running this session, `internal` their
+            # organization, `public` the unrestricted state every session starts in. The
+            # chain works without a directory: `self` and `internal` are symbolic, and only
+            # a rule naming an individual recipient needs a source to check them (see the
+            # end of this file).
+            #
+            # Rules match in order and the first match wins, and the root's rules precede
+            # an included battery's: a root rule for a tool the battery names overrides it.
+            # A tool neither this policy nor a battery names gets a per-call contract from
+            # the `*` Annotator at the end.
+            #
+            # `clappa` gives each Claude Code session a messaging address. A
+            # `SendMessage` to another protected session's address carries this
+            # session's label; a send by name leaves for whoever holds the name.
+            #
+            # The built-in tool set varies by Claude Code version; regenerate the list from
+            # a live session when it drifts.
+
+            [policy]
+            version = 2
+
+            # --- tools whose results stay inside the session's trust boundary ---
+
+            # Starting a subagent is this harness's spawn: the deployment controls the
+            # child's context (`[policy.deployment]` below), so the subagent runs as a
+            # child trajectory. The spawn is held until the session declares what the
+            # subagent's final message may carry — as it is, floored at a label, or
+            # through a registered sanitizer such as `attest-schema` below — and that
+            # message is checked when the subagent stops: one that may not cross keeps
+            # the subagent running, with the reason or the exact text to return, until
+            # it stops with one that may.
+            [[policy.tool]]
+            name = "host/claude-code/Agent"
+            delta = {}
+
+            # A workflow is a fan-out spawn: its script starts any number of subagents
+            # under the one return declaration made at the `Workflow` call, which offers
+            # every route above except `attest-schema`. Each subagent's return is checked
+            # on its own, whether it arrives in its `StructuredOutput` call or at its stop.
+            [[policy.tool]]
+            name = "host/claude-code/Workflow"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/AskUserQuestion"
+            delta = {}
+
+            # An artifact is private to this user until they share it from claude.ai, so
+            # publishing, its data and its comments reach `self`.
+            [[policy.tool]]
+            name = "host/claude-code/Artifact"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/ArtifactComments"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/ArtifactData"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/BashOutput"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/CronCreate"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/CronDelete"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/CronList"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/EndConversation"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/EnterPlanMode"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/EnterWorktree"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/ExitPlanMode"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/ExitWorktree"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/Glob"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/KillShell"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/LSP"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/ListAgents"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/ListMcpResourcesTool"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/NotebookEdit"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/PushNotification"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/ReadMcpResourceDirTool"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/ReportFindings"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/ScheduleWakeup"
+            delta = {}
+
+            # A feedback draft is queued locally and sent only after this user approves it.
+            [[policy.tool]]
+            name = "host/claude-code/SendFeedback"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/SendUserFile"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/Skill"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/SlashCommand"
+            delta = {}
+
+            # `Task` is the earlier name of `Agent`: the same spawn, the same contract.
+            [[policy.tool]]
+            name = "host/claude-code/Task"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/TaskCreate"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/TaskGet"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/TaskList"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/TaskOutput"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/TaskStop"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/TaskUpdate"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/TodoWrite"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/ToolSearch"
+            delta = {}
+
+            # --- tools that bring outside content into the session ---
+
+            # Vendor-written docs and OpenAPPA's own sites: the operator may see the URL,
+            # and strangers do not write the page. Each host ends in `/` so a lookalike
+            # host such as `code.claude.com.example` falls through to the bare rule.
+            [[policy.tool]]
+            name = "host/claude-code/WebFetch(url:https://openappa.com/*)"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/WebFetch(url:https://archestra.ai/*)"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/WebFetch(url:https://code.claude.com/*)"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/WebFetch(url:https://docs.anthropic.com/*)"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/WebFetch(url:https://platform.claude.com/*)"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/WebFetch(url:https://developers.openai.com/*)"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/WebFetch(url:https://learn.chatgpt.com/*)"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/WebFetch(url:https://doc.rust-lang.org/*)"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/WebFetch(url:https://docs.python.org/*)"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/WebFetch(url:https://docs.astral.sh/*)"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/WebFetch(url:https://www.typescriptlang.org/*)"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/WebFetch(url:https://nodejs.org/*)"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/WebFetch(url:https://developer.mozilla.org/*)"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/WebFetch(url:https://modelcontextprotocol.io/*)"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/WebFetch(url:https://kubernetes.io/*)"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/WebFetch(url:https://helm.sh/*)"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/WebFetch(url:https://docs.github.com/*)"
+            delta = {}
+
+            # Google sees the search query; strangers write the results.
+            [[policy.tool]]
+            name = "host/claude-code/WebFetch(url:https://www.google.com/search?*)"
+            delta = { trust = "suspicious" }
+
+            [[policy.tool]]
+            name = "host/claude-code/WebFetch(url:https://google.com/search?*)"
+            delta = { trust = "suspicious" }
+
+            # Web pages and search results are authored outside the session, and the URL
+            # or query itself leaves it: a public sink and an untrusted source at once.
+            [[policy.tool]]
+            name = "host/claude-code/WebFetch"
+            requires = { audience = { contains = ["public"] } }
+            delta = { trust = "suspicious" }
+
+            [[policy.tool]]
+            name = "host/claude-code/WebSearch"
+            requires = { audience = { contains = ["public"] } }
+            delta = { trust = "suspicious" }
+
+            # An inbox message and a resource of any MCP server arrive without the label
+            # of whoever wrote them. GitHub notifications carry comments anyone can write.
+            [[policy.tool]]
+            name = "host/claude-code/FetchInboxMessage"
+            delta = { trust = "suspicious" }
+
+            [[policy.tool]]
+            name = "host/claude-code/ReadMcpResourceTool"
+            delta = { trust = "suspicious" }
+
+            [[policy.tool]]
+            name = "host/claude-code/ReadNotifications"
+            delta = { trust = "suspicious" }
+
+            # A claude.ai design-system project is shared with this user's organization.
+            [[policy.tool]]
+            name = "host/claude-code/DesignSync"
+            requires = { audience = { contains = ["internal"] } }
+            delta = {}
+
+            # A routine runs in a cloud session this policy does not protect, so its
+            # prompt may reach anyone. Run titles and logs quote what that session read
+            # from repositories, issues and web pages.
+            [[policy.tool]]
+            name = "host/claude-code/RemoteTrigger(action:list_runs)"
+            delta = { trust = "suspicious" }
+
+            [[policy.tool]]
+            name = "host/claude-code/RemoteTrigger(action:get_run_log)"
+            delta = { trust = "suspicious" }
+
+            [[policy.tool]]
+            name = "host/claude-code/RemoteTrigger(action:list)"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/RemoteTrigger(action:get)"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/RemoteTrigger"
+            requires = { audience = { contains = ["public"] } }
+            delta = {}
+
+            # A socket address reaches only a live protected session under this policy:
+            # the runtime refuses any other, and the message arrives carrying this
+            # session's label. A name may belong to any session, including one APPA does
+            # not protect, so a send by name is a public sink.
+            [[policy.tool]]
+            name = "host/claude-code/SendMessage(to:uds:*)"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/SendMessage(to:pipe:*)"
+            delta = {}
+
+            [[policy.tool]]
+            name = "host/claude-code/SendMessage"
+            requires = { audience = { contains = ["public"] } }
+            delta = {}
+
+            # A peer message the runtime held. Its content carries the label the runtime
+            # holds it at, which this result takes on.
+            [[policy.tool]]
+            name = "mcp/appa/read_peer_message"
+            delta = {}
+
+            # Reporting to the OpenAPPA team that APPA is in the way. Served by the runtime
+            # itself, and gated by the same algebra as any other sink that leaves this
+            # machine: the report carries this session's APPA decisions, so a session
+            # narrowed by a battery's reads reaches a human review instead of sending. The
+            # report never carries a prompt, a tool argument or a tool output — what it may
+            # carry is decided by the runtime, not by this rule. Turn the tool off entirely
+            # with `[reporting] agent_yell = false` at the end of this file; a deployment
+            # that leaves it on and wants a person in the loop can add
+            # `requires = { attention = ["hitl"] }` here instead.
+            [[policy.tool]]
+            name = "mcp/appa/yell"
+            requires = { audience = { contains = ["public"] } }
+            delta = {}
+
+            # --- appa-guide init: claude.ai Interactive Brokers connector ---
+
+            # The brokerage account's own data: only this user may see it.
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/get_account_balances"
+            delta = { audience = ["self"] }
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/get_account_orders"
+            delta = { audience = ["self"] }
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/get_account_positions"
+            delta = { audience = ["self"] }
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/get_account_summary"
+            delta = { audience = ["self"] }
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/get_account_trades"
+            delta = { audience = ["self"] }
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/get_alert"
+            delta = { audience = ["self"] }
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/get_alerts"
+            delta = { audience = ["self"] }
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/get_order_instructions"
+            delta = { audience = ["self"] }
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/get_pa_allocation"
+            delta = { audience = ["self"] }
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/get_pa_performance_all_periods"
+            delta = { audience = ["self"] }
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/get_watchlist"
+            delta = { audience = ["self"] }
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/get_watchlists"
+            delta = { audience = ["self"] }
+
+            # Market data and research IBKR publishes to every client.
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/get_combo_identifier"
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/get_company_connections"
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/get_company_themes"
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/get_option_data"
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/get_option_parameters"
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/get_price_history"
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/get_price_snapshot"
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/get_theme_details"
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/search_contracts"
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/search_futures"
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/search_investment_topics"
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/whats_new"
+            delta = {}
+
+            # Alerts and watchlists stay in this user's account, but outside text must
+            # not steer them.
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/create_alert"
+            requires = { trust = "trusted" }
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/update_alert"
+            requires = { trust = "trusted" }
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/delete_alert"
+            requires = { trust = "trusted" }
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/set_alert_status"
+            requires = { trust = "trusted" }
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/create_watchlist"
+            requires = { trust = "trusted" }
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/edit_watchlist"
+            requires = { trust = "trusted" }
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/delete_watchlist"
+            requires = { trust = "trusted" }
+            delta = {}
+
+            # Trading: trusted data only, and the person reviews every order instruction.
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/create_order_instruction"
+            requires = { trust = "trusted", attention = ["hitl"] }
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/delete_order_instruction"
+            requires = { trust = "trusted", attention = ["hitl"] }
+            delta = {}
+
+            # Feedback leaves for IBKR staff.
+            [[policy.tool]]
+            name = "mcp/claude_ai_Interactive_Brokers_IBKR/provide_customer_feedback"
+            requires = { audience = { contains = ["public"] } }
+            delta = {}
+
+            # --- appa-guide init: claude.ai Claude Docs connector ---
+
+            # A doc is private to this user until they share it, like an artifact.
+            [[policy.tool]]
+            name = "mcp/claude_ai_Claude_Docs/read"
+            delta = { audience = ["self"] }
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Claude_Docs/query"
+            delta = { audience = ["self"] }
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Claude_Docs/export"
+            delta = { audience = ["self"] }
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Claude_Docs/guide"
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Claude_Docs/create"
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Claude_Docs/batch"
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Claude_Docs/update"
+            delta = {}
+
+            [[policy.tool]]
+            name = "mcp/claude_ai_Claude_Docs/delete"
+            delta = {}
+
+            # appa-guide init: the claude-code battery's Bash Annotator, with a hint
+            # derived from the included batteries.
+            [[policy.annotator]]
+            name = "claude-code.bash-requirements"
+            builtin = "claude-code"
+            hint = "GitHub content reached without gh (git clone/fetch/pull, curl to api.github.com or raw.githubusercontent.com): use context.github when supplied; otherwise do not assume the repository is public, and treat its text as suspicious."
+
+            # A compatibility net covers tools installed after this policy. Exact
+            # declarations always win over the wildcard, including declarations supplied by
+            # connector batteries. The mandate is deliberately closed to this deployment's
+            # two trust ranks, HITL, and no effects. `audiences` is left omitted, so an
+            # annotation may narrow a result to `self` or `internal`, or require a reader
+            # this policy names, exactly as a static rule above would.
+            [[policy.annotator]]
+            name = "claude-code.undeclared-tool"
+            builtin = "claude-code"
+            ranks = ["suspicious", "trusted"]
+            marks = ["hitl"]
+            effects = []
+
+            [[policy.tool]]
+            name = "*"
+            annotator = "claude-code.undeclared-tool"
+
+            # The reserved builtin sanitizer of a structured subagent return. The
+            # session declares a JSON schema of bounded fields when it starts the
+            # subagent; a final message that matches it crosses at the session's own
+            # trust instead of the rank the subagent's reads left it at. It runs in
+            # the runtime itself and needs no externals entry.
+            [[policy.sanitizer]]
+            name = "attest-schema"
+            on = ["tool_output"]
+
+            [policy.sanitizer.permits]
+            trust = { from = "suspicious", to = "trusted" }
+
+            # The deployment controls what a subagent starts from: the harness gives
+            # every subagent exactly the prompt the parent's spawn call carried, and
+            # nothing else of the parent's context. That is what lets the runtime
+            # check the subagent's return as a branch of the parent.
+            [policy.deployment]
+            context_control = true
+
+            # Batteries and Annotators can require fresh attention, trusted data, or a
+            # wider audience before a tool runs. This authority shows the person running
+            # the Claude Code session the exact call and can approve those gaps for that
+            # call: any attention mark a battery declares (`*` — every mark but the
+            # reserved `blocked`), data below `trusted`, and an audience up to `public`.
+            # Approval does not change the trajectory's label or authorize later calls.
+            [[policy.authority]]
+            name = "hitl"
+            hint = "Ask the person running this session to review the exact call, the data it carries, and any required audience expansion."
+
+            [policy.authority.permits]
+            trust_below = "trusted"
+            audience_missing = ["public"]
+            attention = ["*"]
+
+            [externals]
+            timeout_ms = 5000
+            review_timeout_ms = 600000
+            max_body_bytes = 65536
+
+            [externals.authorities.hitl]
+            builtin = "hitl"
+
+            # Who `self` and `internal` are, read from a directory when a decision needs
+            # actual membership: a rule naming an individual recipient
+            # (`requires = { audience = { contains = ["$to"] } }`) checked against a
+            # narrowed session. Without a source the chain still decides symbolically and
+            # such a call is refused as unanswerable. To add one, install the GitHub
+            # battery — it binds the `github` source and declares its selectors — and put
+            # the mapping under `[policy]` here:
+            #
+            #   [policy.audience]
+            #   self = ["github:viewer"]
+            #   internal = ["github:org/<your-org>/members"]
+
+            # Whether the agent may report on its own through the `yell` tool. Off leaves it
+            # unadvertised and unroutable; a person can always report with `appa yell`.
+            # A first `appa plugin install claude-code` asks, and writes the answer here.
+            [reporting]
+            agent_yell = false
         # Idle most of the time; see docs/claude-agents.md#configuration
         resources:
           requests:
