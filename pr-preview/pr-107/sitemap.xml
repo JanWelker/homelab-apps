@@ -19,22 +19,10 @@
         <loc>https://homelab-apps.wlkr.ch/home-assistant/</loc>
       </url>
       <url>
-        <loc>https://homelab-apps.wlkr.ch/jellyfin/</loc>
-      </url>
-      <url>
         <loc>https://homelab-apps.wlkr.ch/kneadtime/</loc>
       </url>
       <url>
         <loc>https://homelab-apps.wlkr.ch/nextcloud/</loc>
-      </url>
-      <url>
-        <loc>https://homelab-apps.wlkr.ch/open-webui/</loc>
-      </url>
-      <url>
-        <loc>https://homelab-apps.wlkr.ch/paperless-ngx/</loc>
-      </url>
-      <url>
-        <loc>https://homelab-apps.wlkr.ch/openclaw/</loc>
       </url>
       <url>
         <loc>https://homelab-apps.wlkr.ch/umami/</loc>
