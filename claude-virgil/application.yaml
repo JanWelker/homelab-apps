@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: claude-homelab-apps
+  name: claude-virgil
   namespace: argocd
 spec:
   project: apps
@@ -14,12 +14,13 @@ spec:
     targetRevision: 0.2.0
     helm:
       valuesObject:
-        session: homelab-apps
-        repo: JanWelker/homelab-apps
+        session: virgil
+        repos:
+          - JanWelker/virgil
         kubernetes:
-          access: read
+          access: none
         argocd:
-          enabled: true
+          enabled: false
         # Idle most of the time; see docs/claude-agents.md#configuration
         resources:
           requests:

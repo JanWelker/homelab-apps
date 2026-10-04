@@ -22,7 +22,15 @@ namespace, the two ServiceAccounts and one directory per session.
 | Storage | One PVC per session: `$HOME`, the clone, the Claude login and the conversation history |
 | Database | None |
 | Secrets | `kv/claude-<session>/github` and `kv/claude-agents/argocd` in OpenBao |
-| Files | [`claude-agents/`](https://github.com/JanWelker/homelab-apps/tree/main/claude-agents) for the namespace; [`claude-homelab/`](https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab) and [`claude-homelab-apps/`](https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab-apps) for the sessions |
+| Files | [`claude-agents/`](https://github.com/JanWelker/homelab-apps/tree/main/claude-agents) for the namespace; one `claude-<session>/` per session, see [Sessions](#sessions) |
+
+## Sessions
+
+| Session | Repositories | Cluster access | Why it is its own session |
+| --- | --- | --- | --- |
+| [`homelab`](https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab) | `homelab`, `homelab-apps`, `claude-agent`, `flowscape`, `knead-time`, `fest.wollbi.ch`, `advent.wollbi.ch`, `renovate-config` | read, Argo CD | Everything that runs on or ships to the cluster, so one agent sees both halves of a rollout |
+| [`sitzplan`](https://github.com/JanWelker/homelab-apps/tree/main/claude-sitzplan) | `sitzplan.schlumpf.me` | none | Hosted outside the cluster; needs only npm besides GitHub |
+| [`virgil`](https://github.com/JanWelker/homelab-apps/tree/main/claude-virgil) | `virgil` | none | An iOS app: the agent edits and opens pull requests, CI builds, because there is no Xcode on Linux |
 
 ## Configuration
 
@@ -34,7 +42,8 @@ namespace, the two ServiceAccounts and one directory per session.
 | `claude-reader` and `claude-writer` are created here with `automountServiceAccountToken: false` | The platform binds them to the read and write ClusterRoles. A pod gets a token only by setting `kubernetes.access`, which keeps the choice visible in the session's own file |
 | `kubernetes.access: read` | The sessions investigate and open pull requests; the cluster changes through Git and ArgoCD, not through the agent |
 | `argocd.enabled: true` | Lets the agent read and sync applications with the `claude` account's token instead of guessing from the Git side |
-| `repo` set per session | Clones the repository once and creates the GitHub token `ExternalSecret`. Without it there is no clone, no token and no GitHub egress |
+| `repos` set per session | Clones each repository once into `$HOME` and creates the GitHub token `ExternalSecret`; one token covers the list. Without repositories there is no clone, no token and no GitHub egress |
+| `extraEgressFQDNs` per session | A session reaches the package registries its own build needs, and no others |
 | `targetRevision` is the only version | The chart's `appVersion` is the Claude Code version and the image tag defaults to it, so a Claude Code release is a chart release |
 | TLS ends in a `socat` sidecar from the same image, with a per-session `Certificate` | Cilium's Gateway only passes `TLSRoute` traffic through, it cannot terminate it; sshd itself listens on loopback only |
 | `resources`: 768Mi requested, 4Gi limit | An agent idles between prompts at a few hundred MiB; the chart's 2Gi request does not fit beside the rest of the workers. The limit leaves room for builds and subagents |
@@ -67,10 +76,11 @@ differs:
 
 ```text
 Host *.ssh.wlkr.ch
+  User agent
   ProxyCommand openssl s_client -quiet -verify_return_error -servername %h -connect %h:443
 ```
 
-Then `ssh homelab.ssh.wlkr.ch` attaches to the tmux session `main`. With a
+`sshd` admits only the user `agent`. Then `ssh homelab.ssh.wlkr.ch` attaches to the tmux session `main`. With a
 command, `ssh homelab.ssh.wlkr.ch <command>` runs it directly, so `scp` and
 `rsync` work.
 
@@ -79,51 +89,79 @@ command, `ssh homelab.ssh.wlkr.ch <command>` runs it directly, so `scp` and
 Once per session, after the first start:
 
 1. `ssh <session>.ssh.wlkr.ch`.
-2. In the Claude Code prompt, run `claude auth login` and finish the browser
-   flow.
-3. Run `/config` and turn on **Enable Remote Control for all sessions**.
+2. Claude Code asks how to log in: pick **Claude account with subscription**
+   and finish the browser flow.
 
-The login lives on the volume and survives restarts.
+The login lives on the volume and survives restarts. Remote Control is on for
+every session through the image's managed settings; the session appears in
+the Claude apps as `claude-<session>`.
 
 ### Secrets
 
-Both paths are typed in with `make bao-secrets` in the platform repository.
-None is generated: each comes from an account outside the cluster.
+None is generated: each comes from an account outside the cluster. In the
+platform repository, `make claude-session-pat SESSION=<session>` writes a
+session's token and `make bao-secrets` the shared Argo CD one.
 
 | Path | Key | Read as |
 | --- | --- | --- |
-| `kv/claude-<session>/github` | `token` | `GH_TOKEN`: the fine-grained token for that session's repository. Only when `repo` is set |
+| `kv/claude-<session>/github` | `token` | `GH_TOKEN`: the fine-grained token for that session's repositories. Only when `repos` is set |
 | `kv/claude-agents/argocd` | `token` | The Argo CD `claude` account's API token, from `argocd account generate-token --account claude`. Only when `argocd.enabled` |
 
 ### Creating the GitHub token
 
-A fine-grained personal access token, one per session, so a leak costs one
-repository:
+A fine-grained personal access token, one per session, so a leak costs that
+session's repositories only:
 
 1. GitHub → Settings → Developer settings → Fine-grained tokens → Generate.
+   A session that gains a repository keeps its token: edit it and add the
+   repository.
 2. Resource owner `JanWelker`; **Only select repositories**, and pick the
-   session's one repository.
-3. Repository permissions, read and write: Contents, Pull requests,
-   Workflows, Checks. Metadata is read-only and is added automatically.
+   session's `repos`.
+3. Repository permissions:
+
+    | Permission | Access | Why |
+    | --- | --- | --- |
+    | Contents | Read and write | Clone and push branches |
+    | Pull requests | Read and write | Open and update pull requests |
+    | Workflows | Read and write | A push that touches `.github/workflows/` is rejected without it |
+    | Actions, Checks, Commit statuses | Read | `gh run` and `gh pr checks` |
+    | Metadata | Read | Mandatory, added automatically |
+
 4. Put the token into `kv/claude-<session>/github` (see above).
 
 ### Adding a session
 
-1. Copy a session directory, for example `claude-homelab/` to
+The `claude-session` skill walks through these steps.
+
+1. Copy a session directory, for example `claude-sitzplan/` to
    `claude-<session>/`.
-2. In `application.yaml`, change `metadata.name`, `session`, `repo` and
-   `ssh.authorizedKeys`.
+2. In `application.yaml`, change `metadata.name`, `session`, `repos`, the
+   access toggles and `extraEgressFQDNs`.
 3. Create the token and write it to OpenBao before the merge, so the
    `ExternalSecret` resolves on the first sync.
-4. Merge. The session answers at `<session>.ssh.wlkr.ch` once the Application
-   is Healthy; then do the [first login](#first-login).
+4. Add the session to [Sessions](#sessions) and merge. It answers at
+   `<session>.ssh.wlkr.ch` once the Application is Healthy; then do the
+   [first login](#first-login).
+
+### Removing a session
+
+1. Delete `claude-<session>/` and its row in [Sessions](#sessions), and
+   merge.
+2. The ApplicationSet preserves resources on deletion, so remove them by
+   hand: `kubectl -n claude-agents delete all,configmap,externalsecret,certificate,secret,tlsroute,ciliumnetworkpolicy,serviceaccount -l app.kubernetes.io/instance=claude-<session>`,
+   then `secret/claude-<session>-tls`, which cert-manager creates without
+   that label.
+3. The volume is kept on purpose (`Prune=false`, `helm.sh/resource-policy:
+   keep`). Delete `pvc/claude-<session>` once nothing on it is needed.
+4. Remove the token: `make claude-session-pat SESSION=<session> DELETE=1` in
+   the platform repository, and revoke it on GitHub.
 
 Every session shares one `targetRevision` in practice: Renovate groups them
 into one pull request.
 
 ### Sessions without a repository
 
-Set `repo: ""` (or leave it out). The pod then has no clone, no GitHub token
+Leave `repos` empty. The pod then has no clone, no GitHub token
 and no GitHub egress, and the `kv/claude-<session>/github` path is not read.
 Use it for a scratch session that only needs the Claude API.
 
