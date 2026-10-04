@@ -83,7 +83,6 @@ Where the snippet lives per site:
 | --- | --- |
 | This site and the [platform documentation](https://homelab.wlkr.ch/) | `overrides/partials/integrations/analytics/custom.html`, wired by `[project.extra.analytics] provider = "custom"` in `zensical.toml` |
 | A SvelteKit or Vite site on GitHub Pages | `src/app.html` or `index.html` |
-| [Nextcloud](nextcloud.md) | The `jsloader` app, configured by the startup hook: it injects the snippet on every page and adds the analytics host to the Content Security Policy, which Nextcloud otherwise pins to itself |
 | [Home Assistant](home-assistant.md) | `frontend.extra_module_url` in `configuration.yaml`, pointing at a module in the ConfigMap that appends the `<script>` tag; a module is loaded through `import()`, which is not how the tracker expects to be run |
 
 ### Secrets
