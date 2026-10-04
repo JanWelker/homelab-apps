@@ -15,6 +15,7 @@ runs on top.
 
 | Application | URL | Storage | Database | Authentication |
 | --- | --- | --- | --- | --- |
+| [Claude agents](claude-agents.md) | `<session>.ssh.wlkr.ch` | One PVC per session: `$HOME`, clone and login | None | SSH public keys |
 | [Dependency-Track](dependency-track.md) | [sbom.k8s.wlkr.ch](https://sbom.k8s.wlkr.ch) | A PVC for uploaded BOMs and mirrored feeds | CloudNativePG | Authentik OIDC |
 | [Flowscape](flowscape.md) | [flowscape.k8s.wlkr.ch](https://flowscape.k8s.wlkr.ch) | None | None | Authentik proxy |
 | [Home Assistant](home-assistant.md) | [home.k8s.wlkr.ch](https://home.k8s.wlkr.ch) | A PVC for `/config` | CloudNativePG, for the recorder | Authentik proxy, in front of its own login |

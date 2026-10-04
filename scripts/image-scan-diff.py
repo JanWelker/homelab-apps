@@ -35,9 +35,14 @@ def sources(spec):
 def render_chart(root, source, values_refs):
     """helm template for one chart source; returns the manifests as text."""
     helm = source.get("helm", {})
-    args = ["helm", "template", "scan", source["chart"],
-            "--repo", source["repoURL"], "--version", str(source["targetRevision"]),
-            "--include-crds"]
+    # An http(s) repoURL is a chart repository; anything else is an OCI
+    # registry path, which helm takes as oci://<repoURL>/<chart>.
+    if source["repoURL"].startswith(("http://", "https://")):
+        chart = [source["chart"], "--repo", source["repoURL"]]
+    else:
+        chart = [f"oci://{source['repoURL'].rstrip('/')}/{source['chart']}"]
+    args = ["helm", "template", "scan", *chart,
+            "--version", str(source["targetRevision"]), "--include-crds"]
     with tempfile.TemporaryDirectory() as workdir:
         for i, values_file in enumerate(helm.get("valueFiles", [])):
             for ref, ref_root in values_refs.items():

@@ -38,6 +38,19 @@ def chart_sources(app_path):
     return [s for s in (spec.get("sources") or [spec["source"]]) if "chart" in s]
 
 
+def chart_args(source):
+    """The chart reference and version flags helm takes for one source.
+
+    A repoURL with an http(s) scheme is a chart repository, so the chart is
+    its name plus --repo. Anything else is an OCI registry path (ArgoCD
+    takes it without a scheme), which helm wants as oci://<repoURL>/<chart>.
+    """
+    version = ["--version", str(source["targetRevision"])]
+    if source["repoURL"].startswith(("http://", "https://")):
+        return [source["chart"], "--repo", source["repoURL"], *version]
+    return [f"oci://{source['repoURL'].rstrip('/')}/{source['chart']}", *version]
+
+
 def render(name, source):
     """helm template for one chart source; returns (ok, output)."""
     values = source.get("helm", {}).get("valuesObject", {})
@@ -48,9 +61,7 @@ def render(name, source):
         values_file = pathlib.Path(workdir, "values.yaml")
         values_file.write_text(yaml.safe_dump(values))
         result = subprocess.run(
-            ["helm", "template", name, source["chart"],
-             "--repo", source["repoURL"],
-             "--version", str(source["targetRevision"]),
+            ["helm", "template", name, *chart_args(source),
              "--namespace", name,
              "--values", str(values_file)],
             cwd=workdir, capture_output=True, text=True, check=False)
