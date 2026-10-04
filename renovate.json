@@ -1,49 +1,11 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "platformAutomerge": true,
   "extends": [
-    "config:best-practices",
-    ":dependencyDashboard",
-    ":prHourlyLimitNone",
-    ":prConcurrentLimitNone",
-    ":timezone(Europe/Berlin)"
+    "github>JanWelker/renovate-config"
   ],
-  "labels": [
-    "dependencies"
-  ],
-  "schedule": "at any time",
-  "vulnerabilityAlerts": {
-    "enabled": true,
-    "labels": [
-      "security"
-    ]
-  },
   "packageRules": [
     {
-      "description": "Same policy as the homelab repository: patch and minor automerge, majors wait for a human. No groups -- every workload gets its own PR.",
-      "matchUpdateTypes": [
-        "patch",
-        "minor"
-      ],
-      "automerge": true
-    },
-    {
-      "description": "Major updates always require review.",
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "automerge": false
-    },
-    {
-      "description": "Three days between a release and its PR, as in the homelab repository: long enough for an upstream to pull a broken or compromised tag. Renovate lifts this for its own vulnerability-alert PRs.",
-      "matchDatasources": [
-        "docker",
-        "helm"
-      ],
-      "minimumReleaseAge": "3 days"
-    },
-    {
-      "description": "A PostgreSQL major version is an offline migration that takes the workload down while it runs, and it is not reversible. It waits for a human even though the image tag makes it look like any other bump. See cloudnative-pg.md in the homelab docs.",
+      "description": "A PostgreSQL major version is an offline migration that takes the workload down while it runs, and it is not reversible. The preset already holds every major for a human; this rule labels it. See cloudnative-pg.md in the homelab docs.",
       "matchDatasources": [
         "docker"
       ],
@@ -53,9 +15,7 @@
       "matchUpdateTypes": [
         "major"
       ],
-      "automerge": false,
-      "labels": [
-        "dependencies",
+      "addLabels": [
         "database-major"
       ]
     },
@@ -71,8 +31,7 @@
         "minor"
       ],
       "automerge": false,
-      "labels": [
-        "dependencies",
+      "addLabels": [
         "app-major"
       ]
     },
