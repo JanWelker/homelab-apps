@@ -6,17 +6,17 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Flowscape on the cluster: a self-built 3D map of Hubble flows across namespaces, read-only, behind the Authentik proxy outpost.">
+        <meta name="description" content="Long-running Claude Code agents on the cluster, one per session: an sshd and a tmux session on a volume, reached over TLS on the Gateway, with a deliberately small reach.">
       
       
       
-        <link rel="canonical" href="https://homelab-apps.wlkr.ch/flowscape/">
+        <link rel="canonical" href="https://homelab-apps.wlkr.ch/claude-agents/">
       
       
-        <link rel="prev" href="../dependency-track/">
+        <link rel="prev" href="../conventions/">
       
       
-        <link rel="next" href="../home-assistant/">
+        <link rel="next" href="../dependency-track/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Flowscape - Homelab Applications</title>
+        <title>Claude agents - Homelab Applications</title>
       
     
     
@@ -88,7 +88,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#flowscape" class="md-skip">
+        <a href="#claude-agents" class="md-skip">
           Skip to content
         </a>
       
@@ -123,7 +123,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Flowscape
+              Claude agents
             
           </span>
         </div>
@@ -241,9 +241,11 @@
   
   
   
+    
   
-    <li class="md-tabs__item">
-      <a href="../claude-agents/" class="md-tabs__link">
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="././" class="md-tabs__link">
         
   
   Claude agents
@@ -273,11 +275,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="././" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../flowscape/" class="md-tabs__link">
         
   
   Flowscape
@@ -489,58 +489,6 @@
       
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../claude-agents/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Claude agents
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../dependency-track/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Dependency-Track
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
     
   
   
@@ -560,7 +508,7 @@
   <span class="md-ellipsis">
     
   
-  Flowscape
+  Claude agents
 
     
   </span>
@@ -577,7 +525,7 @@
   <span class="md-ellipsis">
     
   
-  Flowscape
+  Claude agents
 
     
   </span>
@@ -650,6 +598,100 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ssh-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        SSH config
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#first-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        First login
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Secrets
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-the-github-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Creating the GitHub token
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Adding a session
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sessions-without-a-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sessions without a repository
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acp-from-zed" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        ACP from Zed
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hosted-side-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Hosted side checklist
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -678,6 +720,58 @@
   
 </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dependency-track/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Dependency-Track
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flowscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Flowscape
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -926,6 +1020,100 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ssh-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        SSH config
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#first-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        First login
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Secrets
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creating-the-github-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Creating the GitHub token
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Adding a session
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sessions-without-a-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sessions without a repository
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#acp-from-zed" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        ACP from Zed
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hosted-side-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Hosted side checklist
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -965,7 +1153,7 @@
                 
                   
   
-    <a href="https://github.com/JanWelker/homelab-apps/edit/main/docs/flowscape.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+    <a href="https://github.com/JanWelker/homelab-apps/edit/main/docs/claude-agents.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
       
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
     </a>
@@ -974,23 +1162,22 @@
     
       
     
-    <a href="https://github.com/JanWelker/homelab-apps/raw/main/docs/flowscape.md" title="View source of this page" class="md-content__button md-icon">
+    <a href="https://github.com/JanWelker/homelab-apps/raw/main/docs/claude-agents.md" title="View source of this page" class="md-content__button md-icon">
       
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-code-2" viewBox="0 0 24 24"><path d="M4 12.15V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2h-3.35"/><path d="M14 2v5a1 1 0 0 0 1 1h5M5 16l-3 3 3 3M9 22l3-3-3-3"/></svg>
     </a>
   
 
 
-<h1 id="flowscape">Flowscape<a class="headerlink" href="#flowscape" title="Permanent link">&para;</a></h1>
-<p><a href="https://github.com/JanWelker/flowscape">Flowscape</a> draws the whole cluster's
-network traffic as one 3D scene: namespaces as platforms, workloads as
-lights, every conversation an arc with sparks coloured by verdict. Hubble UI
-shows one namespace at a time; this answers "who talks to whom across
-namespaces, and what would a policy have dropped" in one picture. It is the
-one application here whose upstream is our own repository, and it deploys as
-plain manifests around that image, per
-<a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>.</p>
-<p><img alt="Flowscape showing the demo cluster" src="https://raw.githubusercontent.com/JanWelker/flowscape/main/docs/screenshot.png" /></p>
+<h1 id="claude-agents">Claude agents<a class="headerlink" href="#claude-agents" title="Permanent link">&para;</a></h1>
+<p>Each session is a Claude Code instance that keeps running when the laptop is
+closed: a pod with <code>sshd</code>, a tmux session and a volume, reached at
+<code>&lt;session&gt;.ssh.wlkr.ch</code>. The same session is also driven from the Claude apps
+through Remote Control. The image and the Helm chart are the user's own,
+built in the <code>claude-agent</code> repository, which
+<a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>
+allows for the same reason as the Flowscape image. This repository holds the
+namespace, the two ServiceAccounts and one directory per session.</p>
 <h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1001,28 +1188,28 @@ plain manifests around that image, per
 </thead>
 <tbody>
 <tr>
-<td>URL</td>
-<td><a href="https://flowscape.k8s.wlkr.ch">flowscape.k8s.wlkr.ch</a>; a <a href="https://janwelker.github.io/flowscape/">live demo</a> with a synthetic cluster runs in the browser</td>
+<td>Hostname</td>
+<td><code>&lt;session&gt;.ssh.wlkr.ch</code>, a passthrough <code>TLSRoute</code> on <code>apps-gateway</code> that the chart renders; external-dns publishes it</td>
 </tr>
 <tr>
 <td>Authentication</td>
-<td>Authentik proxy outpost; the app has none of its own</td>
+<td>SSH public keys only; no password, no root</td>
 </tr>
 <tr>
 <td>Storage</td>
-<td>None. Five minutes of counters in memory, rebuilt from Relay on every start</td>
+<td>One PVC per session: <code>$HOME</code>, the clone, the Claude login and the conversation history</td>
 </tr>
 <tr>
 <td>Database</td>
 <td>None</td>
 </tr>
 <tr>
-<td>Reads</td>
-<td>Hubble Relay in <code>kube-system</code>, plaintext gRPC on the pod port</td>
+<td>Secrets</td>
+<td><code>kv/claude-&lt;session&gt;/github</code> and <code>kv/claude-agents/argocd</code> in OpenBao</td>
 </tr>
 <tr>
 <td>Files</td>
-<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/flowscape"><code>flowscape/</code></a></td>
+<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-agents"><code>claude-agents/</code></a> for the namespace; <a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab"><code>claude-homelab/</code></a> and <a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab-apps"><code>claude-homelab-apps/</code></a> for the sessions</td>
 </tr>
 </tbody>
 </table>
@@ -1036,44 +1223,56 @@ plain manifests around that image, per
 </thead>
 <tbody>
 <tr>
-<td>Plain manifests, no chart</td>
-<td>One stateless process with one port; the <a href="https://github.com/JanWelker/flowscape/blob/main/deploy/README.md">application repository</a> lists what any deployment needs, and that is all there is</td>
+<td><code>claude-agents/</code> is plain manifests; each session is a separate Application on the OCI chart</td>
+<td>The namespace outlives any one session. Removing a session must not prune the namespace or the other sessions</td>
+</tr>
+<tr>
+<td>Session Applications have a single source and no <code>directory.exclude</code></td>
+<td><code>exclude</code> filters a Git directory source. An OCI chart has none, so there is nothing for <code>application.yaml</code> to be excluded from</td>
 </tr>
 <tr>
 <td>The namespace enforces <code>restricted</code></td>
-<td>The image is distroless, runs as uid 65532, writes nothing and needs no capability, so the strictest profile costs nothing</td>
+<td>The image runs as uid 1000 with every capability dropped and a read-only root filesystem</td>
 </tr>
 <tr>
-<td><code>automountServiceAccountToken: false</code></td>
-<td>The flow metadata already carries namespace, workload, identity, ports and verdict; the app never talks to the API server, so it holds no token</td>
+<td><code>claude-reader</code> and <code>claude-writer</code> are created here with <code>automountServiceAccountToken: false</code></td>
+<td>The platform binds them to the read and write ClusterRoles. A pod gets a token only by setting <code>kubernetes.access</code>, which keeps the choice visible in the session's own file</td>
 </tr>
 <tr>
-<td><code>HUBBLE_RELAY_ADDR</code> on the Service port</td>
-<td>Relay's Service maps 80 to the pod's 4245 and serves plaintext: the Cilium chart enables TLS only on the agent leg by default. The network policy names the pod port because policy sees the backend, not the Service</td>
+<td><code>kubernetes.access: read</code></td>
+<td>The sessions investigate and open pull requests; the cluster changes through Git and ArgoCD, not through the agent</td>
 </tr>
 <tr>
-<td><code>ALLOWED_ORIGINS</code> is the hostname</td>
-<td>The WebSocket accepts only browsers that loaded the page from <code>flowscape.k8s.wlkr.ch</code>; anything else is refused before the socket opens</td>
+<td><code>argocd.enabled: true</code></td>
+<td>Lets the agent read and sync applications with the <code>claude</code> account's token instead of guessing from the Git side</td>
 </tr>
 <tr>
-<td>Readiness ignores the Relay connection</td>
-<td>The outpost turns a failing readiness probe into a 502 on the whole site. A Relay outage shows as a red status pill in the UI and <code>flowscape_relay_connected 0</code> in Prometheus instead, so the page stays up to say what is wrong</td>
+<td><code>repo</code> set per session</td>
+<td>Clones the repository once and creates the GitHub token <code>ExternalSecret</code>. Without it there is no clone, no token and no GitHub egress</td>
 </tr>
 <tr>
-<td><code>revisionHistoryLimit: 2</code></td>
-<td>Superseded ReplicaSets keep their Trivy config-audit reports until garbage collection; the default keeps ten</td>
+<td><code>targetRevision</code> is the only version</td>
+<td>The chart's <code>appVersion</code> is the Claude Code version and the image tag defaults to it, so a Claude Code release is a chart release</td>
 </tr>
 <tr>
-<td><code>HTTPRoute</code> targets <code>authentik-server</code>, not the app</td>
-<td>Every flow in the cluster, with pod names, ports and request paths, is visible in the UI; the outpost authenticates before the request reaches it. The cross-namespace <code>backendRef</code> works only because the platform's <code>referencegrant.yaml</code> names this namespace. Pointing the route at the Service instead silently removes the whole authentication layer, so it deserves a second look in review</td>
+<td>TLS ends in a <code>socat</code> sidecar from the same image, with a per-session <code>Certificate</code></td>
+<td>Cilium's Gateway only passes <code>TLSRoute</code> traffic through, it cannot terminate it; sshd itself listens on loopback only</td>
+</tr>
+<tr>
+<td><code>ssh.authorizedKeys</code> holds public keys</td>
+<td>They are public data: the same lines as <code>github.com/JanWelker.keys</code></td>
 </tr>
 </tbody>
 </table>
 <h3 id="network-policy">Network policy<a class="headerlink" href="#network-policy" title="Permanent link">&para;</a></h3>
-<p>Every rule in <code>flowscape/networkpolicy.yaml</code>, and why it is there. The shape
-is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → Ship a <code>CiliumNetworkPolicy</code></a>;
+<p>Every rule in
+<a href="https://github.com/JanWelker/homelab-apps/blob/main/claude-agents/networkpolicy.yaml"><code>claude-agents/networkpolicy.yaml</code></a>,
+and why it is there. The shape is
+<a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → Ship a <code>CiliumNetworkPolicy</code></a>;
 rollout and debugging are in
-<a href="https://homelab.wlkr.ch/platform/security-policies/#network-policies">Security Policies</a>.</p>
+<a href="https://homelab.wlkr.ch/platform/security-policies/#network-policies">Security Policies</a>.
+The names an agent may reach live in each session's own policy, rendered by
+the chart from its values (<code>extraEgressFQDNs</code> adds to them).</p>
 <table>
 <thead>
 <tr>
@@ -1083,100 +1282,128 @@ rollout and debugging are in
 </thead>
 <tbody>
 <tr>
-<td>Ingress on 8080 from the Authentik server pods only, with an L7 <code>http</code> rule</td>
-<td>The outpost is the only path to the UI, and the WebSocket upgrade passes the proxy the same way Home Assistant's does. No <code>fromEntities: ingress</code>, so a request straight from the Gateway cannot skip the login</td>
+<td>Ingress on 2222 from the <code>ingress</code> entity</td>
+<td>The Gateway passes the TLS stream through by SNI to the pod's TLS sidecar, so the Gateway is the only way in</td>
 </tr>
 <tr>
-<td>Ingress from Prometheus on 8080, <code>GET /metrics</code> only</td>
-<td>The metrics share the port with the UI; the path match keeps the scraper away from <code>/api</code> and <code>/ws</code></td>
+<td>Ingress from <code>host</code> and <code>remote-node</code></td>
+<td>The kubelet's TCP probes</td>
 </tr>
 <tr>
-<td>Egress to <code>hubble-relay</code> in <code>kube-system</code> on 4245</td>
-<td>The one thing the app dials. The matching ingress rule on Relay's own policy lives in the platform repository, so reading every flow in the cluster is deliberately a change on both sides</td>
+<td>Ingress and egress within the namespace</td>
+<td>Sessions share the namespace; the policy does not split them further</td>
 </tr>
 <tr>
-<td>No <code>toFQDNs</code>, no <code>kube-apiserver</code></td>
-<td>Nothing outside the cluster and no API access are needed; the absence is the point</td>
+<td>Default egress to the namespace only</td>
+<td>A session reaches nothing else unless its own policy says so. Those names (the Claude API, GitHub when <code>repo</code> is set, the Argo CD server) are the agent's reach, so adding one is reviewed like a firewall change</td>
 </tr>
 </tbody>
 </table>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
+<h3 id="ssh-config">SSH config<a class="headerlink" href="#ssh-config" title="Permanent link">&para;</a></h3>
+<p>One block covers every session, because the hostname is the only thing that
+differs:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Host *.ssh.wlkr.ch
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  ProxyCommand openssl s_client -quiet -verify_return_error -servername %h -connect %h:443
+</span></code></pre></div>
+<p>Then <code>ssh homelab.ssh.wlkr.ch</code> attaches to the tmux session <code>main</code>. With a
+command, <code>ssh homelab.ssh.wlkr.ch &lt;command&gt;</code> runs it directly, so <code>scp</code> and
+<code>rsync</code> work.</p>
+<h3 id="first-login">First login<a class="headerlink" href="#first-login" title="Permanent link">&para;</a></h3>
+<p>Once per session, after the first start:</p>
+<ol>
+<li><code>ssh &lt;session&gt;.ssh.wlkr.ch</code>.</li>
+<li>In the Claude Code prompt, run <code>claude auth login</code> and finish the browser
+   flow.</li>
+<li>Run <code>/config</code> and turn on <strong>Enable Remote Control for all sessions</strong>.</li>
+</ol>
+<p>The login lives on the volume and survives restarts.</p>
+<h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
+<p>Both paths are typed in with <code>make bao-secrets</code> in the platform repository.
+None is generated: each comes from an account outside the cluster.</p>
 <table>
 <thead>
 <tr>
-<th>Control</th>
-<th>Effect</th>
+<th>Path</th>
+<th>Key</th>
+<th>Read as</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Drag, scroll</td>
-<td>Orbit and zoom; the scene auto-rotates until the first drag</td>
+<td><code>kv/claude-&lt;session&gt;/github</code></td>
+<td><code>token</code></td>
+<td><code>GH_TOKEN</code>: the fine-grained token for that session's repository. Only when <code>repo</code> is set</td>
 </tr>
 <tr>
-<td>Group by</td>
-<td>Platforms are namespaces or cluster nodes; the switch animates the regrouping, and in node view the arcs between platforms are the traffic that crosses the WireGuard mesh</td>
-</tr>
-<tr>
-<td>Node chips</td>
-<td>Hover to highlight the workloads on that machine, click to hide them; a red dot marks a node Hubble Relay cannot reach</td>
-</tr>
-<tr>
-<td>Click a light or an arc</td>
-<td>Counters, rates over the window, ports, HTTP paths and DNS names seen at L7, drop reasons, a sparkline</td>
-</tr>
-<tr>
-<td>Namespace chips</td>
-<td>Hide a namespace; alt-click shows only that one</td>
-</tr>
-<tr>
-<td>Verdict and protocol chips</td>
-<td>Hide arcs and sparks of that kind</td>
-</tr>
-<tr>
-<td>Window slider</td>
-<td>10 s to 5 min; rates and the sparkline follow</td>
-</tr>
-<tr>
-<td><code>space</code>, <code>f</code></td>
-<td>Pause, fit the ring into the view</td>
+<td><code>kv/claude-agents/argocd</code></td>
+<td><code>token</code></td>
+<td>The Argo CD <code>claude</code> account's API token, from <code>argocd account generate-token --account claude</code>. Only when <code>argocd.enabled</code></td>
 </tr>
 </tbody>
 </table>
-<p><code>world</code> is split by the name the Hubble DNS proxy resolved, so an arc to
-<code>github.com</code> and one to <code>smtp.mailbox.org</code> are distinct. <code>kube-apiserver</code> and
-<code>ingress</code> sit on the outer ring; the Gateway's Envoy is <code>ingress</code>, which is
-why user traffic arrives from there. The six machines sit at the back of
-that ring under their own names: a flow's reporting agent places the pod on
-its node, and the <code>host</code> and <code>remote-node</code> identities resolve to the machine
-once one flow there has shown its address as <code>host</code>. Nothing is read from
-the API server for this.</p>
-<p>Without the cluster, the same binary runs on a laptop with <code>--demo</code> or replays
-a capture; the <a href="https://github.com/JanWelker/flowscape#run-it">README</a> has
-both.</p>
-<h2 id="health-check">Health check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>flowscape<span class="w"> </span>get<span class="w"> </span>pods
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>flowscape<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>deploy/flowscape<span class="w"> </span>--<span class="w"> </span>wget<span class="w"> </span>-qO-<span class="w"> </span>localhost:8080/api/status
-</span></code></pre></div>
-<p><code>status.relay</code> should read <code>connected</code> with an empty <code>unavailable</code> list. In
-Grafana, <code>flowscape_relay_connected</code> and <code>flowscape_relay_unavailable_nodes</code>
-say the same over time, and <code>rate(flowscape_flows_received_total[5m])</code> should
-sit in the hundreds per second.</p>
-<h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
-<div class="admonition warning">
-<p class="admonition-title">Amber means audited, not blocked</p>
-<p>With <code>policyAuditMode</code> on, a policy that would deny a flow logs an <code>AUDIT</code> verdict and lets it through. Amber arcs are exactly the conversations that break the day audit mode is switched off — see <a href="https://homelab.wlkr.ch/platform/security-policies/#rollout">Security Policies → Rollout</a>. Red arcs are real drops.</p>
-</div>
+<h3 id="creating-the-github-token">Creating the GitHub token<a class="headerlink" href="#creating-the-github-token" title="Permanent link">&para;</a></h3>
+<p>A fine-grained personal access token, one per session, so a leak costs one
+repository:</p>
+<ol>
+<li>GitHub → Settings → Developer settings → Fine-grained tokens → Generate.</li>
+<li>Resource owner <code>JanWelker</code>; <strong>Only select repositories</strong>, and pick the
+   session's one repository.</li>
+<li>Repository permissions, read and write: Contents, Pull requests,
+   Workflows, Checks. Metadata is read-only and is added automatically.</li>
+<li>Put the token into <code>kv/claude-&lt;session&gt;/github</code> (see above).</li>
+</ol>
+<h3 id="adding-a-session">Adding a session<a class="headerlink" href="#adding-a-session" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Copy a session directory, for example <code>claude-homelab/</code> to
+   <code>claude-&lt;session&gt;/</code>.</li>
+<li>In <code>application.yaml</code>, change <code>metadata.name</code>, <code>session</code>, <code>repo</code> and
+   <code>ssh.authorizedKeys</code>.</li>
+<li>Create the token and write it to OpenBao before the merge, so the
+   <code>ExternalSecret</code> resolves on the first sync.</li>
+<li>Merge. The session answers at <code>&lt;session&gt;.ssh.wlkr.ch</code> once the Application
+   is Healthy; then do the <a href="#first-login">first login</a>.</li>
+</ol>
+<p>Every session shares one <code>targetRevision</code> in practice: Renovate groups them
+into one pull request.</p>
+<h3 id="sessions-without-a-repository">Sessions without a repository<a class="headerlink" href="#sessions-without-a-repository" title="Permanent link">&para;</a></h3>
+<p>Set <code>repo: ""</code> (or leave it out). The pod then has no clone, no GitHub token
+and no GitHub egress, and the <code>kv/claude-&lt;session&gt;/github</code> path is not read.
+Use it for a scratch session that only needs the Claude API.</p>
+<h3 id="acp-from-zed">ACP from Zed<a class="headerlink" href="#acp-from-zed" title="Permanent link">&para;</a></h3>
+<p>Set <code>acp.enabled: true</code> in the session's values. Zed then starts the agent
+over the same SSH connection (<code>ssh &lt;session&gt;.ssh.wlkr.ch claude-code-acp</code>),
+which works because a command bypasses tmux.</p>
+<h3 id="hosted-side-checklist">Hosted side checklist<a class="headerlink" href="#hosted-side-checklist" title="Permanent link">&para;</a></h3>
+<p>What lives on Anthropic's and GitHub's side, not in this repository:</p>
 <ul>
-<li><strong>It is live, not history.</strong> Relay's buffer is minutes deep and the app
-  keeps five minutes; the record of what a policy refused last week is in
-  Loki, via the Hubble export the platform tails.</li>
-<li><strong>The status pill, not the pod, reports a Relay outage.</strong> Readiness stays
-  green on purpose (see Configuration), so <code>kubectl get pods</code> looks fine
-  while the scene is empty. Check <code>/api/status</code> or the metric.</li>
-<li><strong>Sparks are a sample.</strong> The server sends at most 200 flow events per
-  second per browser and the browser adds synthetic ones in proportion to
-  the rate; the counters in the panel are exact, the particles are not.</li>
+<li>[ ] The Claude GitHub App is installed on all repositories the sessions
+      touch.</li>
+<li>[ ] Auto-fix is enabled for pull requests the sessions open.</li>
+<li>[ ] Cloud environments exist for the repositories that need a hosted run.</li>
+<li>[ ] Routines run the sweeps that need no cluster access: Renovate pull
+      requests and merge conflicts.</li>
+</ul>
+<h2 id="health-check">Health check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>claude-agents<span class="w"> </span>get<span class="w"> </span>pods,statefulsets
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>claude-agents<span class="w"> </span>get<span class="w"> </span>tlsroute
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>openssl<span class="w"> </span>s_client<span class="w"> </span>-quiet<span class="w"> </span>-servername<span class="w"> </span>homelab.ssh.wlkr.ch<span class="w"> </span>-connect<span class="w"> </span>homelab.ssh.wlkr.ch:443<span class="w"> </span>&lt;/dev/null<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-1
+</span></code></pre></div>
+<p>The last command prints the SSH banner (<code>SSH-2.0-OpenSSH_...</code>) when the whole
+path works: DNS, certificate, Gateway, policy and <code>sshd</code>.</p>
+<h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>An update restarts the pod and ends the running turn.</strong> A new chart
+  version is a new pod. The conversation survives on the volume: the start
+  script runs <code>claude --continue</code>, which resumes it, but a turn in flight is
+  lost. Merge version bumps between turns.</li>
+<li><strong>Remote Control needs a full subscription login.</strong> <code>claude auth login</code>
+  works; a <code>setup-token</code> or an API key does not, and the session then shows
+  up nowhere in the apps.</li>
+<li><strong>The network policies are not enforced yet.</strong> While the platform runs with
+  <code>policyAuditMode</code>, Cilium logs what it would drop and drops nothing. Treat
+  the egress list as intent until that is switched off; see
+  <a href="https://homelab.wlkr.ch/platform/security-policies/#network-policies">Security Policies</a>.</li>
 </ul>
 
 
@@ -1220,7 +1447,7 @@ sit in the hundreds per second.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../dependency-track/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Dependency-Track">
+          <a href="../conventions/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Conventions">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
@@ -1230,20 +1457,20 @@ sit in the hundreds per second.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Dependency-Track
+                Conventions
               </div>
             </div>
           </a>
         
         
           
-          <a href="../home-assistant/" class="md-footer__link md-footer__link--next" aria-label="Next: Home Assistant">
+          <a href="../dependency-track/" class="md-footer__link md-footer__link--next" aria-label="Next: Dependency-Track">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Home Assistant
+                Dependency-Track
               </div>
             </div>
             <div class="md-footer__button md-icon">
