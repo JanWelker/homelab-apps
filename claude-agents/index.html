@@ -1326,6 +1326,10 @@ namespace, the two ServiceAccounts and one directory per session.</p>
 <td>Clones each repository once into <code>$HOME</code> and creates the GitHub token <code>ExternalSecret</code>; one token covers the list. Without repositories there is no clone, no token and no GitHub egress</td>
 </tr>
 <tr>
+<td><code>skills.repo: JanWelker/claude-skills</code></td>
+<td>The private repository behind the laptop's <code>~/.claude/skills</code>, cloned into the same place and pulled at every session start, so a session runs the same skills and can push changes to them</td>
+</tr>
+<tr>
 <td><code>extraEgressFQDNs</code> per session</td>
 <td>A session reaches the package registries its own build needs, and no others</td>
 </tr>
@@ -1436,7 +1440,7 @@ session's repositories only:</p>
    A session that gains a repository keeps its token: edit it and add the
    repository.</li>
 <li>Resource owner <code>JanWelker</code>; <strong>Only select repositories</strong>, and pick the
-   session's <code>repos</code>.</li>
+   session's <code>repos</code> plus <code>claude-skills</code>.</li>
 <li>
 <p>Repository permissions:</p>
 <table>
