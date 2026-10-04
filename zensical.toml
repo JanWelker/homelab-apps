@@ -22,6 +22,7 @@ extra_css = [
 nav = [
   { "Home" = "index.md" },
   { "Conventions" = "conventions.md" },
+  { "Claude agents" = "claude-agents.md" },
   { "Dependency-Track" = "dependency-track.md" },
   { "Flowscape" = "flowscape.md" },
   { "Home Assistant" = "home-assistant.md" },

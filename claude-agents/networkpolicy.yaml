@@ -1,0 +1,43 @@
+---
+# Every rule and its reason: docs/claude-agents.md#network-policy
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-ingress
+  namespace: claude-agents
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    Default-deny ingress. The Gateway reaches sshd on 2222, the namespace
+    itself and the node's health probes.
+  endpointSelector: {}
+  ingress:
+    - fromEndpoints:
+        - {}
+    - fromEntities:
+        - host
+        - remote-node
+    - fromEntities:
+        - ingress
+      toPorts:
+        - ports:
+            - port: "2222"
+              protocol: TCP
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-egress
+  namespace: claude-agents
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    Default-deny egress. The namespace only; every name outside the cluster
+    is in a per-session policy shipped by the claude-agent chart, and that
+    list is the agent's reach.
+  endpointSelector: {}
+  egress:
+    - toEndpoints:
+        - {}

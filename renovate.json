@@ -66,6 +66,31 @@
       "minimumReleaseAge": "0 days"
     },
     {
+      "description": "The claude-agent chart is our own, published by the claude-agent repository; its appVersion is the Claude Code version, so a new Claude Code release is a new chart version and the only bump an instance needs. The three-day wait guards against upstream releases being pulled, which does not apply here. One group, so every session moves in the same PR.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/janwelker/charts/claude-agent"
+      ],
+      "minimumReleaseAge": "0 days",
+      "groupName": "claude-agent"
+    },
+    {
+      "description": "Automerge the claude-agent chart once ci-ok is green. Limited to patch and minor because the shared preset holds a major for a human, and an unrestricted automerge here would override that.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/janwelker/charts/claude-agent"
+      ],
+      "matchUpdateTypes": [
+        "patch",
+        "minor"
+      ],
+      "automerge": true
+    },
+    {
       "description": "Home Assistant versions its releases as calendar dates, which semver reads as a major bump every month. Without this every routine release would wait for a human and none of them would ever be automerged.",
       "matchDatasources": [
         "docker"

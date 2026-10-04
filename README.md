@@ -17,6 +17,7 @@ Kubeadm, Cilium, Rook-Ceph, ArgoCD and everything under them — is in
 
 | Application | URL | Auth | Manifests | Page |
 | --- | --- | --- | --- | --- |
+| Claude agents | `<session>.ssh.wlkr.ch` | SSH keys | [`claude-agents/`](claude-agents/) | [docs](https://homelab-apps.wlkr.ch/claude-agents/) |
 | Flowscape | `flowscape.k8s.wlkr.ch` ([live demo](https://janwelker.github.io/flowscape/)) | Authentik proxy | [`flowscape/`](flowscape/) | [docs](https://homelab-apps.wlkr.ch/flowscape/) |
 | Home Assistant | `home.k8s.wlkr.ch` | Authentik proxy | [`home-assistant/`](home-assistant/) | [docs](https://homelab-apps.wlkr.ch/home-assistant/) |
 | Jellyfin | `media.k8s.wlkr.ch` | Authentik proxy | [`jellyfin/`](jellyfin/) | [docs](https://homelab-apps.wlkr.ch/jellyfin/) |

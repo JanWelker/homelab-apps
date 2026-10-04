@@ -40,6 +40,8 @@ repackager's. Nextcloud publishes its own chart; Home Assistant publishes
 none, so it is plain manifests around the official
 `ghcr.io/home-assistant/home-assistant` image.
 
+The user's own chart wrapping the user's own image is allowed, as with the Flowscape images and the `claude-agent` chart.
+
 Pin every version. No `latest`, no floating tags. Renovate moves them, three
 days after a release, and the `image-scan.yaml` workflow fails a pull request
 whose new image carries a fixable CRITICAL the old one did not — the
