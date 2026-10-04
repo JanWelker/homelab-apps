@@ -1330,6 +1330,10 @@ namespace, the two ServiceAccounts and one directory per session.</p>
 <td>The private repository behind the laptop's <code>~/.claude/skills</code>, cloned into the same place and pulled at every session start, so a session runs the same skills and can push changes to them</td>
 </tr>
 <tr>
+<td><code>appa.enabled: true</code> on <code>claude-homelab</code></td>
+<td>The session reads cluster state, secrets paths and private repositories and can push and post to GitHub. <a href="https://openappa.com">OpenAPPA</a> checks each tool call against what the session has read, so private data does not flow to public sinks. Only the tmux main session (and its Remote Control) runs under <code>clappa</code>; ACP and hand-started <code>claude</code> are not gated. Tune the policy with <code>/appa-guide</code> in the session; it lives on the PVC in <code>~/.config/appa</code></td>
+</tr>
+<tr>
 <td><code>extraEgressFQDNs</code> per session</td>
 <td>A session reaches the package registries its own build needs, and no others</td>
 </tr>
