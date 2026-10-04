@@ -24,6 +24,9 @@ spec:
           - JanWelker/fest.wollbi.ch
           - JanWelker/advent.wollbi.ch
           - JanWelker/renovate-config
+        # The same skills as the laptop; see docs/claude-agents.md#configuration
+        skills:
+          repo: JanWelker/claude-skills
         kubernetes:
           access: read
         argocd:

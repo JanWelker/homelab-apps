@@ -17,6 +17,9 @@ spec:
         session: virgil
         repos:
           - JanWelker/virgil
+        # The same skills as the laptop; see docs/claude-agents.md#configuration
+        skills:
+          repo: JanWelker/claude-skills
         kubernetes:
           access: none
         argocd:
