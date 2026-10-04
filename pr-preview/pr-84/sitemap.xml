@@ -22,6 +22,9 @@
         <loc>https://homelab-apps.wlkr.ch/nextcloud/</loc>
       </url>
       <url>
+        <loc>https://homelab-apps.wlkr.ch/open-webui/</loc>
+      </url>
+      <url>
         <loc>https://homelab-apps.wlkr.ch/paperless-ngx/</loc>
       </url>
       <url>
