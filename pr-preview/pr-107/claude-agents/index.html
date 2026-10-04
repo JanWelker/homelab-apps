@@ -1357,7 +1357,7 @@ namespace, the two ServiceAccounts and one directory per session.</p>
 <tbody>
 <tr>
 <td>Hostname</td>
-<td><code>&lt;session&gt;.ssh.wlkr.ch</code>, a <code>TLSRoute</code> on <code>apps-gateway</code> that the chart renders</td>
+<td><code>&lt;session&gt;.ssh.wlkr.ch</code>, a passthrough <code>TLSRoute</code> on <code>apps-gateway</code> that the chart renders; external-dns publishes it</td>
 </tr>
 <tr>
 <td>Authentication</td>
@@ -1423,6 +1423,10 @@ namespace, the two ServiceAccounts and one directory per session.</p>
 <td>The chart's <code>appVersion</code> is the Claude Code version and the image tag defaults to it, so a Claude Code release is a chart release</td>
 </tr>
 <tr>
+<td>TLS ends in a <code>socat</code> sidecar from the same image, with a per-session <code>Certificate</code></td>
+<td>Cilium's Gateway only passes <code>TLSRoute</code> traffic through, it cannot terminate it; sshd itself listens on loopback only</td>
+</tr>
+<tr>
 <td><code>ssh.authorizedKeys</code> holds public keys</td>
 <td>They are public data: the same lines as <code>github.com/JanWelker.keys</code></td>
 </tr>
@@ -1447,11 +1451,11 @@ the chart from its values (<code>extraEgressFQDNs</code> adds to them).</p>
 <tbody>
 <tr>
 <td>Ingress on 2222 from the <code>ingress</code> entity</td>
-<td>The Gateway terminates TLS and forwards the plain SSH stream to the pod, so the Gateway is the only way in</td>
+<td>The Gateway passes the TLS stream through by SNI to the pod's TLS sidecar, so the Gateway is the only way in</td>
 </tr>
 <tr>
 <td>Ingress from <code>host</code> and <code>remote-node</code></td>
-<td>The kubelet's TCP probe on 2222</td>
+<td>The kubelet's TCP probes</td>
 </tr>
 <tr>
 <td>Ingress and egress within the namespace</td>
