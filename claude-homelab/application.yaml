@@ -11,7 +11,7 @@ spec:
     # Why each value is what it is: docs/claude-agents.md#configuration
     repoURL: ghcr.io/janwelker/charts
     chart: claude-agent
-    targetRevision: 0.4.0
+    targetRevision: 0.4.1
     helm:
       valuesObject:
         session: homelab
