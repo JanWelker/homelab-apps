@@ -1368,9 +1368,14 @@ through, and a client that mixes names fails every login — see
 <a href="https://homelab.wlkr.ch/platform/authentik/#one-hostname">One hostname</a>.</p>
 <h3 id="7-real-secrets-come-from-openbao">7. Real secrets come from OpenBao<a class="headerlink" href="#7-real-secrets-come-from-openbao" title="Permanent link">&para;</a></h3>
 <p>An <code>ExternalSecret</code> reading <code>kv/&lt;app&gt;/config</code>, with a comment at the top of
-the file naming what seeds it: <code>make bao-secrets</code> in the platform repository,
-which runs <code>scripts/bao-secrets.sh</code> and writes every application's path.
-Database passwords are the exception, because CloudNativePG generates them
+the file naming what writes it. Random values — session keys, admin
+passwords, OIDC client pairs — come from a <code>Password</code> generator and a
+<code>PushSecret</code> at the end of the same <code>secrets.yaml</code>, at sync wave <code>-2</code> so they
+land before the <code>ExternalSecret</code> at <code>-1</code> — see <a href="https://homelab.wlkr.ch/platform/openbao/#generated-secrets">Generated secrets</a>. A value from an
+account outside the cluster, such as a model API key, is typed in with
+<code>make bao-secrets</code> in the platform repository, into a path of its own: a
+<code>bao kv put</code> replaces a path wholesale and would take the generated keys with
+it. Database passwords are neither, because CloudNativePG generates them
 (rule 3).</p>
 <p>OIDC client credentials go in the application's own <code>kv/&lt;app&gt;/config</code>, never
 under <code>kv/authentik/config</code>: a <code>bao kv put</code> replaces a path wholesale, so

@@ -1567,7 +1567,11 @@ with the configured one character for character, and Authentik's carries
 the slash. Use <code>auth.k8s.wlkr.ch</code>, Authentik's only hostname; see
 <a href="https://homelab.wlkr.ch/platform/authentik/#one-hostname">One hostname</a>.</p>
 <h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
-<p>Two paths, both written by <code>make bao-secrets</code> in the platform repository.</p>
+<p>Two paths. <code>kv/dependency-track/config</code> is written once by the <code>PushSecret</code>
+in <code>secrets.yaml</code> and never overwritten — see <a href="https://homelab.wlkr.ch/platform/openbao/#generated-secrets">Generated secrets</a>; its template turns 32
+generated characters into the base64 the chart wants for <code>kek</code>.
+<code>kv/dependency-track/sbom-upload</code> is written by <code>make bao-secrets</code> in the
+platform repository.</p>
 <table>
 <thead>
 <tr>
@@ -1596,9 +1600,9 @@ the slash. Use <code>auth.k8s.wlkr.ch</code>, Authentik's only hostname; see
 </table>
 <p>The API key is its own path because Dependency-Track issues it, after the
 first start, and a <code>bao kv put</code> replaces a path wholesale: writing it later
-into the first path would have rotated the KEK. The script asks for it and
-accepts an empty answer, so a fresh cluster still seeds everything else
-without one. The database password is not here; CloudNativePG generates it.</p>
+into the first path would have deleted the KEK. The script asks for it and
+accepts an empty answer, so the path exists before Dependency-Track can issue
+a key. The database password is not here; CloudNativePG generates it.</p>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
 <h3 id="first-login">First login<a class="headerlink" href="#first-login" title="Permanent link">&para;</a></h3>
 <p>The first start seeds <code>admin</code> with the password <code>admin</code> and asks for a new
@@ -1682,10 +1686,9 @@ portfolio count should match that number.</p>
 <p class="admonition-title">The KEK is the database</p>
 <p>Every secret Dependency-Track stores, feed tokens and notification
 credentials among them, is encrypted with the key in
-<code>kv/dependency-track/config</code>. Rewriting that path leaves the database
-unreadable in those places; <code>make bao-secrets</code> asks for a typed
-confirmation before it does. A restore of the database is only a restore
-together with the key.</p>
+<code>kv/dependency-track/config</code>. Deleting that path makes the <code>PushSecret</code>
+write a new key and leaves the database unreadable in those places. A
+restore of the database is only a restore together with the key.</p>
 </div>
 <ul>
 <li><strong>A login that fails on <code>iss</code></strong> is a mismatch between the issuer in

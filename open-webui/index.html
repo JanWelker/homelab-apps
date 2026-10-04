@@ -1219,7 +1219,7 @@ chart, so this is that chart with values, per
 </tr>
 <tr>
 <td>Secrets</td>
-<td><code>kv/open-webui/config</code> in OpenBao</td>
+<td><code>kv/open-webui/config</code> and <code>kv/open-webui/openai</code> in OpenBao</td>
 </tr>
 <tr>
 <td>Files</td>
@@ -1349,35 +1349,42 @@ endpoint and OpenRouter. Two steps, in this order:</p>
    it the connection test fails with a timeout that looks like a wrong key.</li>
 <li>Settings → Connections → add the base URL and the key.</li>
 </ol>
-<p>The key that is in Git's reach — the one in <code>kv/open-webui/config</code> — is only
+<p>The key that is in Git's reach — the one in <code>kv/open-webui/openai</code> — is only
 the default OpenAI one. Keys added through the UI are stored in the database.</p>
 <h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
-<p><code>kv/open-webui/config</code> holds four values, written by <code>make bao-secrets</code> in the
-platform repository, all at once because a <code>bao kv put</code> replaces a path
-wholesale.</p>
+<p>Two paths. <code>kv/open-webui/config</code> is generated: written once by the
+<code>PushSecret</code> in <code>secrets.yaml</code> and never overwritten — see <a href="https://homelab.wlkr.ch/platform/openbao/#generated-secrets">Generated secrets</a>.
+<code>kv/open-webui/openai</code> is typed in with <code>make bao-secrets</code> in the platform
+repository, its own path because a <code>bao kv put</code> replaces a path wholesale and
+would take the generated keys with it.</p>
 <table>
 <thead>
 <tr>
+<th>Path</th>
 <th>Key</th>
 <th>Read as</th>
 </tr>
 </thead>
 <tbody>
 <tr>
+<td><code>kv/open-webui/config</code></td>
 <td><code>webui-secret-key</code></td>
 <td><code>WEBUI_SECRET_KEY</code>: signs the session cookies</td>
 </tr>
 <tr>
-<td><code>openai-api-key</code></td>
-<td><code>OPENAI_API_KEY</code>: the default provider's key, the one value here that is typed in rather than generated</td>
-</tr>
-<tr>
+<td><code>kv/open-webui/config</code></td>
 <td><code>oidc-client-id</code></td>
 <td><code>OAUTH_CLIENT_ID</code>, and the same value on Authentik's side</td>
 </tr>
 <tr>
+<td><code>kv/open-webui/config</code></td>
 <td><code>oidc-client-secret</code></td>
 <td><code>OAUTH_CLIENT_SECRET</code>, likewise</td>
+</tr>
+<tr>
+<td><code>kv/open-webui/openai</code></td>
+<td><code>api-key</code></td>
+<td><code>OPENAI_API_KEY</code>: the default provider's key</td>
 </tr>
 </tbody>
 </table>

@@ -1366,9 +1366,8 @@ rollout and debugging are in
 </tbody>
 </table>
 <h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
-<p><code>kv/paperless-ngx/config</code> holds four values, written by <code>make bao-secrets</code> in
-the platform repository, all at once because a <code>bao kv put</code> replaces a path
-wholesale.</p>
+<p><code>kv/paperless-ngx/config</code> holds four values, written once by the <code>PushSecret</code>
+in <code>secrets.yaml</code> and never overwritten — see <a href="https://homelab.wlkr.ch/platform/openbao/#generated-secrets">Generated secrets</a>.</p>
 <table>
 <thead>
 <tr>
@@ -1413,7 +1412,7 @@ is Running before anything else.</p>
 <li><strong>The break-glass login is <code>/admin/</code>, not the front page.</strong> The normal login
   redirects to Authentik; <code>admin</code> signs in at
   <code>https://paperless.k8s.wlkr.ch/admin/</code> with the password from OpenBao.</li>
-<li><strong>Rewriting <code>kv/paperless-ngx/config</code> does not change the admin password.</strong>
+<li><strong>Deleting <code>kv/paperless-ngx/config</code> does not change the admin password.</strong>
   It is read only when Paperless first creates the account. The new value gets
   written down and the old one still logs you in — reset it in <code>/admin/</code>.</li>
 <li><strong>The index is rebuildable, the originals are not.</strong> Both volumes carry

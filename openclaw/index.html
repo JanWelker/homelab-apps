@@ -1219,7 +1219,7 @@ chart, so this is plain manifests shaped after that reference, per
 </tr>
 <tr>
 <td>Secrets</td>
-<td><code>kv/openclaw/config</code> in OpenBao</td>
+<td><code>kv/openclaw/config</code> and <code>kv/openclaw/anthropic</code> in OpenBao</td>
 </tr>
 <tr>
 <td>Files</td>
@@ -1332,24 +1332,29 @@ is able to reach.</p>
 <p>Doing it the other way round produces a connection that hangs rather than one
 that fails, which reads as a wrong credential.</p>
 <h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
-<p><code>kv/openclaw/config</code> holds two values, written by <code>make bao-secrets</code> in the
-platform repository, both at once because a <code>bao kv put</code> replaces a path
-wholesale.</p>
+<p>Two paths. <code>kv/openclaw/config</code> is generated: written once by the
+<code>PushSecret</code> in <code>secrets.yaml</code> and never overwritten — see <a href="https://homelab.wlkr.ch/platform/openbao/#generated-secrets">Generated secrets</a>.
+<code>kv/openclaw/anthropic</code> is typed in with <code>make bao-secrets</code> in the platform
+repository, its own path because a <code>bao kv put</code> replaces a path wholesale and
+would take the generated token with it.</p>
 <table>
 <thead>
 <tr>
+<th>Path</th>
 <th>Key</th>
 <th>Read as</th>
 </tr>
 </thead>
 <tbody>
 <tr>
+<td><code>kv/openclaw/config</code></td>
 <td><code>gateway-token</code></td>
 <td><code>OPENCLAW_GATEWAY_TOKEN</code>: the control UI's shared secret</td>
 </tr>
 <tr>
-<td><code>anthropic-api-key</code></td>
-<td><code>ANTHROPIC_API_KEY</code>: the model the agent thinks with, the one value here that is typed in rather than generated</td>
+<td><code>kv/openclaw/anthropic</code></td>
+<td><code>api-key</code></td>
+<td><code>ANTHROPIC_API_KEY</code>: the model the agent thinks with</td>
 </tr>
 </tbody>
 </table>

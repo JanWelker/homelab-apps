@@ -1344,9 +1344,8 @@ rollout and debugging are in
 Pages are made of three blocks, which are the three shapes the Pelican pages
 had: prose, a run of images under a heading, and a download.</p>
 <h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
-<p><code>kv/advent-wollbi/config</code> holds two values, written by <code>make bao-secrets</code> in
-the platform repository, both at once because a <code>bao kv put</code> replaces a path
-wholesale.</p>
+<p><code>kv/advent-wollbi/config</code> holds two values, written once by the <code>PushSecret</code> in
+<code>secrets.yaml</code> and never overwritten — see <a href="https://homelab.wlkr.ch/platform/openbao/#generated-secrets">Generated secrets</a>.</p>
 <table>
 <thead>
 <tr>
