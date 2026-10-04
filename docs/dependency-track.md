@@ -134,7 +134,11 @@ the slash. Use `auth.k8s.wlkr.ch`, Authentik's only hostname; see
 
 ### Secrets
 
-Two paths, both written by `make bao-secrets` in the platform repository.
+Two paths. `kv/dependency-track/config` is written once by the `PushSecret`
+in `secrets.yaml` and never overwritten — see [Generated secrets](https://homelab.wlkr.ch/platform/openbao/#generated-secrets); its template turns 32
+generated characters into the base64 the chart wants for `kek`.
+`kv/dependency-track/sbom-upload` is written by `make bao-secrets` in the
+platform repository.
 
 | Path | Key | Read by |
 | --- | --- | --- |
@@ -144,9 +148,9 @@ Two paths, both written by `make bao-secrets` in the platform repository.
 
 The API key is its own path because Dependency-Track issues it, after the
 first start, and a `bao kv put` replaces a path wholesale: writing it later
-into the first path would have rotated the KEK. The script asks for it and
-accepts an empty answer, so a fresh cluster still seeds everything else
-without one. The database password is not here; CloudNativePG generates it.
+into the first path would have deleted the KEK. The script asks for it and
+accepts an empty answer, so the path exists before Dependency-Track can issue
+a key. The database password is not here; CloudNativePG generates it.
 
 ## Usage
 
@@ -237,10 +241,9 @@ portfolio count should match that number.
 !!! warning "The KEK is the database"
     Every secret Dependency-Track stores, feed tokens and notification
     credentials among them, is encrypted with the key in
-    `kv/dependency-track/config`. Rewriting that path leaves the database
-    unreadable in those places; `make bao-secrets` asks for a typed
-    confirmation before it does. A restore of the database is only a restore
-    together with the key.
+    `kv/dependency-track/config`. Deleting that path makes the `PushSecret`
+    write a new key and leaves the database unreadable in those places. A
+    restore of the database is only a restore together with the key.
 
 - **A login that fails on `iss`** is a mismatch between the issuer in
   `application.yaml` and Authentik's, usually the trailing slash. Both

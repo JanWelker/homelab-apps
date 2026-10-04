@@ -85,9 +85,8 @@ had: prose, a run of images under a heading, and a download.
 
 ### Secrets
 
-`kv/fest-wollbi/config` holds two values, written by `make bao-secrets` in the
-platform repository, both at once because a `bao kv put` replaces a path
-wholesale.
+`kv/fest-wollbi/config` holds two values, written once by the `PushSecret` in
+`secrets.yaml` and never overwritten — see [Generated secrets](https://homelab.wlkr.ch/platform/openbao/#generated-secrets).
 
 | Key | Read as |
 | --- | --- |
@@ -118,6 +117,6 @@ after it.
   repository.
 - **The uploads volume and the database are one backup.** A restore of one
   without the other leaves records pointing at files that are gone.
-- **Rewriting `kv/fest-wollbi/config` logs the editors out** and does not
+- **Deleting `kv/fest-wollbi/config` logs the editors out** and does not
   change the first editor's password, which is read only while the database is
   empty.
