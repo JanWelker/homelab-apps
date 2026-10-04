@@ -1331,7 +1331,7 @@ namespace, the two ServiceAccounts and one directory per session.</p>
 </tr>
 <tr>
 <td><code>appa.enabled: true</code> on <code>claude-homelab</code></td>
-<td>The session reads cluster state, secrets paths and private repositories and can push and post to GitHub. <a href="https://openappa.com">OpenAPPA</a> checks each tool call against what the session has read, so private data does not flow to public sinks. Only the tmux main session (and its Remote Control) runs under <code>clappa</code>; ACP and hand-started <code>claude</code> are not gated. Tune the policy with <code>/appa-guide</code> in the session; it lives on the PVC in <code>~/.config/appa</code></td>
+<td>The session reads cluster state, secrets paths and private repositories and can push and post to GitHub. <a href="https://openappa.com">OpenAPPA</a> checks each tool call against what the session has read, so private data does not flow to public sinks. Only the tmux main session (and its Remote Control) runs under <code>clappa</code>; ACP and hand-started <code>claude</code> are not gated. Tune the policy with <code>/appa-guide</code> in the session, then copy it into <code>appa.policy</code> with the <code>appa-sync</code> skill: the pod installs that file over <code>~/.config/appa/appa.toml</code> on every start, so a change made only on the PVC lasts until the next restart</td>
 </tr>
 <tr>
 <td><code>extraEgressFQDNs</code> per session</td>
