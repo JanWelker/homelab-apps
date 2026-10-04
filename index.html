@@ -291,22 +291,6 @@
   
   
     <li class="md-tabs__item">
-      <a href="./jellyfin/" class="md-tabs__link">
-        
-  
-  Jellyfin
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
       <a href="./kneadtime/" class="md-tabs__link">
         
   
@@ -327,54 +311,6 @@
         
   
   Nextcloud
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="./open-webui/" class="md-tabs__link">
-        
-  
-  Open WebUI
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="./paperless-ngx/" class="md-tabs__link">
-        
-  
-  Paperless-ngx
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
-      <a href="./openclaw/" class="md-tabs__link">
-        
-  
-  OpenClaw
 
       </a>
     </li>
@@ -718,32 +654,6 @@
   
   
     <li class="md-nav__item">
-      <a href="./jellyfin/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Jellyfin
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="./kneadtime/" class="md-nav__link">
         
   
@@ -778,84 +688,6 @@
     
   
   Nextcloud
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="./open-webui/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Open WebUI
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="./paperless-ngx/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Paperless-ngx
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="./openclaw/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  OpenClaw
 
     
   </span>
@@ -1112,39 +944,11 @@ runs on top.</p>
 <td>Authentik proxy, in front of its own login</td>
 </tr>
 <tr>
-<td><a href="jellyfin/">Jellyfin</a></td>
-<td><a href="https://media.k8s.wlkr.ch">media.k8s.wlkr.ch</a></td>
-<td>Three PVCs: the library, the configuration, the transcode cache</td>
-<td>None; SQLite on the configuration volume</td>
-<td>Authentik proxy, in front of its own login</td>
-</tr>
-<tr>
 <td><a href="nextcloud/">Nextcloud</a></td>
 <td><a href="https://cloud.k8s.wlkr.ch">cloud.k8s.wlkr.ch</a></td>
 <td>A PVC for files</td>
 <td>CloudNativePG</td>
 <td>Authentik OIDC</td>
-</tr>
-<tr>
-<td><a href="open-webui/">Open WebUI</a></td>
-<td><a href="https://chat.k8s.wlkr.ch">chat.k8s.wlkr.ch</a></td>
-<td>A PVC for uploads and the retrieval index</td>
-<td>CloudNativePG</td>
-<td>Authentik OIDC</td>
-</tr>
-<tr>
-<td><a href="paperless-ngx/">Paperless-ngx</a></td>
-<td><a href="https://paperless.k8s.wlkr.ch">paperless.k8s.wlkr.ch</a></td>
-<td>Two PVCs: the archive, and the index and consume folder</td>
-<td>CloudNativePG</td>
-<td>Authentik OIDC</td>
-</tr>
-<tr>
-<td><a href="openclaw/">OpenClaw</a></td>
-<td><a href="https://claw.k8s.wlkr.ch">claw.k8s.wlkr.ch</a></td>
-<td>One PVC: state, workspace and channel credentials</td>
-<td>None</td>
-<td>Authentik proxy, in front of its own token</td>
 </tr>
 <tr>
 <td><a href="umami/">Umami</a></td>
