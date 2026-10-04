@@ -64,7 +64,7 @@ the chart from its values (`extraEgressFQDNs` adds to them).
 | Rule | Why |
 | --- | --- |
 | Ingress on 2222 from the `ingress` entity | The Gateway passes the TLS stream through by SNI to the pod's TLS sidecar, so the Gateway is the only way in |
-| Ingress from `host` and `remote-node` | The kubelet's TCP probes |
+| Ingress from `host` | The kubelet's probes, which come from the pod's own node. The Gateway arrives as the `ingress` entity from any node, so `remote-node` is not needed |
 | Ingress and egress within the namespace | Sessions share the namespace; the policy does not split them further |
 | Default egress to the namespace only | A session reaches nothing else unless its own policy says so. Those names (the Claude API, GitHub when `repo` is set, the Argo CD server) are the agent's reach, so adding one is reviewed like a firewall change |
 
