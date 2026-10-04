@@ -25,7 +25,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: flowscape
-          image: ghcr.io/janwelker/flowscape:0.5.0@sha256:11b4292fd1d3b334cc2ed3557951d1bb90de81fc5650d0ff25c2edeed511a9d9
+          image: ghcr.io/janwelker/flowscape:0.5.1@sha256:ab7d68e65f6574e30c27c1303d5af16a0a8676817584d158b196db99b755aacc
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
