@@ -20,6 +20,7 @@ runs on top.
 | [Home Assistant](home-assistant.md) | [home.k8s.wlkr.ch](https://home.k8s.wlkr.ch) | A PVC for `/config` | CloudNativePG, for the recorder | Authentik proxy, in front of its own login |
 | [Nextcloud](nextcloud.md) | [cloud.k8s.wlkr.ch](https://cloud.k8s.wlkr.ch) | A PVC for files | CloudNativePG | Authentik OIDC |
 | [Open WebUI](open-webui.md) | [chat.k8s.wlkr.ch](https://chat.k8s.wlkr.ch) | A PVC for uploads and the retrieval index | CloudNativePG | Authentik OIDC |
+| [Paperless-ngx](paperless-ngx.md) | [paperless.k8s.wlkr.ch](https://paperless.k8s.wlkr.ch) | Two PVCs: the archive, and the index and consume folder | CloudNativePG | Authentik OIDC |
 | [Umami](umami.md) | [analytics.k8s.wlkr.ch](https://analytics.k8s.wlkr.ch) | None | CloudNativePG | Authentik proxy, in front of its own login; the tracker paths are public |
 | [Wollbi Adventsfenster](advent-wollbi.md) | [advent.wollbi.ch](https://advent.wollbi.ch) | A PVC for uploads | CloudNativePG | Public; Authentik proxy on `/admin` only |
 | [Wollbi-Fescht](fest-wollbi.md) | [fest.wollbi.ch](https://fest.wollbi.ch) | A PVC for uploads | CloudNativePG | Public; Authentik proxy on `/admin` only |
