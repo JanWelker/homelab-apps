@@ -1259,6 +1259,10 @@ namespace, the two ServiceAccounts and one directory per session.</p>
 <td>Cilium's Gateway only passes <code>TLSRoute</code> traffic through, it cannot terminate it; sshd itself listens on loopback only</td>
 </tr>
 <tr>
+<td><code>resources</code>: 768Mi requested, 4Gi limit</td>
+<td>An agent idles between prompts at a few hundred MiB; the chart's 2Gi request does not fit beside the rest of the workers. The limit leaves room for builds and subagents</td>
+</tr>
+<tr>
 <td><code>ssh.authorizedKeys</code> holds public keys</td>
 <td>They are public data: the same lines as <code>github.com/JanWelker.keys</code></td>
 </tr>
