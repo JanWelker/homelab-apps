@@ -37,6 +37,7 @@ namespace, the two ServiceAccounts and one directory per session.
 | `repo` set per session | Clones the repository once and creates the GitHub token `ExternalSecret`. Without it there is no clone, no token and no GitHub egress |
 | `targetRevision` is the only version | The chart's `appVersion` is the Claude Code version and the image tag defaults to it, so a Claude Code release is a chart release |
 | TLS ends in a `socat` sidecar from the same image, with a per-session `Certificate` | Cilium's Gateway only passes `TLSRoute` traffic through, it cannot terminate it; sshd itself listens on loopback only |
+| `resources`: 768Mi requested, 4Gi limit | An agent idles between prompts at a few hundred MiB; the chart's 2Gi request does not fit beside the rest of the workers. The limit leaves room for builds and subagents |
 | `ssh.authorizedKeys` holds public keys | They are public data: the same lines as `github.com/JanWelker.keys` |
 
 ### Network policy
