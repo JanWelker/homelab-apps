@@ -49,8 +49,6 @@ spec:
             # ffmpeg writes its segments here, not into the root filesystem.
             - name: JELLYFIN_CACHE_DIR
               value: /cache
-            - name: JELLYFIN_CONFIG_DIR
-              value: /config
           volumeMounts:
             - name: config
               mountPath: /config
