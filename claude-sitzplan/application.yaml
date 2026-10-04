@@ -2,7 +2,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: claude-homelab
+  name: claude-sitzplan
   namespace: argocd
 spec:
   project: apps
@@ -14,20 +14,16 @@ spec:
     targetRevision: 0.2.0
     helm:
       valuesObject:
-        session: homelab
+        session: sitzplan
         repos:
-          - JanWelker/homelab
-          - JanWelker/homelab-apps
-          - JanWelker/claude-agent
-          - JanWelker/flowscape
-          - JanWelker/knead-time
-          - JanWelker/fest.wollbi.ch
-          - JanWelker/advent.wollbi.ch
-          - JanWelker/renovate-config
+          - JanWelker/sitzplan.schlumpf.me
         kubernetes:
-          access: read
+          access: none
         argocd:
-          enabled: true
+          enabled: false
+        # npm for installs and builds; see docs/claude-agents.md#sessions
+        extraEgressFQDNs:
+          - matchName: registry.npmjs.org
         # Idle most of the time; see docs/claude-agents.md#configuration
         resources:
           requests:
