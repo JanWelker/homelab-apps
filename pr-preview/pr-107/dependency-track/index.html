@@ -1,0 +1,1873 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Dependency-Track on the cluster: the official chart, an external CloudNativePG database, Authentik OIDC, and a nightly job that feeds it every SBOM Trivy Operator already produces.">
+      
+      
+      
+        <link rel="canonical" href="https://homelab-apps.wlkr.ch/dependency-track/">
+      
+      
+        <link rel="prev" href="../claude-agents/">
+      
+      
+        <link rel="next" href="../flowscape/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/logo.png">
+      <meta name="generator" content="zensical-0.0.63">
+    
+    
+      
+        <title>Dependency-Track - Homelab Applications</title>
+      
+    
+    
+      
+        
+      
+      <link rel="stylesheet" href="../assets/stylesheets/modern/main.10763589.min.css">
+      
+        
+          
+        
+        <link rel="stylesheet" href="../assets/stylesheets/modern/palette.812a03bb.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/fonts.css">
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_scope.pathname.endsWith("/")||(__md_scope=new URL(__md_scope.pathname+"/",location)),__md_hash=e=>[...e].reduce(((e,t)=>(e<<5)-e+t.charCodeAt(0)),0),__md_get=(e,t=localStorage,_=__md_scope)=>JSON.parse(t.getItem(_.pathname+"."+e)),__md_set=(e,t,_=localStorage,a=__md_scope)=>{try{_.setItem(a.pathname+"."+e,JSON.stringify(t))}catch(e){}},document.documentElement.setAttribute("data-platform",navigator.platform)</script>
+    
+      
+  
+
+
+  <script defer src="https://analytics.k8s.wlkr.ch/script.js" data-website-id="56b371f0-7926-4b5d-8562-0c31c7d4792b" data-domains="homelab-apps.wlkr.ch"></script>
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#dependency-track" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="./.." title="Homelab Applications" class="md-header__button md-logo" aria-label="Homelab Applications" data-md-component="logo">
+      
+  <img src="../assets/images/logo.png" alt="Homelab Applications">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer" aria-label="Navigation">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-menu" viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h16"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Homelab Applications
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Dependency-Track
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Following your system theme -- switch to light"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Following your system theme -- switch to light" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-sun-moon" viewBox="0 0 24 24"><path d="M12 2v2M14.837 16.385a6 6 0 1 1-7.223-7.222c.624-.147.97.66.715 1.248a4 4 0 0 0 5.26 5.259c.589-.255 1.396.09 1.248.715M16 12a4 4 0 0 0-4-4M19 5l-1.256 1.256M20 12h2"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Pinned to light -- switch to dark"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Pinned to light -- switch to dark" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="custom"  aria-label="Pinned to dark -- follow your system theme"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Pinned to dark -- follow your system theme" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search" aria-label="Search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog" aria-label="Search">
+  <button type="button" class="md-search__button">
+    Search
+  </button>
+</div>
+      
+    
+    <div class="md-header__source">
+      
+        <a href="https://github.com/JanWelker/homelab-apps" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    JanWelker/homelab-apps
+  </div>
+</a>
+      
+    </div>
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="./.." class="md-tabs__link">
+        
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../conventions/" class="md-tabs__link">
+        
+  
+  Conventions
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../claude-agents/" class="md-tabs__link">
+        
+  
+  Claude agents
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="././" class="md-tabs__link">
+        
+  
+  Dependency-Track
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../flowscape/" class="md-tabs__link">
+        
+  
+  Flowscape
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../home-assistant/" class="md-tabs__link">
+        
+  
+  Home Assistant
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../jellyfin/" class="md-tabs__link">
+        
+  
+  Jellyfin
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../kneadtime/" class="md-tabs__link">
+        
+  
+  Knead Time
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../nextcloud/" class="md-tabs__link">
+        
+  
+  Nextcloud
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../open-webui/" class="md-tabs__link">
+        
+  
+  Open WebUI
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../paperless-ngx/" class="md-tabs__link">
+        
+  
+  Paperless-ngx
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../openclaw/" class="md-tabs__link">
+        
+  
+  OpenClaw
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../umami/" class="md-tabs__link">
+        
+  
+  Umami
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../advent-wollbi/" class="md-tabs__link">
+        
+  
+  Wollbi Adventsfenster
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../fest-wollbi/" class="md-tabs__link">
+        
+  
+  Wollbi-Fescht
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="./.." title="Homelab Applications" class="md-nav__button md-logo" aria-label="Homelab Applications" data-md-component="logo">
+      
+  <img src="../assets/images/logo.png" alt="Homelab Applications">
+
+    </a>
+    Homelab Applications
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/JanWelker/homelab-apps" title="Go to repository" class="md-source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2026 Fonticons, Inc.--><path fill="currentColor" d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    JanWelker/homelab-apps
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="./.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../conventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Conventions
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../claude-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Claude agents
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Dependency-Track
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="././" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Dependency-Track
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        At a glance
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Configuration
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#network-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Network policy
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sbom-upload" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        SBOM upload
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#false-positives" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        False positives
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retired-projects" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Retired projects
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oidc" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        OIDC
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Secrets
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Usage
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#first-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        First login
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reading-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Reading it
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#health-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Health check
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pitfalls" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Pitfalls
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../flowscape/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Flowscape
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../home-assistant/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Home Assistant
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../jellyfin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Jellyfin
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kneadtime/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Knead Time
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../nextcloud/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Nextcloud
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../open-webui/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Open WebUI
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../paperless-ngx/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Paperless-ngx
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../openclaw/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  OpenClaw
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../umami/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Umami
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../advent-wollbi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Wollbi Adventsfenster
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fest-wollbi/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Wollbi-Fescht
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  
+                    
+                    
+                    
+                      
+                    
+                    
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
+                  
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#at-a-glance" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        At a glance
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Configuration
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#network-policy" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Network policy
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sbom-upload" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        SBOM upload
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#false-positives" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        False positives
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#retired-projects" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Retired projects
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#oidc" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        OIDC
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Secrets
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Usage
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#first-login" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        First login
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reading-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Reading it
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#health-check" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Health check
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pitfalls" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Pitfalls
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+  
+    <a href="https://github.com/JanWelker/homelab-apps/edit/main/docs/dependency-track.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-pen" viewBox="0 0 24 24"><path d="M12.659 22H18a2 2 0 0 0 2-2V8a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 14 2H6a2 2 0 0 0-2 2v9.34"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10.378 12.622a1 1 0 0 1 3 3.003L8.36 20.637a2 2 0 0 1-.854.506l-2.867.837a.5.5 0 0 1-.62-.62l.836-2.869a2 2 0 0 1 .506-.853z"/></svg>
+    </a>
+  
+  
+    
+      
+    
+    <a href="https://github.com/JanWelker/homelab-apps/raw/main/docs/dependency-track.md" title="View source of this page" class="md-content__button md-icon">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-file-code-2" viewBox="0 0 24 24"><path d="M4 12.15V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.706.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2h-3.35"/><path d="M14 2v5a1 1 0 0 0 1 1h5M5 16l-3 3 3 3M9 22l3-3-3-3"/></svg>
+    </a>
+  
+
+
+<h1 id="dependency-track">Dependency-Track<a class="headerlink" href="#dependency-track" title="Permanent link">&para;</a></h1>
+<p><a href="https://dependencytrack.org/">Dependency-Track</a> keeps a software bill of
+materials for every image the cluster runs and re-checks each one against the
+vulnerability feeds every day, so a new CVE shows up against images that were
+already scanned, not only the next time Trivy looks. Upstream publishes the
+<a href="https://github.com/DependencyTrack/helm-charts/tree/main/charts/dependency-track"><code>dependency-track</code> chart</a>,
+so this is that chart with an external database, per
+<a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>;
+the network policy, the database, the Authentik blueprint and the upload job
+come from a second source pointing at this repository.</p>
+<p>The SBOMs are not generated here. The platform's
+<a href="https://homelab.wlkr.ch/platform/trivy-operator/">Trivy Operator</a> writes one
+CycloneDX <code>SbomReport</code> per running container, and the <a href="#sbom-upload">upload job</a>
+hands them over once a night. Trivy answers what is in the images today;
+Dependency-Track answers what changed, which images share a component, and
+whether a policy holds across the portfolio.</p>
+<h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>URL</td>
+<td><a href="https://sbom.k8s.wlkr.ch">sbom.k8s.wlkr.ch</a></td>
+</tr>
+<tr>
+<td>Authentication</td>
+<td>Authentik OIDC, code flow with PKCE; <code>admin</code> kept as break-glass</td>
+</tr>
+<tr>
+<td>Storage</td>
+<td>A PVC for uploaded BOM files and the mirrored feeds</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>CloudNativePG <code>Cluster</code> <code>dependency-track-db</code></td>
+</tr>
+<tr>
+<td>Secrets</td>
+<td><code>kv/dependency-track/config</code> and <code>kv/dependency-track/sbom-upload</code> in OpenBao</td>
+</tr>
+<tr>
+<td>Files</td>
+<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/dependency-track"><code>dependency-track/</code></a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
+<p>The chart values in <code>application.yaml</code> that are not defaults:</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>database.existingSecret: dependency-track-db-app</code></td>
+<td>CloudNativePG's generated credentials carry the <code>username</code> and <code>password</code> keys the chart mounts as files; see <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract">the contract</a>. The JDBC URL names the <code>-rw</code> Service</td>
+</tr>
+<tr>
+<td><code>secretManagement.database.kek</code> from <code>dependency-track-config</code></td>
+<td>The key that encrypts every secret Dependency-Track stores in its database, API tokens for the feeds included. It must survive a rebuild, so it is generated into OpenBao, never by the chart. See <a href="#secrets">Secrets</a></td>
+</tr>
+<tr>
+<td><code>fileStorage.local.existingClaim</code></td>
+<td>The chart's own PVC carries only <code>helm.sh/resource-policy: keep</code>, which a prune ignores; <code>pvc.yaml</code> carries <code>Prune=false</code> like every other volume here</td>
+</tr>
+<tr>
+<td><code>DT_TELEMETRY_SUBMISSION_DEFAULT_ENABLED: "false"</code></td>
+<td>No phone-home. The property seeds the setting once, so it has to be off before the first start; the egress policy would drop the request anyway</td>
+</tr>
+<tr>
+<td><code>DT_OIDC_*</code> and the frontend's <code>OIDC_*</code></td>
+<td>Both halves must name the same issuer and client ID; the API server validates the ID token the browser obtained. <code>preferred_username</code> is Authentik's username claim, and <code>groups</code> arrives with the <code>profile</code> scope, so team membership follows Authentik's groups. See <a href="#oidc">OIDC</a></td>
+</tr>
+<tr>
+<td><code>apiServer.web.resources</code>, 1Gi requested, 3Gi limit</td>
+<td>The JVM sizes its heap from the limit. Upstream recommends 8Gi for production; the portfolio here is a few hundred small images</td>
+</tr>
+<tr>
+<td><code>serviceMonitor.namespace: dependency-track</code></td>
+<td>The chart defaults to the <code>monitoring</code> namespace, which the <code>apps</code> project may not write to. Prometheus reads it from here like every other application's</td>
+</tr>
+<tr>
+<td><code>httpRoute</code> on <code>apps-gateway</code></td>
+<td>The chart's route sends <code>/api</code> to the API server and everything else to the frontend on one hostname, so the frontend's <code>API_BASE_URL</code> stays empty and the browser uses relative URLs</td>
+</tr>
+<tr>
+<td><code>revisionHistoryLimit: 2</code> on both Deployments</td>
+<td>Superseded ReplicaSets keep their Trivy config-audit reports until garbage collection; the chart keeps five</td>
+</tr>
+</tbody>
+</table>
+<h3 id="network-policy">Network policy<a class="headerlink" href="#network-policy" title="Permanent link">&para;</a></h3>
+<p>Every rule in <code>dependency-track/networkpolicy.yaml</code>, and why it is there. The
+shape is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → Ship a <code>CiliumNetworkPolicy</code></a>.</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ingress on 8080 from <code>ingress</code></td>
+<td>The Gateway reaches the API server and the frontend directly; the login is OIDC, so no outpost sits in front</td>
+</tr>
+<tr>
+<td>Ingress from Prometheus on 9000 and 9187, <code>GET /metrics</code> only</td>
+<td>The API server's management port and the database's exporter</td>
+</tr>
+<tr>
+<td>Ingress from <code>cnpg-system</code> on 8000</td>
+<td>The operator polls the instance manager there; without the rule the <code>Cluster</code> never goes Healthy. See <a href="../nextcloud/#sync-stuck-on-the-database">Sync stuck on the database</a></td>
+</tr>
+<tr>
+<td>Egress from the API server to Authentik</td>
+<td>Discovery, the signing keys and the userinfo endpoint, on the public name, for the same reason Nextcloud dials it: the <code>iss</code> claim is that name</td>
+</tr>
+<tr>
+<td>Egress from the API server to <code>nvd.nist.gov</code>, <code>storage.googleapis.com</code>, <code>api.github.com</code>, <code>epss.empiricalsecurity.com</code></td>
+<td>The feeds the internal analyzer mirrors: NVD, OSV, GitHub Advisories, EPSS. GitHub stays off until a token is entered in the UI; the rule is there so entering one is the only step</td>
+</tr>
+<tr>
+<td>Egress from the API server to <code>proxy.golang.org</code>, <code>registry.npmjs.org</code>, <code>pypi.org</code>, <code>repo1.maven.org</code>, <code>api.nuget.org</code>, <code>crates.io</code>, <code>rubygems.org</code></td>
+<td>The registries Dependency-Track asks for the latest version of a component, for the ecosystems the images here contain. The other default repositories are disabled at <a href="#first-login">first login</a> rather than allowed</td>
+</tr>
+<tr>
+<td>Egress from the upload job to <code>kube-apiserver</code></td>
+<td>It lists the <code>SbomReport</code> objects; the API it posts to is in the namespace</td>
+</tr>
+<tr>
+<td>Egress from the database pod to <code>kube-apiserver</code></td>
+<td>The instance manager reports its status there; its liveness check fails otherwise</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sbom-upload">SBOM upload<a class="headerlink" href="#sbom-upload" title="Permanent link">&para;</a></h3>
+<p><code>sbom-upload.yaml</code> is a CronJob, a ConfigMap holding the script, and a
+ServiceAccount. At 05:00 it lists every <code>SbomReport</code> in the cluster and sends
+each distinct image that is running, once, to <code>PUT /api/v1/bom</code> with
+<code>autoCreate</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Detail</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Project name is the image reference without its tag, version is the tag</td>
+<td>A project's version history is then Renovate's bump history, and two namespaces running the same image share one project</td>
+</tr>
+<tr>
+<td>Namespaces become <code>namespace:&lt;name&gt;</code> tags on the project</td>
+<td>Where a finding runs is the first question when it fires</td>
+</tr>
+<tr>
+<td>Reports owned by a ReplicaSet scaled to zero are skipped</td>
+<td>A report outlives its workload until the ReplicaSet is garbage-collected, and a superseded revision is not part of what runs. If the platform's grant lacks <code>replicasets</code>, the job says so and uploads everything</td>
+</tr>
+<tr>
+<td><code>isLatest</code> goes to the highest version that is running</td>
+<td>Two versions of one image can run at once, and the flag otherwise lands on whichever was uploaded last</td>
+</tr>
+<tr>
+<td>Two digests under one tag are one upload</td>
+<td>They are one project version; the namespaces of both become its tags</td>
+</tr>
+<tr>
+<td>Reads <code>report.components</code> from the report, unchanged</td>
+<td>Trivy Operator already writes CycloneDX; Dependency-Track accepts the same document, <code>specVersion</code> 1.7 included</td>
+</tr>
+<tr>
+<td>The <code>ClusterRole</code> that lets it list reports and ReplicaSets is the platform's</td>
+<td>The <code>apps</code> project may not create cluster-scoped RBAC, and who may read Trivy's findings is the platform's call. It is <code>sbom-readers.yaml</code> next to the operator in the homelab repository</td>
+</tr>
+<tr>
+<td>The API key is <code>optional</code> on the container, and its <code>ExternalSecret</code> is at sync wave 1</td>
+<td>A missing Secret would leave the pod in <code>CreateContainerConfigError</code>, and a <code>Forbid</code> CronJob never runs again behind a Job that never finishes; the script exits 1 with the reason instead. The wave is the same argument one level up: this is the one secret only a running Dependency-Track can issue, so it is fetched after the application, never in a wave that gates it. <code>make bao-secrets</code> writes the path empty rather than leaving it absent, for the same reason</td>
+</tr>
+<tr>
+<td>Runs before the platform's <code>findings-history</code> job at 06:30</td>
+<td>Both read the same reports; neither depends on the other</td>
+</tr>
+</tbody>
+</table>
+<h3 id="false-positives">False positives<a class="headerlink" href="#false-positives" title="Permanent link">&para;</a></h3>
+<p><code>false-positives.json</code> in the same ConfigMap names findings that are not
+findings: a project, an advisory, a component and the reason. After the
+uploads the job records each as a suppressed <code>FALSE_POSITIVE</code> analysis.</p>
+<table>
+<thead>
+<tr>
+<th>Detail</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>The job records them, not a person</td>
+<td>An analysis belongs to one project version, so every new tag of the image arrives with the finding open again</td>
+</tr>
+<tr>
+<td>A rule names the component by PURL without its version</td>
+<td>The version moves with the image; the name is what collides</td>
+</tr>
+<tr>
+<td>A finding raised by tonight's upload is suppressed tomorrow</td>
+<td>Dependency-Track analyses a BOM after it has accepted it, and the job does not wait</td>
+</tr>
+<tr>
+<td>Without <code>VULNERABILITY_ANALYSIS_UPDATE</code> the job says so and succeeds</td>
+<td>The uploads are what the job is for</td>
+</tr>
+</tbody>
+</table>
+<h3 id="retired-projects">Retired projects<a class="headerlink" href="#retired-projects" title="Permanent link">&para;</a></h3>
+<p>A project the job created and did not upload in a run is marked inactive,
+since its image no longer runs. Administration → Configuration →
+Maintenance then deletes it: retention there only ever acts on inactive
+projects.</p>
+<table>
+<thead>
+<tr>
+<th>Detail</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Only after a run with no failed upload and no skipped report</td>
+<td>A run that found nothing to upload would retire the portfolio</td>
+</tr>
+<tr>
+<td>Only projects with a <code>namespace:</code> tag</td>
+<td>That is the job's mark; a project created by hand is not the job's to retire</td>
+</tr>
+<tr>
+<td>Every upload asks for an active project</td>
+<td>An image that runs again after a rollback is part of the portfolio again</td>
+</tr>
+<tr>
+<td>Without <code>PORTFOLIO_MANAGEMENT_UPDATE</code> the job says so and succeeds</td>
+<td>The uploads are what the job is for</td>
+</tr>
+</tbody>
+</table>
+<p>How many retired versions of a project stay is the retention setting's
+to say, not the job's.</p>
+<h3 id="oidc">OIDC<a class="headerlink" href="#oidc" title="Permanent link">&para;</a></h3>
+<p>The provider is <code>dependency-track/authentik-blueprint.yaml</code>, a ConfigMap
+targeted at the <code>authentik</code> namespace, mounted and discovered the way
+<a href="../nextcloud/#oidc">Nextcloud's</a> is. What differs:</p>
+<table>
+<thead>
+<tr>
+<th>Blueprint field</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>client_type: public</code>, no <code>client_secret</code></td>
+<td>The frontend is a browser application and authenticates with authorization code plus PKCE; there is nowhere to keep a secret and the API server only validates the resulting ID token</td>
+</tr>
+<tr>
+<td><code>redirect_uris</code> ends in <code>/static/oidc-callback.html</code></td>
+<td>The page the frontend ships for the return leg</td>
+</tr>
+<tr>
+<td><code>client_id</code> from <code>!Env</code></td>
+<td>Authentik reads it from its own <code>ExternalSecret</code> on <code>kv/dependency-track/config</code>, the same value both Deployments read</td>
+</tr>
+<tr>
+<td>A <code>dependency-track-admins</code> group</td>
+<td>Mapped to the <code>Administrators</code> team, so the <code>groups</code> claim is what grants admin, in the shape <a href="https://homelab.wlkr.ch/platform/authentik/#groups-and-roles">ArgoCD and Grafana</a> already use. The group is in the blueprint because it is the contract; who is in it stays in Authentik and out of Git</td>
+</tr>
+</tbody>
+</table>
+<p>The issuer is <code>https://auth.k8s.wlkr.ch/application/o/dependency-track/</code>,
+trailing slash included: Dependency-Track compares the discovered issuer
+with the configured one character for character, and Authentik's carries
+the slash. Use <code>auth.k8s.wlkr.ch</code>, Authentik's only hostname; see
+<a href="https://homelab.wlkr.ch/platform/authentik/#one-hostname">One hostname</a>.</p>
+<h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
+<p>Two paths. <code>kv/dependency-track/config</code> is written once by the <code>PushSecret</code>
+in <code>secrets.yaml</code> and never overwritten — see <a href="https://homelab.wlkr.ch/platform/openbao/#generated-secrets">Generated secrets</a>; its template turns 32
+generated characters into the base64 the chart wants for <code>kek</code>.
+<code>kv/dependency-track/sbom-upload</code> is written by <code>make bao-secrets</code> in the
+platform repository.</p>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Key</th>
+<th>Read by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kv/dependency-track/config</code></td>
+<td><code>kek</code></td>
+<td>The API server, as the key encryption key for the secrets it stores</td>
+</tr>
+<tr>
+<td><code>kv/dependency-track/config</code></td>
+<td><code>oidc-client-id</code></td>
+<td>The API server, the frontend <strong>and</strong> Authentik, through two <code>ExternalSecret</code>s</td>
+</tr>
+<tr>
+<td><code>kv/dependency-track/sbom-upload</code></td>
+<td><code>api-key</code></td>
+<td>The upload job</td>
+</tr>
+</tbody>
+</table>
+<p>The API key is its own path because Dependency-Track issues it, after the
+first start, and a <code>bao kv put</code> replaces a path wholesale: writing it later
+into the first path would have deleted the KEK. The script asks for it and
+accepts an empty answer, so the path exists before Dependency-Track can issue
+a key. The database password is not here; CloudNativePG generates it.</p>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
+<h3 id="first-login">First login<a class="headerlink" href="#first-login" title="Permanent link">&para;</a></h3>
+<p>The first start seeds <code>admin</code> with the password <code>admin</code> and asks for a new
+one. Keep the account as break-glass; everything after is Authentik.</p>
+<ol>
+<li>
+<p>Add yourself to <code>dependency-track-admins</code> in Authentik. The blueprint
+   creates the group and the mapping to the <code>Administrators</code> team is under
+   Administration → Access Management → OpenID Connect Groups; team
+   synchronization grants it on the next login.</p>
+<div class="admonition danger">
+<p class="admonition-title">A team with no mapped group is emptied at every login</p>
+<p><code>synchronizeTeamMembership</code> removes an OIDC user from every team
+that has no mapped OpenID Connect group, so adding someone to a team
+by hand holds only until they log in again. The mapping, not the
+membership, is what lasts.</p>
+</div>
+<ol>
+<li>Administration → Access Management → Teams: a team <code>sbom-upload</code> with the
+   <code>BOM_UPLOAD</code>, <code>PROJECT_CREATION_UPLOAD</code>, <code>VIEW_PORTFOLIO</code>,
+   <code>VULNERABILITY_ANALYSIS_UPDATE</code> and <code>PORTFOLIO_MANAGEMENT_UPDATE</code>
+   permissions, and an API key on
+   it. <code>make bao-secrets</code> in the platform repository writes it to
+   <code>kv/dependency-track/sbom-upload</code>; the job picks it up at its next run,
+   or sooner:</li>
+</ol>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>dependency-track<span class="w"> </span>create<span class="w"> </span>job<span class="w"> </span>--from<span class="o">=</span>cronjob/sbom-upload<span class="w"> </span>sbom-upload-now
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>dependency-track<span class="w"> </span>logs<span class="w"> </span>job/sbom-upload-now
+</span></code></pre></div>
+</li>
+<li>
+<p>Administration → Vulnerability Sources: OSV is off by default. Enable it
+   with the <code>Debian</code>, <code>Alpine</code>, <code>Go</code>, <code>npm</code>, <code>PyPI</code>, <code>Maven</code>, <code>NuGet</code>,
+   <code>crates.io</code> and <code>RubyGems</code> ecosystems; NVD and EPSS are on already.
+   GitHub Advisories needs a token.</p>
+<div class="admonition warning">
+<p class="admonition-title">Without OSV the portfolio has components and no findings</p>
+<p>NVD describes what a vulnerability affects as a CPE, and the internal
+analyzer skips any component without one. Trivy's SBOMs are mostly
+operating-system and language packages, which carry a PURL and no
+CPE, so NVD alone matches almost nothing here however many hundred
+thousand advisories it has mirrored. OSV and GitHub Advisories are
+the ones that match on PURL. A full portfolio reporting zero
+vulnerabilities is this, not a clean estate.</p>
+</div>
+<p>OSV mirrors at 03:00 and NVD at 04:00, so findings appear the morning
+after the source is switched on, not the minute it is.
+4. Administration → Configuration → Maintenance: enable inactive project
+   deletion, by versions. Without it a <a href="#retired-projects">retired</a> project
+   stays forever.
+5. Administration → Repositories: disable the repositories the
+   <a href="#network-policy">egress policy</a> does not allow, or every analysis logs a
+   failed lookup for them.</p>
+</li>
+</ol>
+<h3 id="reading-it">Reading it<a class="headerlink" href="#reading-it" title="Permanent link">&para;</a></h3>
+<p>The portfolio is one project per image; the <code>namespace:</code> tags say where it
+runs. A vulnerability's Affected Projects view is the cross-image question
+Trivy's per-container reports cannot answer directly. The same objects are
+in the API:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Every project and its version, newest upload first</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-Api-Key: </span><span class="nv">$KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"https://sbom.k8s.wlkr.ch/api/v1/project?sortName=lastBomImport&amp;sortOrder=desc"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.[] | [.name, .version, .lastBomImport] | @tsv'</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># Findings for one project</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-Api-Key: </span><span class="nv">$KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"https://sbom.k8s.wlkr.ch/api/v1/finding/project/&lt;uuid&gt;"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.[] | [.vulnerability.severity, .vulnerability.vulnId, .component.purl] | @tsv'</span>
+</span></code></pre></div>
+<h2 id="health-check">Health check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>dependency-track<span class="w"> </span>get<span class="w"> </span>pods,cronjob
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>dependency-track<span class="w"> </span>get<span class="w"> </span>cluster<span class="w"> </span>dependency-track-db
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>curl<span class="w"> </span>-s<span class="w"> </span>https://sbom.k8s.wlkr.ch/api/version<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>.version
+</span></code></pre></div>
+<p>The database should report <code>Cluster in healthy state</code>, the version endpoint
+answers without a login, and the last <code>sbom-upload</code> job should have
+succeeded with a line like <code>66 images, 0 failed, 0 reports skipped, 110 from
+superseded revisions</code>. In the UI, the Dashboard's
+portfolio count should match that number.</p>
+<h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
+<div class="admonition warning">
+<p class="admonition-title">The KEK is the database</p>
+<p>Every secret Dependency-Track stores, feed tokens and notification
+credentials among them, is encrypted with the key in
+<code>kv/dependency-track/config</code>. Deleting that path makes the <code>PushSecret</code>
+write a new key and leaves the database unreadable in those places. A
+restore of the database is only a restore together with the key.</p>
+</div>
+<ul>
+<li><strong>A login that fails on <code>iss</code></strong> is a mismatch between the issuer in
+  <code>application.yaml</code> and Authentik's, usually the trailing slash. Both
+  Deployments carry the value; change it in one place.</li>
+<li><strong>A first login that lands nowhere</strong> is a user with no team. Provisioning
+  creates the account; the group mapping in <a href="#first-login">First login</a> is
+  what grants it anything.</li>
+<li><strong>A job that reports <code>no API key yet</code></strong> is the <a href="#first-login">first-login</a>
+  step not done, or the <code>ExternalSecret</code> not refreshed since it was; the
+  Secret carries a <code>data-hash</code> annotation that moves when the value does.</li>
+<li><strong>A sync that stops at the database</strong> with <code>could not get secret data from
+  provider</code> is <code>kv/dependency-track/sbom-upload</code> missing entirely. Run
+  <code>make bao-secrets</code> in the platform repository, which writes the path empty
+  when there is no key yet; an absent path fails the <code>ExternalSecret</code>, and a
+  failed resource stops the wave it is in.</li>
+<li><strong>Old image versions pile up as projects</strong> when inactive project
+  deletion is off under Maintenance, or the team lacks the permission to
+  <a href="#retired-projects">retire</a> them. The job never deletes.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+  
+  
+
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-circle-arrow-up" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4M12 16V8"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../claude-agents/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Claude agents">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Claude agents
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../flowscape/" class="md-footer__link md-footer__link--next" aria-label="Next: Flowscape">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Flowscape
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" class="lucide lucide-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Jan Welker
+    </div>
+  
+  
+    Made with
+    <a href="https://zensical.org/" target="_blank" rel="noopener">
+      Zensical
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      
+      
+        
+        
+      <script id="__config" type="application/json">{"annotate":null,"base":"..","features":["content.action.edit","content.action.view","content.code.copy","navigation.footer","navigation.indexes","navigation.instant","navigation.instant.prefetch","navigation.instant.progress","navigation.tabs","navigation.tabs.sticky","navigation.top","navigation.tracking","search.highlight","toc.follow"],"redirect":null,"search":"../assets/javascripts/workers/search.7d14d953.min.js","tags":null,"translations":{"clipboard.copied":"Copied to clipboard","clipboard.copy":"Copy to clipboard","search.result.more.one":"1 more on this page","search.result.more.other":"# more on this page","search.result.none":"No matching documents","search.result.one":"1 matching document","search.result.other":"# matching documents","search.result.placeholder":"Type to start searching","search.result.term.missing":"Missing","select.version":"Select version"},"version":null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.8dcc8e9c.min.js"></script>
+      
+    
+  </body>
+</html>
