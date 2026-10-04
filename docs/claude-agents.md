@@ -43,6 +43,7 @@ namespace, the two ServiceAccounts and one directory per session.
 | `kubernetes.access: read` | The sessions investigate and open pull requests; the cluster changes through Git and ArgoCD, not through the agent |
 | `argocd.enabled: true` | Lets the agent read and sync applications with the `claude` account's token instead of guessing from the Git side |
 | `repos` set per session | Clones each repository once into `$HOME` and creates the GitHub token `ExternalSecret`; one token covers the list. Without repositories there is no clone, no token and no GitHub egress |
+| `skills.repo: JanWelker/claude-skills` | The private repository behind the laptop's `~/.claude/skills`, cloned into the same place and pulled at every session start, so a session runs the same skills and can push changes to them |
 | `extraEgressFQDNs` per session | A session reaches the package registries its own build needs, and no others |
 | `targetRevision` is the only version | The chart's `appVersion` is the Claude Code version and the image tag defaults to it, so a Claude Code release is a chart release |
 | TLS ends in a `socat` sidecar from the same image, with a per-session `Certificate` | Cilium's Gateway only passes `TLSRoute` traffic through, it cannot terminate it; sshd itself listens on loopback only |
@@ -116,7 +117,7 @@ session's repositories only:
    A session that gains a repository keeps its token: edit it and add the
    repository.
 2. Resource owner `JanWelker`; **Only select repositories**, and pick the
-   session's `repos`.
+   session's `repos` plus `claude-skills`.
 3. Repository permissions:
 
     | Permission | Access | Why |

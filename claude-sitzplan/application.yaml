@@ -11,12 +11,15 @@ spec:
     # Why each value is what it is: docs/claude-agents.md#configuration
     repoURL: ghcr.io/janwelker/charts
     chart: claude-agent
-    targetRevision: 0.2.0
+    targetRevision: 0.3.0
     helm:
       valuesObject:
         session: sitzplan
         repos:
           - JanWelker/sitzplan.schlumpf.me
+        # The same skills as the laptop; see docs/claude-agents.md#configuration
+        skills:
+          repo: JanWelker/claude-skills
         kubernetes:
           access: none
         argocd:
