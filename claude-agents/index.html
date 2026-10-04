@@ -562,6 +562,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sessions
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -650,6 +661,17 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         Adding a session
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removing-a-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Removing a session
       </span>
     </span>
   </a>
@@ -984,6 +1006,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sessions
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1072,6 +1105,17 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         Adding a session
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#removing-a-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Removing a session
       </span>
     </span>
   </a>
@@ -1209,7 +1253,38 @@ namespace, the two ServiceAccounts and one directory per session.</p>
 </tr>
 <tr>
 <td>Files</td>
-<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-agents"><code>claude-agents/</code></a> for the namespace; <a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab"><code>claude-homelab/</code></a> and <a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab-apps"><code>claude-homelab-apps/</code></a> for the sessions</td>
+<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-agents"><code>claude-agents/</code></a> for the namespace; one <code>claude-&lt;session&gt;/</code> per session, see <a href="#sessions">Sessions</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="sessions">Sessions<a class="headerlink" href="#sessions" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Session</th>
+<th>Repositories</th>
+<th>Cluster access</th>
+<th>Why it is its own session</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab"><code>homelab</code></a></td>
+<td><code>homelab</code>, <code>homelab-apps</code>, <code>claude-agent</code>, <code>flowscape</code>, <code>knead-time</code>, <code>fest.wollbi.ch</code>, <code>advent.wollbi.ch</code>, <code>renovate-config</code></td>
+<td>read, Argo CD</td>
+<td>Everything that runs on or ships to the cluster, so one agent sees both halves of a rollout</td>
+</tr>
+<tr>
+<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-sitzplan"><code>sitzplan</code></a></td>
+<td><code>sitzplan.schlumpf.me</code></td>
+<td>none</td>
+<td>Hosted outside the cluster; needs only npm besides GitHub</td>
+</tr>
+<tr>
+<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-virgil"><code>virgil</code></a></td>
+<td><code>virgil</code></td>
+<td>none</td>
+<td>An iOS app: the agent edits and opens pull requests, CI builds, because there is no Xcode on Linux</td>
 </tr>
 </tbody>
 </table>
@@ -1247,8 +1322,12 @@ namespace, the two ServiceAccounts and one directory per session.</p>
 <td>Lets the agent read and sync applications with the <code>claude</code> account's token instead of guessing from the Git side</td>
 </tr>
 <tr>
-<td><code>repo</code> set per session</td>
-<td>Clones the repository once and creates the GitHub token <code>ExternalSecret</code>. Without it there is no clone, no token and no GitHub egress</td>
+<td><code>repos</code> set per session</td>
+<td>Clones each repository once into <code>$HOME</code> and creates the GitHub token <code>ExternalSecret</code>; one token covers the list. Without repositories there is no clone, no token and no GitHub egress</td>
+</tr>
+<tr>
+<td><code>extraEgressFQDNs</code> per session</td>
+<td>A session reaches the package registries its own build needs, and no others</td>
 </tr>
 <tr>
 <td><code>targetRevision</code> is the only version</td>
@@ -1308,23 +1387,26 @@ the chart from its values (<code>extraEgressFQDNs</code> adds to them).</p>
 <p>One block covers every session, because the hostname is the only thing that
 differs:</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Host *.ssh.wlkr.ch
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  ProxyCommand openssl s_client -quiet -verify_return_error -servername %h -connect %h:443
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  User agent
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  ProxyCommand openssl s_client -quiet -verify_return_error -servername %h -connect %h:443
 </span></code></pre></div>
-<p>Then <code>ssh homelab.ssh.wlkr.ch</code> attaches to the tmux session <code>main</code>. With a
+<p><code>sshd</code> admits only the user <code>agent</code>. Then <code>ssh homelab.ssh.wlkr.ch</code> attaches to the tmux session <code>main</code>. With a
 command, <code>ssh homelab.ssh.wlkr.ch &lt;command&gt;</code> runs it directly, so <code>scp</code> and
 <code>rsync</code> work.</p>
 <h3 id="first-login">First login<a class="headerlink" href="#first-login" title="Permanent link">&para;</a></h3>
 <p>Once per session, after the first start:</p>
 <ol>
 <li><code>ssh &lt;session&gt;.ssh.wlkr.ch</code>.</li>
-<li>In the Claude Code prompt, run <code>claude auth login</code> and finish the browser
-   flow.</li>
-<li>Run <code>/config</code> and turn on <strong>Enable Remote Control for all sessions</strong>.</li>
+<li>Claude Code asks how to log in: pick <strong>Claude account with subscription</strong>
+   and finish the browser flow.</li>
 </ol>
-<p>The login lives on the volume and survives restarts.</p>
+<p>The login lives on the volume and survives restarts. Remote Control is on for
+every session through the image's managed settings; the session appears in
+the Claude apps as <code>claude-&lt;session&gt;</code>.</p>
 <h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
-<p>Both paths are typed in with <code>make bao-secrets</code> in the platform repository.
-None is generated: each comes from an account outside the cluster.</p>
+<p>None is generated: each comes from an account outside the cluster. In the
+platform repository, <code>make claude-session-pat SESSION=&lt;session&gt;</code> writes a
+session's token and <code>make bao-secrets</code> the shared Argo CD one.</p>
 <table>
 <thead>
 <tr>
@@ -1337,7 +1419,7 @@ None is generated: each comes from an account outside the cluster.</p>
 <tr>
 <td><code>kv/claude-&lt;session&gt;/github</code></td>
 <td><code>token</code></td>
-<td><code>GH_TOKEN</code>: the fine-grained token for that session's repository. Only when <code>repo</code> is set</td>
+<td><code>GH_TOKEN</code>: the fine-grained token for that session's repositories. Only when <code>repos</code> is set</td>
 </tr>
 <tr>
 <td><code>kv/claude-agents/argocd</code></td>
@@ -1347,31 +1429,87 @@ None is generated: each comes from an account outside the cluster.</p>
 </tbody>
 </table>
 <h3 id="creating-the-github-token">Creating the GitHub token<a class="headerlink" href="#creating-the-github-token" title="Permanent link">&para;</a></h3>
-<p>A fine-grained personal access token, one per session, so a leak costs one
-repository:</p>
+<p>A fine-grained personal access token, one per session, so a leak costs that
+session's repositories only:</p>
 <ol>
-<li>GitHub → Settings → Developer settings → Fine-grained tokens → Generate.</li>
+<li>GitHub → Settings → Developer settings → Fine-grained tokens → Generate.
+   A session that gains a repository keeps its token: edit it and add the
+   repository.</li>
 <li>Resource owner <code>JanWelker</code>; <strong>Only select repositories</strong>, and pick the
-   session's one repository.</li>
-<li>Repository permissions, read and write: Contents, Pull requests,
-   Workflows, Checks. Metadata is read-only and is added automatically.</li>
-<li>Put the token into <code>kv/claude-&lt;session&gt;/github</code> (see above).</li>
+   session's <code>repos</code>.</li>
+<li>
+<p>Repository permissions:</p>
+<table>
+<thead>
+<tr>
+<th>Permission</th>
+<th>Access</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Contents</td>
+<td>Read and write</td>
+<td>Clone and push branches</td>
+</tr>
+<tr>
+<td>Pull requests</td>
+<td>Read and write</td>
+<td>Open and update pull requests</td>
+</tr>
+<tr>
+<td>Workflows</td>
+<td>Read and write</td>
+<td>A push that touches <code>.github/workflows/</code> is rejected without it</td>
+</tr>
+<tr>
+<td>Actions, Checks, Commit statuses</td>
+<td>Read</td>
+<td><code>gh run</code> and <code>gh pr checks</code></td>
+</tr>
+<tr>
+<td>Metadata</td>
+<td>Read</td>
+<td>Mandatory, added automatically</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p>Put the token into <code>kv/claude-&lt;session&gt;/github</code> (see above).</p>
+</li>
 </ol>
 <h3 id="adding-a-session">Adding a session<a class="headerlink" href="#adding-a-session" title="Permanent link">&para;</a></h3>
+<p>The <code>claude-session</code> skill walks through these steps.</p>
 <ol>
-<li>Copy a session directory, for example <code>claude-homelab/</code> to
+<li>Copy a session directory, for example <code>claude-sitzplan/</code> to
    <code>claude-&lt;session&gt;/</code>.</li>
-<li>In <code>application.yaml</code>, change <code>metadata.name</code>, <code>session</code>, <code>repo</code> and
-   <code>ssh.authorizedKeys</code>.</li>
+<li>In <code>application.yaml</code>, change <code>metadata.name</code>, <code>session</code>, <code>repos</code>, the
+   access toggles and <code>extraEgressFQDNs</code>.</li>
 <li>Create the token and write it to OpenBao before the merge, so the
    <code>ExternalSecret</code> resolves on the first sync.</li>
-<li>Merge. The session answers at <code>&lt;session&gt;.ssh.wlkr.ch</code> once the Application
-   is Healthy; then do the <a href="#first-login">first login</a>.</li>
+<li>Add the session to <a href="#sessions">Sessions</a> and merge. It answers at
+   <code>&lt;session&gt;.ssh.wlkr.ch</code> once the Application is Healthy; then do the
+   <a href="#first-login">first login</a>.</li>
+</ol>
+<h3 id="removing-a-session">Removing a session<a class="headerlink" href="#removing-a-session" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Delete <code>claude-&lt;session&gt;/</code> and its row in <a href="#sessions">Sessions</a>, and
+   merge.</li>
+<li>The ApplicationSet preserves resources on deletion, so remove them by
+   hand: <code>kubectl -n claude-agents delete all,configmap,externalsecret,certificate,secret,tlsroute,ciliumnetworkpolicy,serviceaccount -l app.kubernetes.io/instance=claude-&lt;session&gt;</code>,
+   then <code>secret/claude-&lt;session&gt;-tls</code>, which cert-manager creates without
+   that label.</li>
+<li>The volume is kept on purpose (<code>Prune=false</code>, <code>helm.sh/resource-policy:
+   keep</code>). Delete <code>pvc/claude-&lt;session&gt;</code> once nothing on it is needed.</li>
+<li>Remove the token: <code>make claude-session-pat SESSION=&lt;session&gt; DELETE=1</code> in
+   the platform repository, and revoke it on GitHub.</li>
 </ol>
 <p>Every session shares one <code>targetRevision</code> in practice: Renovate groups them
 into one pull request.</p>
 <h3 id="sessions-without-a-repository">Sessions without a repository<a class="headerlink" href="#sessions-without-a-repository" title="Permanent link">&para;</a></h3>
-<p>Set <code>repo: ""</code> (or leave it out). The pod then has no clone, no GitHub token
+<p>Leave <code>repos</code> empty. The pod then has no clone, no GitHub token
 and no GitHub egress, and the <code>kv/claude-&lt;session&gt;/github</code> path is not read.
 Use it for a scratch session that only needs the Claude API.</p>
 <h3 id="acp-from-zed">ACP from Zed<a class="headerlink" href="#acp-from-zed" title="Permanent link">&para;</a></h3>
