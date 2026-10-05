@@ -8,7 +8,7 @@ Each session is a Claude Code instance that keeps running when the laptop is
 closed: a pod with `sshd`, a tmux session and a volume, reached at
 `<session>.ssh.wlkr.ch`. The same session is also driven from the Claude apps
 through Remote Control. The image and the Helm chart are the user's own,
-built in the `claude-agent` repository, which
+built in the `agent-mooring` repository, which
 [Conventions → Official upstream sources only](conventions.md#2-official-upstream-sources-only)
 allows for the same reason as the Flowscape image. This repository holds the
 namespace, the two ServiceAccounts and one directory per session.
@@ -28,7 +28,7 @@ namespace, the two ServiceAccounts and one directory per session.
 
 | Session | Repositories | Cluster access | Why it is its own session |
 | --- | --- | --- | --- |
-| [`homelab`](https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab) | `homelab`, `homelab-apps`, `claude-agent`, `flowscape`, `knead-time`, `fest.wollbi.ch`, `advent.wollbi.ch`, `renovate-config` | read, Argo CD | Everything that runs on or ships to the cluster, so one agent sees both halves of a rollout |
+| [`homelab`](https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab) | `homelab`, `homelab-apps`, `agent-mooring`, `flowscape`, `knead-time`, `fest.wollbi.ch`, `advent.wollbi.ch`, `renovate-config` | read, Argo CD | Everything that runs on or ships to the cluster, so one agent sees both halves of a rollout |
 | [`sitzplan`](https://github.com/JanWelker/homelab-apps/tree/main/claude-sitzplan) | `sitzplan.schlumpf.me` | none | Hosted outside the cluster; needs only npm besides GitHub |
 | [`virgil`](https://github.com/JanWelker/homelab-apps/tree/main/claude-virgil) | `virgil` | none | An iOS app: the agent edits and opens pull requests, CI builds, because there is no Xcode on Linux |
 
