@@ -10,8 +10,8 @@ spec:
     # An OCI chart, so there is no directory to exclude application.yaml from.
     # Why each value is what it is: docs/claude-agents.md#configuration
     repoURL: ghcr.io/janwelker/charts
-    chart: claude-agent
-    targetRevision: 0.4.2
+    chart: agent-mooring
+    targetRevision: 0.5.0
     helm:
       valuesObject:
         session: virgil
