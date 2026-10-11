@@ -23,6 +23,7 @@ so its upstream is our own — per
 | Database | CloudNativePG `Cluster` `advent-wollbi-db` |
 | Secrets | `kv/advent-wollbi/config` in OpenBao |
 | Files | [`advent-wollbi/`](https://github.com/JanWelker/homelab-apps/tree/main/advent-wollbi) |
+| Previews | One per pull request labelled `preview` — [Pull request previews](previews.md) |
 | Source | [JanWelker/advent.wollbi.ch](https://github.com/JanWelker/advent.wollbi.ch) |
 
 ## Configuration

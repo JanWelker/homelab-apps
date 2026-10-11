@@ -1,0 +1,35 @@
+---
+# Under *.k8s.wlkr.ch, so the platform's wildcard certificate and external-dns
+# cover every preview without a change there. No outpost on /admin: Payload's
+# own login, with the generated password, is the only gate. The hostname is
+# replaced per pull request by the ApplicationSet. docs/previews.md
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: advent-wollbi
+  namespace: advent-wollbi-preview
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: apps-gateway
+      namespace: kube-system
+      sectionName: https
+  hostnames:
+    - "advent-wollbi-preview.k8s.wlkr.ch"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      filters:
+        # A preview is public but must not compete with the real site in
+        # search results.
+        - type: ResponseHeaderModifier
+          responseHeaderModifier:
+            set:
+              - name: X-Robots-Tag
+                value: noindex, nofollow
+      backendRefs:
+        - name: advent-wollbi
+          port: 3000

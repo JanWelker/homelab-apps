@@ -1,0 +1,17 @@
+---
+# One pull request of JanWelker/advent.wollbi.ch, deployed by the `previews`
+# ApplicationSet in the platform repository. It sets the namespace, the image
+# tag and the hostname per pull request; the placeholders below are what it
+# replaces. docs/previews.md
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: advent-wollbi-preview
+resources:
+  - namespace.yaml
+  - networkpolicy.yaml
+  - secrets.yaml
+  - database.yaml
+  - deployment.yaml
+  - service.yaml
+  - httproute.yaml
+  - seed-job.yaml
