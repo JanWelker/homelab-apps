@@ -4,13 +4,19 @@
         <loc>https://homelab-apps.wlkr.ch/</loc>
       </url>
       <url>
-        <loc>https://homelab-apps.wlkr.ch/conventions/</loc>
+        <loc>https://homelab-apps.wlkr.ch/advent-wollbi/</loc>
       </url>
       <url>
         <loc>https://homelab-apps.wlkr.ch/claude-agents/</loc>
       </url>
       <url>
+        <loc>https://homelab-apps.wlkr.ch/conventions/</loc>
+      </url>
+      <url>
         <loc>https://homelab-apps.wlkr.ch/dependency-track/</loc>
+      </url>
+      <url>
+        <loc>https://homelab-apps.wlkr.ch/fest-wollbi/</loc>
       </url>
       <url>
         <loc>https://homelab-apps.wlkr.ch/flowscape/</loc>
@@ -25,12 +31,9 @@
         <loc>https://homelab-apps.wlkr.ch/nextcloud/</loc>
       </url>
       <url>
+        <loc>https://homelab-apps.wlkr.ch/previews/</loc>
+      </url>
+      <url>
         <loc>https://homelab-apps.wlkr.ch/umami/</loc>
-      </url>
-      <url>
-        <loc>https://homelab-apps.wlkr.ch/advent-wollbi/</loc>
-      </url>
-      <url>
-        <loc>https://homelab-apps.wlkr.ch/fest-wollbi/</loc>
       </url>
 </urlset>
