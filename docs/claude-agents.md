@@ -28,7 +28,7 @@ namespace, the two ServiceAccounts and one directory per session.
 
 | Session | Repositories | Cluster access | Why it is its own session |
 | --- | --- | --- | --- |
-| [`homelab`](https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab) | `homelab`, `homelab-apps`, `claude-agent`, `flowscape`, `knead-time`, `fest.wollbi.ch`, `advent.wollbi.ch`, `renovate-config` | read, Argo CD | Everything that runs on or ships to the cluster, so one agent sees both halves of a rollout |
+| [`homelab`](https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab) | `homelab`, `homelab-apps`, `claude-agent`, `flowscape`, `knead-time`, `fest.wollbi.ch`, `advent.wollbi.ch`, `renovate-config` | read, Argo CD, Prometheus, Hubble, OpenBao; the Internet but not the LAN | Everything that runs on or ships to the cluster, so one agent sees both halves of a rollout |
 | [`sitzplan`](https://github.com/JanWelker/homelab-apps/tree/main/claude-sitzplan) | `sitzplan.schlumpf.me` | none | Hosted outside the cluster; needs only npm besides GitHub |
 | [`virgil`](https://github.com/JanWelker/homelab-apps/tree/main/claude-virgil) | `virgil` | none | An iOS app: the agent edits and opens pull requests, CI builds, because there is no Xcode on Linux |
 
@@ -68,6 +68,8 @@ the chart from its values (`extraEgressFQDNs` adds to them).
 | Ingress from `host` | The kubelet's probes, which come from the pod's own node. The Gateway arrives as the `ingress` entity from any node, so `remote-node` is not needed |
 | Ingress and egress within the namespace | Sessions share the namespace; the policy does not split them further |
 | Default egress to the namespace only | A session reaches nothing else unless its own policy says so. Those names (the Claude API, GitHub when `repo` is set, the Argo CD server) are the agent's reach, so adding one is reviewed like a firewall change |
+| `homelab-session`: every public address, minus the private, carrier-grade and link-local ranges | The cluster session installs tools, reads docs and fetches whatever a diagnosis needs; a name list would be a firewall change per lookup. Cutting the private ranges keeps the LAN, the nodes' LAN side and the Gateway addresses out |
+| `homelab-session`: Prometheus, Hubble Relay, the Argo CD server and OpenBao | The APIs the session diagnoses with; each service's own policy admits the session in the platform repository. The Argo CD server pod is needed for `argo-grpc` too, because the Gateway checks the caller's egress against the backend |
 
 ## Usage
 
