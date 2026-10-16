@@ -1312,7 +1312,7 @@ namespace, the two ServiceAccounts and one directory per session.</p>
 <tr>
 <td><a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab"><code>homelab</code></a></td>
 <td><code>homelab</code>, <code>homelab-apps</code>, <code>claude-agent</code>, <code>flowscape</code>, <code>knead-time</code>, <code>fest.wollbi.ch</code>, <code>advent.wollbi.ch</code>, <code>renovate-config</code></td>
-<td>read, Argo CD</td>
+<td>read, Argo CD, Prometheus, Hubble, OpenBao; the Internet but not the LAN</td>
 <td>Everything that runs on or ships to the cluster, so one agent sees both halves of a rollout</td>
 </tr>
 <tr>
@@ -1428,6 +1428,14 @@ the chart from its values (<code>extraEgressFQDNs</code> adds to them).</p>
 <tr>
 <td>Default egress to the namespace only</td>
 <td>A session reaches nothing else unless its own policy says so. Those names (the Claude API, GitHub when <code>repo</code> is set, the Argo CD server) are the agent's reach, so adding one is reviewed like a firewall change</td>
+</tr>
+<tr>
+<td><code>homelab-session</code>: every public address, minus the private, carrier-grade and link-local ranges</td>
+<td>The cluster session installs tools, reads docs and fetches whatever a diagnosis needs; a name list would be a firewall change per lookup. Cutting the private ranges keeps the LAN, the nodes' LAN side and the Gateway addresses out</td>
+</tr>
+<tr>
+<td><code>homelab-session</code>: Prometheus, Hubble Relay, the Argo CD server and OpenBao</td>
+<td>The APIs the session diagnoses with; each service's own policy admits the session in the platform repository. The Argo CD server pod is needed for <code>argo-grpc</code> too, because the Gateway checks the caller's egress against the backend</td>
 </tr>
 </tbody>
 </table>
