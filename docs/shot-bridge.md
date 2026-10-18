@@ -62,16 +62,13 @@ The chart's `CiliumNetworkPolicy`, at sync wave `-2`. The shape is
 
 | Path | Keys | Written by |
 | --- | --- | --- |
-| `kv/shot-bridge/accounts` | `lm-username`, `lm-password`, `apns-key-id`, `apns-key-p8` | Typed in by hand, see below |
+| `kv/shot-bridge/accounts` | `lm-username`, `lm-password`, `apns-key-id`, `apns-key-p8` | `make bao-secrets` in the platform repository |
 | `kv/shot-bridge/config` | `api-key` | The `PushSecret` in `secrets.yaml` |
 
 The accounts path holds values from outside the cluster, so it is its own
-path: a `bao kv put` replaces a path wholesale.
-
-```bash
-bao kv put kv/shot-bridge/accounts \
-  lm-username=... lm-password=... apns-key-id=... apns-key-p8=@AuthKey.p8
-```
+path: a `bao kv put` replaces a path wholesale. `make bao-secrets` asks for
+the La Marzocco login, then the APNs key ID and the path to the `.p8` file;
+Enter leaves the APNs half empty until the key exists.
 
 ## Usage
 
@@ -95,7 +92,10 @@ kubectl -n shot-bridge logs deploy/shot-bridge
 - **The image and chart have to be public on GHCR.** The cluster has no pull
   secret for `ghcr.io/janwelker`, and ArgoCD has no credentials for the chart
   registry.
-- **The pod crash-loops until `kv/shot-bridge/accounts` exists.** The bridge
-  exits on a missing variable rather than starting half-configured.
+- **The sync stops at wave `-1` until `kv/shot-bridge/accounts` exists.** The
+  `ExternalSecret` fails on a missing path, so the Deployment is never
+  created; run `make bao-secrets`.
+- **The pod crash-loops while the APNs keys are empty.** The bridge exits on a
+  missing variable rather than starting half-configured.
 - **A changed API key logs the phone out.** Enter the new one in the app's
   setup screen; the watch receives it from the phone.
