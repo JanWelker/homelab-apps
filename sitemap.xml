@@ -34,6 +34,9 @@
         <loc>https://homelab-apps.wlkr.ch/previews/</loc>
       </url>
       <url>
+        <loc>https://homelab-apps.wlkr.ch/shot-bridge/</loc>
+      </url>
+      <url>
         <loc>https://homelab-apps.wlkr.ch/umami/</loc>
       </url>
 </urlset>
