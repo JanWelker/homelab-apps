@@ -13,7 +13,7 @@ spec:
     # Why each value is what it is: docs/shot-bridge.md#configuration
     - repoURL: ghcr.io/janwelker/charts
       chart: shot-bridge
-      targetRevision: 0.1.1
+      targetRevision: 0.1.2
       helm:
         valuesObject:
           lm:
