@@ -45,7 +45,7 @@ chart is published to `ghcr.io/janwelker/charts`, per
 | Probes are TCP | `/healthz` returns 503 whenever the machine is off, and the apps still need the history then |
 | `apns.env: sandbox` | The iPhone app is installed from Xcode with development signing; TestFlight builds need `production` |
 | `apns.bundleId` and `apns.teamId` | Must match the app's bundle ID and team, or APNs rejects every push |
-| `lm.serial` | The machine to watch; the bridge's built-in default is one specific Micra |
+| `lm.serial` | The machine to watch; required since chart 0.1.4 |
 
 ### Network policy
 
