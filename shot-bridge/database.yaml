@@ -1,0 +1,40 @@
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: shot-bridge-db
+  namespace: shot-bridge
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  instances: 1
+  # One instance: the -primary PDB would refuse every drain; see docs/conventions.md
+  enablePDB: false
+
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.6-system-trixie@sha256:f7e00138159bb45d70b624ba25e446924cb3ed1bf366d13e936c3f81b914064e
+
+  storage:
+    size: 1Gi
+    storageClass: rook-ceph-block
+
+  bootstrap:
+    initdb:
+      database: shot_bridge
+      owner: shot_bridge
+
+  postgresql:
+    parameters:
+      shared_buffers: 32MB
+      # The bridge's pool holds at most 4, migrate-sqlite 4 more while it runs.
+      max_connections: "20"
+
+  resources:
+    requests:
+      cpu: 20m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+
+  monitoring:
+    enablePodMonitor: true
