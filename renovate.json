@@ -5,6 +5,25 @@
   ],
   "packageRules": [
     {
+      "description": "requires-python names the minor only, as in the homelab repository: .python-version already picks the interpreter.",
+      "matchManagers": [
+        "pep621"
+      ],
+      "matchDepTypes": [
+        "requires-python"
+      ],
+      "rangeStrategy": "replace"
+    },
+    {
+      "description": "requires-python, .python-version and the sbom-upload image name the same minor: one PR for all of them. Held at 3.14 with the homelab repository, whose tooling cannot run 3.15 yet.",
+      "matchDepNames": [
+        "python",
+        "docker.io/library/python"
+      ],
+      "groupName": "python",
+      "allowedVersions": "/^3\\.14([.-]|$)/"
+    },
+    {
       "description": "A PostgreSQL major version is an offline migration that takes the workload down while it runs, and it is not reversible. The preset already holds every major for a human; this rule labels it. See cloudnative-pg.md in the homelab docs.",
       "matchDatasources": [
         "docker"
