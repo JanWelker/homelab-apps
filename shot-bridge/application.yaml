@@ -23,6 +23,8 @@ spec:
             bundleId: ch.wlkr.shottimer
             env: sandbox
           existingSecret: shot-bridge
+          database:
+            existingSecret: shot-bridge-db-app
           persistence:
             storageClassName: rook-ceph-block
             annotations:
