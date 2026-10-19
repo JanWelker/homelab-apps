@@ -10,7 +10,7 @@ this one process watches the machine, tracks each shot, looks up the
 machine's exact extraction time afterwards, keeps the shot history in SQLite,
 and starts and updates the phone's Live Activity through APNs. The phone and
 watch apps call its small HTTP API. The source, the image and the chart live
-in [tcinbis/shotapp](https://github.com/tcinbis/shotapp/tree/main/deploy); the
+in [somuch-cloud/shotapp](https://github.com/somuch-cloud/shotapp/tree/main/deploy); the
 chart is published to `ghcr.io/janwelker/charts`, per
 [Conventions → Official upstream sources only](conventions.md#2-official-upstream-sources-only).
 
