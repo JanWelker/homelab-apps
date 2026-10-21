@@ -1262,6 +1262,11 @@ same namespace through its external-database settings.</p>
 <code>&lt;cluster&gt;-primary</code> PodDisruptionBudget otherwise never allows an eviction,
 so a drain of that node hangs until Kured's timeout and the node is never
 rebooted. The pod moves and the database is down for the move either way.</p>
+<p>Every <code>Cluster</code> outside a preview gets a <code>backup.yaml</code> beside it, the
+<a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#backing-up-a-database">stanza from the platform</a>
+with the <code>Cluster</code>'s name and namespace filled in, and the <code>plugins</code> entry in
+the <code>Cluster</code>. Velero's nightly PVC snapshot alone restores only to the night
+it was taken; the WAL archive restores to any second.</p>
 <p>The operator writes a <code>&lt;cluster-name&gt;-app</code> Secret with <code>username</code>, <code>password</code>,
 <code>host</code>, <code>port</code>, <code>dbname</code> and a ready-assembled <code>uri</code>. Consume those keys; never
 copy the value into Git or OpenBao.</p>
@@ -1380,6 +1385,11 @@ until someone ran <code>argocd app sync</code>.</p>
 <td>Backups of a PVC</td>
 <td>Nothing</td>
 <td>Velero snapshots it nightly; restoring is in <a href="https://homelab.wlkr.ch/operations/backups/">Backups &amp; Recovery</a></td>
+</tr>
+<tr>
+<td>Backups of a database</td>
+<td><code>backup.yaml</code> and a <code>plugins</code> entry (rule 3)</td>
+<td>WAL archived continuously, a base backup nightly, to the database's own bucket</td>
 </tr>
 <tr>
 <td>Metrics</td>

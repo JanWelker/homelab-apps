@@ -1167,7 +1167,7 @@ chart is published to <code>ghcr.io/janwelker/charts</code>, per
 <tr>
 <td>Shot history, registered phones, default dose, coffees, reference shots</td>
 <td>PostgreSQL, the CloudNativePG <code>Cluster</code> <code>shot-bridge-db</code> (<code>database.yaml</code>)</td>
-<td>History no; phones re-register on their next launch. The nightly Velero snapshot is the only copy, crash-consistent</td>
+<td>History from its WAL archive, to any point inside its retention window; phones re-register on their next launch</td>
 </tr>
 <tr>
 <td>The SQLite file from before 2026-10-19</td>
@@ -1214,7 +1214,7 @@ chart is published to <code>ghcr.io/janwelker/charts</code>, per
 </tr>
 <tr>
 <td><code>Cluster</code> <code>shot-bridge-db</code>, two instances, 1Gi</td>
-<td>A few rows a day, but the phones log every shot as it happens; a replica turns a drain or a node loss into a failover of seconds instead of a restart. <code>enablePDB: false</code> still, so the drain triggers that failover rather than hanging, and a topology spread keeps the two on different nodes</td>
+<td>A few rows a day, but the phones log every shot as it happens; a replica turns a drain or a node loss into a failover of seconds instead of a restart. <code>enablePDB: false</code> still, so the drain triggers that failover rather than hanging, and a topology spread keeps the two on different nodes. WAL and a nightly base backup through <code>backup.yaml</code></td>
 </tr>
 <tr>
 <td><code>HTTPRoute</code> targets the bridge's Service</td>

@@ -1141,7 +1141,7 @@ Deployment, a Service, a PVC and a ConfigMap around the official image, per
 <tr>
 <td>History and long-term statistics</td>
 <td>PostgreSQL, via CloudNativePG</td>
-<td>Only from the same Velero snapshot, which is crash-consistent, not point in time</td>
+<td>From its WAL archive, to any point inside its retention window</td>
 </tr>
 <tr>
 <td><code>configuration.yaml</code></td>

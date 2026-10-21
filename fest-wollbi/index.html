@@ -1338,8 +1338,10 @@ after it.</p>
   in production, so a collection change that works on a laptop does nothing
   here until <code>payload migrate:create</code> has been run and committed in the site
   repository.</li>
-<li><strong>The uploads volume and the database are one backup.</strong> A restore of one
-  without the other leaves records pointing at files that are gone.</li>
+<li><strong>The uploads volume and the database restore together.</strong> The uploads
+  come back from a Velero night, the database from its WAL archive; restore
+  the database to that night's backup time, or records point at files that
+  are gone.</li>
 <li><strong>Deleting <code>kv/fest-wollbi/config</code> logs the editors out</strong> and does not
   change the first editor's password, which is read only while the database is
   empty.</li>
