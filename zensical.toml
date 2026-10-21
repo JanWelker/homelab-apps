@@ -25,6 +25,7 @@ nav = [
   { "Claude agents" = "claude-agents.md" },
   { "Dependency-Track" = "dependency-track.md" },
   { "Flowscape" = "flowscape.md" },
+  { "GitHub runners" = "arc-runners.md" },
   { "Home Assistant" = "home-assistant.md" },
   { "Knead Time" = "kneadtime.md" },
   { "Nextcloud" = "nextcloud.md" },
