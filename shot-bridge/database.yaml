@@ -51,5 +51,11 @@ spec:
     limits:
       memory: 256Mi
 
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: shot-bridge-db
+
   monitoring:
     enablePodMonitor: true
