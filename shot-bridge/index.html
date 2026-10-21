@@ -1165,9 +1165,14 @@ chart is published to <code>ghcr.io/janwelker/charts</code>, per
 </thead>
 <tbody>
 <tr>
-<td>Shot history, registered phones, default dose</td>
-<td>SQLite on the PVC</td>
-<td>History no; phones re-register on their next launch</td>
+<td>Shot history, registered phones, default dose, coffees, reference shots</td>
+<td>PostgreSQL, the CloudNativePG <code>Cluster</code> <code>shot-bridge-db</code> (<code>database.yaml</code>)</td>
+<td>History no; phones re-register on their next launch. The nightly Velero snapshot is the only copy, crash-consistent</td>
+</tr>
+<tr>
+<td>The SQLite file from before 2026-10-19</td>
+<td><code>bridge.db</code> on the PVC, read once by <code>migrate-sqlite</code></td>
+<td>Kept as a fallback; delete it once the PostgreSQL history has been checked</td>
 </tr>
 <tr>
 <td>La Marzocco installation key</td>
@@ -1201,11 +1206,15 @@ chart is published to <code>ghcr.io/janwelker/charts</code>, per
 </tr>
 <tr>
 <td>One replica, <code>Recreate</code></td>
-<td>One cloud websocket and one SQLite file; two copies would double every push</td>
+<td>One cloud websocket; two copies would double every push</td>
 </tr>
 <tr>
-<td>SQLite, not a CloudNativePG <code>Cluster</code></td>
-<td>One writer and a few rows a day; the bridge is built around SQLite, and Velero backs up the PVC</td>
+<td><code>database.existingSecret: shot-bridge-db-app</code></td>
+<td>The bridge reads <code>DATABASE_URL</code> from the Secret CloudNativePG writes for <code>shot-bridge-db</code> (<code>uri</code> key); without it the chart falls back to the SQLite file on the PVC. The PVC stays for the La Marzocco installation key</td>
+</tr>
+<tr>
+<td><code>Cluster</code> <code>shot-bridge-db</code>, one instance, 1Gi</td>
+<td>A few rows a day; one instance with <code>enablePDB: false</code> like the other databases, no <code>ScheduledBackup</code>, Velero snapshots the volume nightly</td>
 </tr>
 <tr>
 <td><code>HTTPRoute</code> targets the bridge's Service</td>
@@ -1251,6 +1260,10 @@ chart is published to <code>ghcr.io/janwelker/charts</code>, per
 <tr>
 <td>Egress to the four APNs names on 443, 2195 and 2196</td>
 <td>Pushes and broadcasts on 443; channel management on 2195 (sandbox) and 2196 (production)</td>
+</tr>
+<tr>
+<td>Egress to the namespace on 5432</td>
+<td>The database's <code>-rw</code> Service</td>
 </tr>
 </tbody>
 </table>

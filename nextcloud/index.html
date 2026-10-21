@@ -1194,7 +1194,7 @@ blueprint) come from a second source pointing at this repository.</p>
 <tbody>
 <tr>
 <td>URL</td>
-<td><a href="https://cloud.k8s.wlkr.ch">cloud.k8s.wlkr.ch</a></td>
+<td><a href="https://cloud.infra.k8s.wlkr.ch">cloud.infra.k8s.wlkr.ch</a>, LAN and VPN only</td>
 </tr>
 <tr>
 <td>Authentication</td>
@@ -1232,6 +1232,14 @@ blueprint) come from a second source pointing at this repository.</p>
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><code>HTTPRoute</code> on <code>infra-gateway</code>, not <code>apps-gateway</code></td>
+<td>Only <code>apps-gateway</code> gets a public DNS record, so the PHP stack is reachable from the LAN and the VPN and not from the internet. Sync clients use app passwords on <code>/remote.php</code>, which an outpost in front would either break or have to exempt</td>
+</tr>
+<tr>
+<td><code>trusted_domains</code> rewritten by the startup hook</td>
+<td>The image applies <code>NEXTCLOUD_TRUSTED_DOMAINS</code>, which the chart fills from <code>nextcloud.host</code>, only on the first install, so a later hostname change would otherwise answer every request with "untrusted domain". Deleted first for the same reason as <code>allowedClients</code> below</td>
+</tr>
 <tr>
 <td><code>podSecurityContext</code> and <code>securityContext</code> set seccomp only; the namespace enforces <code>baseline</code></td>
 <td>The apache flavour of the official image starts as root and drops to <code>www-data</code> itself, so <code>runAsNonRoot</code> and a read-only root would mean changing how the image runs. <code>RuntimeDefault</code> is the profile the image is built for. The metrics exporter is a static Go binary that writes nothing, so it runs fully restricted</td>
@@ -1434,7 +1442,7 @@ CloudNativePG generates it and nothing outside the cluster needs it.</p>
 <h3 id="break-glass">Break-glass<a class="headerlink" href="#break-glass" title="Permanent link">&para;</a></h3>
 <p><code>hide_login_form</code> hides the fields; it does not disable local accounts. The
 admin whose password is in <code>kv/nextcloud/config</code> still works at:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>https://cloud.k8s.wlkr.ch/login?direct=1
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>https://cloud.infra.k8s.wlkr.ch/login?direct=1
 </span></code></pre></div>
 <p>Same reasoning as
 <a href="https://homelab.wlkr.ch/platform/authentik/#when-authentik-is-down">Grafana's break-glass admin</a>.</p>
