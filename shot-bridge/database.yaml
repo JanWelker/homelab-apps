@@ -8,9 +8,24 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false
     argocd.argoproj.io/sync-wave: "-1"
 spec:
-  instances: 1
-  # One instance: the -primary PDB would refuse every drain; see docs/conventions.md
+  # Two instances so a drain or a node loss fails over instead of taking the
+  # bridge's history down; see docs/shot-bridge.md#configuration
+  instances: 2
+  # The -primary PDB would refuse the primary's eviction on every drain;
+  # without it the operator fails over. See docs/conventions.md
   enablePDB: false
+
+  # The operator's anti-affinity is a preference the scheduler outweighs on
+  # unequal nodes; this keeps the two apart.
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      nodeTaintsPolicy: Honor
+      labelSelector:
+        matchLabels:
+          cnpg.io/cluster: shot-bridge-db
+          cnpg.io/podRole: instance
 
   imageName: ghcr.io/cloudnative-pg/postgresql:18.6-system-trixie@sha256:f7e00138159bb45d70b624ba25e446924cb3ed1bf366d13e936c3f81b914064e
 
