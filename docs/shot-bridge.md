@@ -21,7 +21,7 @@ chart is published to `ghcr.io/janwelker/charts`, per
 | URL | [shot.k8s.wlkr.ch](https://shot.k8s.wlkr.ch/healthz), an API for the iPhone and watch apps |
 | Authentication | The bridge's own bearer key; the apps cannot go through Authentik |
 | Storage | PVC `shot-bridge`, SQLite and the La Marzocco installation key |
-| Database | None; SQLite on the PVC |
+| Database | CloudNativePG `Cluster` `shot-bridge-db`, a primary and a streaming replica |
 | Dials | `lion.lamarzocco.io`, APNs |
 | Files | [`shot-bridge/`](https://github.com/JanWelker/homelab-apps/tree/main/shot-bridge) |
 
@@ -42,7 +42,7 @@ chart is published to `ghcr.io/janwelker/charts`, per
 | Own chart, values in `application.yaml` | The chart ships the Deployment, PVC, Service, `HTTPRoute` and `CiliumNetworkPolicy`; this directory adds the namespace and the secrets |
 | One replica, `Recreate` | One cloud websocket; two copies would double every push |
 | `database.existingSecret: shot-bridge-db-app` | The bridge reads `DATABASE_URL` from the Secret CloudNativePG writes for `shot-bridge-db` (`uri` key); without it the chart falls back to the SQLite file on the PVC. The PVC stays for the La Marzocco installation key |
-| `Cluster` `shot-bridge-db`, one instance, 1Gi | A few rows a day; one instance with `enablePDB: false` like the other databases, no `ScheduledBackup`, Velero snapshots the volume nightly |
+| `Cluster` `shot-bridge-db`, two instances, 1Gi | A few rows a day, but the phones log every shot as it happens; a replica turns a drain or a node loss into a failover of seconds instead of a restart. `enablePDB: false` still, so the drain triggers that failover rather than hanging, and a topology spread keeps the two on different nodes |
 | `HTTPRoute` targets the bridge's Service | The phone sends `Authorization: Bearer`; an Authentik outpost in front would answer the app with a login page |
 | Probes are TCP | `/healthz` returns 503 whenever the machine is off, and the apps still need the history then |
 | `apns.env: sandbox` | The iPhone app is installed from Xcode with development signing; TestFlight builds need `production` |
