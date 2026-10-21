@@ -29,7 +29,7 @@ chart is published to `ghcr.io/janwelker/charts`, per
 
 | State | Where | Rebuildable? |
 | --- | --- | --- |
-| Shot history, registered phones, default dose, coffees, reference shots | PostgreSQL, the CloudNativePG `Cluster` `shot-bridge-db` (`database.yaml`) | History no; phones re-register on their next launch. The nightly Velero snapshot is the only copy, crash-consistent |
+| Shot history, registered phones, default dose, coffees, reference shots | PostgreSQL, the CloudNativePG `Cluster` `shot-bridge-db` (`database.yaml`) | History from its WAL archive, to any point inside its retention window; phones re-register on their next launch |
 | The SQLite file from before 2026-10-19 | `bridge.db` on the PVC, read once by `migrate-sqlite` | Kept as a fallback; delete it once the PostgreSQL history has been checked |
 | La Marzocco installation key | `installation_key.json` on the PVC | Yes, the bridge registers a new one on start |
 | Account credentials and the APNs key | OpenBao `kv/shot-bridge/accounts` | Re-typed from the accounts |
@@ -42,7 +42,7 @@ chart is published to `ghcr.io/janwelker/charts`, per
 | Own chart, values in `application.yaml` | The chart ships the Deployment, PVC, Service, `HTTPRoute` and `CiliumNetworkPolicy`; this directory adds the namespace and the secrets |
 | One replica, `Recreate` | One cloud websocket; two copies would double every push |
 | `database.existingSecret: shot-bridge-db-app` | The bridge reads `DATABASE_URL` from the Secret CloudNativePG writes for `shot-bridge-db` (`uri` key); without it the chart falls back to the SQLite file on the PVC. The PVC stays for the La Marzocco installation key |
-| `Cluster` `shot-bridge-db`, two instances, 1Gi | A few rows a day, but the phones log every shot as it happens; a replica turns a drain or a node loss into a failover of seconds instead of a restart. `enablePDB: false` still, so the drain triggers that failover rather than hanging, and a topology spread keeps the two on different nodes |
+| `Cluster` `shot-bridge-db`, two instances, 1Gi | A few rows a day, but the phones log every shot as it happens; a replica turns a drain or a node loss into a failover of seconds instead of a restart. `enablePDB: false` still, so the drain triggers that failover rather than hanging, and a topology spread keeps the two on different nodes. WAL and a nightly base backup through `backup.yaml` |
 | `HTTPRoute` targets the bridge's Service | The phone sends `Authorization: Bearer`; an Authentik outpost in front would answer the app with a login page |
 | Probes are TCP | `/healthz` returns 503 whenever the machine is off, and the apps still need the history then |
 | `apns.env: sandbox` | The iPhone app is installed from Xcode with development signing; TestFlight builds need `production` |

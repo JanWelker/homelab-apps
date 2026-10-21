@@ -35,5 +35,12 @@ spec:
     limits:
       memory: 512Mi
 
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      enabled: true
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: umami-db
+
   monitoring:
     enablePodMonitor: true

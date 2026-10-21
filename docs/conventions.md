@@ -61,6 +61,12 @@ A single-instance `Cluster` sets `enablePDB: false`: the operator's
 so a drain of that node hangs until Kured's timeout and the node is never
 rebooted. The pod moves and the database is down for the move either way.
 
+Every `Cluster` outside a preview gets a `backup.yaml` beside it, the
+[stanza from the platform](https://homelab.wlkr.ch/platform/cloudnative-pg/#backing-up-a-database)
+with the `Cluster`'s name and namespace filled in, and the `plugins` entry in
+the `Cluster`. Velero's nightly PVC snapshot alone restores only to the night
+it was taken; the WAL archive restores to any second.
+
 The operator writes a `<cluster-name>-app` Secret with `username`, `password`,
 `host`, `port`, `dbname` and a ready-assembled `uri`. Consume those keys; never
 copy the value into Git or OpenBao.
@@ -179,6 +185,7 @@ The platform handles all of this; adding your own is the usual mistake:
 | Storage | `storageClassName: rook-ceph-block` | Rook-Ceph replicates it three ways |
 | Logs | Nothing | Alloy ships stdout to Loki |
 | Backups of a PVC | Nothing | Velero snapshots it nightly; restoring is in [Backups & Recovery](https://homelab.wlkr.ch/operations/backups/) |
+| Backups of a database | `backup.yaml` and a `plugins` entry (rule 3) | WAL archived continuously, a base backup nightly, to the database's own bucket |
 | Metrics | A `ServiceMonitor` or `PodMonitor` | Prometheus scrapes it |
 
 ## Writing an `HTTPRoute`

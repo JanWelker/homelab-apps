@@ -24,7 +24,7 @@ Deployment, a Service, a PVC and a ConfigMap around the official image, per
 | State | Where | Rebuildable? |
 | --- | --- | --- |
 | Registries, users, tokens, integration config (`/config/.storage`) | The `home-assistant-config` PVC | **No.** Losing it means re-pairing every device; the nightly [Velero snapshot](https://homelab.wlkr.ch/operations/backups/) is the only copy |
-| History and long-term statistics | PostgreSQL, via CloudNativePG | Only from the same Velero snapshot, which is crash-consistent, not point in time |
+| History and long-term statistics | PostgreSQL, via CloudNativePG | From its WAL archive, to any point inside its retention window |
 | `configuration.yaml` | A ConfigMap, in Git | Yes |
 
 ## Configuration

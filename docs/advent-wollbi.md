@@ -118,8 +118,10 @@ after it.
   in production, so a collection change that works on a laptop does nothing
   here until `payload migrate:create` has been run and committed in the site
   repository.
-- **The uploads volume and the database are one backup.** A restore of one
-  without the other leaves records pointing at files that are gone.
+- **The uploads volume and the database restore together.** The uploads
+  come back from a Velero night, the database from its WAL archive; restore
+  the database to that night's backup time, or records point at files that
+  are gone.
 - **The site is seasonal and the cluster is not.** Nothing scales it down in
   January; it is one small pod and one small database all year, which is
   cheaper than remembering to turn it back on in November.

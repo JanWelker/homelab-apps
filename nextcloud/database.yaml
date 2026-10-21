@@ -35,5 +35,12 @@ spec:
     limits:
       memory: 1Gi
 
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      enabled: true
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: nextcloud-db
+
   monitoring:
     enablePodMonitor: true
