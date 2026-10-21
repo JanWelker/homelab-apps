@@ -8,11 +8,11 @@ spec:
   parentRefs:
     - group: gateway.networking.k8s.io
       kind: Gateway
-      name: apps-gateway
+      name: infra-gateway
       namespace: kube-system
       sectionName: https
   hostnames:
-    - "cloud.k8s.wlkr.ch"
+    - "cloud.infra.k8s.wlkr.ch"
   rules:
     - backendRefs:
         - name: nextcloud

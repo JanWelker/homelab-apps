@@ -20,7 +20,7 @@ Kubeadm, Cilium, Rook-Ceph, ArgoCD and everything under them — is in
 | Claude agents | `<session>.ssh.wlkr.ch` | SSH keys | [`claude-agents/`](claude-agents/) | [docs](https://homelab-apps.wlkr.ch/claude-agents/) |
 | Flowscape | `flowscape.k8s.wlkr.ch` ([live demo](https://janwelker.github.io/flowscape/)) | Authentik proxy | [`flowscape/`](flowscape/) | [docs](https://homelab-apps.wlkr.ch/flowscape/) |
 | Home Assistant | `home.k8s.wlkr.ch` | Authentik proxy | [`home-assistant/`](home-assistant/) | [docs](https://homelab-apps.wlkr.ch/home-assistant/) |
-| Nextcloud | `cloud.k8s.wlkr.ch` | Authentik OIDC | [`nextcloud/`](nextcloud/) | [docs](https://homelab-apps.wlkr.ch/nextcloud/) |
+| Nextcloud | `cloud.infra.k8s.wlkr.ch` | Authentik OIDC | [`nextcloud/`](nextcloud/) | [docs](https://homelab-apps.wlkr.ch/nextcloud/) |
 | Shot Timer bridge | `shot.k8s.wlkr.ch` | Bridge API key | [`shot-bridge/`](shot-bridge/) | [docs](https://homelab-apps.wlkr.ch/shot-bridge/) |
 | Umami | `analytics.k8s.wlkr.ch` | Authentik proxy | [`umami/`](umami/) | [docs](https://homelab-apps.wlkr.ch/umami/) |
 | Wollbi Adventsfenster | `advent.wollbi.ch` | Public; Authentik proxy on `/admin` | [`advent-wollbi/`](advent-wollbi/) | [docs](https://homelab-apps.wlkr.ch/advent-wollbi/) |

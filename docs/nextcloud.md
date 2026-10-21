@@ -14,7 +14,7 @@ blueprint) come from a second source pointing at this repository.
 
 | | |
 | --- | --- |
-| URL | [cloud.k8s.wlkr.ch](https://cloud.k8s.wlkr.ch) |
+| URL | [cloud.infra.k8s.wlkr.ch](https://cloud.infra.k8s.wlkr.ch), LAN and VPN only |
 | Authentication | Authentik OIDC through the first-party `user_oidc` app; local login hidden |
 | Chart | `nextcloud`, from `https://nextcloud.github.io/helm/` |
 | Storage | `rook-ceph-block` PVC, `ReadWriteOnce` |
@@ -28,6 +28,8 @@ The values in `nextcloud/application.yaml` that are not self-explanatory:
 
 | Setting | Why |
 | --- | --- |
+| `HTTPRoute` on `infra-gateway`, not `apps-gateway` | Only `apps-gateway` gets a public DNS record, so the PHP stack is reachable from the LAN and the VPN and not from the internet. Sync clients use app passwords on `/remote.php`, which an outpost in front would either break or have to exempt |
+| `trusted_domains` rewritten by the startup hook | The image applies `NEXTCLOUD_TRUSTED_DOMAINS`, which the chart fills from `nextcloud.host`, only on the first install, so a later hostname change would otherwise answer every request with "untrusted domain". Deleted first for the same reason as `allowedClients` below |
 | `podSecurityContext` and `securityContext` set seccomp only; the namespace enforces `baseline` | The apache flavour of the official image starts as root and drops to `www-data` itself, so `runAsNonRoot` and a read-only root would mean changing how the image runs. `RuntimeDefault` is the profile the image is built for. The metrics exporter is a static Go binary that writes nothing, so it runs fully restricted |
 | `internalDatabase.enabled: false`, `externalDatabase.existingSecret` | `internalDatabase` is the chart's SQLite; its Bitnami PostgreSQL subchart is `postgresql.enabled`, off by default. Both give way to a CloudNativePG `Cluster` at sync wave `-1`, per [the contract](https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract). ArgoCD's health check for `Cluster` makes the wave wait for a working database before the chart's install job connects |
 | `redis.enabled: false` | Another Bitnami subchart. One replica needs no shared cache; the chart configures APCu |
@@ -156,7 +158,7 @@ CloudNativePG generates it and nothing outside the cluster needs it.
 admin whose password is in `kv/nextcloud/config` still works at:
 
 ```text
-https://cloud.k8s.wlkr.ch/login?direct=1
+https://cloud.infra.k8s.wlkr.ch/login?direct=1
 ```
 
 Same reasoning as

@@ -29,7 +29,7 @@ data:
           client_secret: !Env NEXTCLOUD_CLIENT_SECRET
           redirect_uris:
             - matching_mode: strict
-              url: https://cloud.k8s.wlkr.ch/apps/user_oidc/code
+              url: https://cloud.infra.k8s.wlkr.ch/apps/user_oidc/code
           signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
           property_mappings:
             - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
@@ -42,5 +42,5 @@ data:
         attrs:
           name: Nextcloud
           provider: !KeyOf nextcloud-provider
-          meta_launch_url: https://cloud.k8s.wlkr.ch
+          meta_launch_url: https://cloud.infra.k8s.wlkr.ch
           meta_description: Files, calendar and contacts

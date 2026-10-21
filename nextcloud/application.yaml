@@ -6,7 +6,7 @@ metadata:
   namespace: argocd
   annotations:
     argocd.argoproj.io/manifest-generate-paths: .
-    link.argocd.argoproj.io/external-link: https://cloud.k8s.wlkr.ch
+    link.argocd.argoproj.io/external-link: https://cloud.infra.k8s.wlkr.ch
 spec:
   project: apps
   sources:
@@ -21,7 +21,7 @@ spec:
             flavor: apache
 
           nextcloud:
-            host: cloud.k8s.wlkr.ch
+            host: cloud.infra.k8s.wlkr.ch
 
             podSecurityContext:
               seccompProfile:
@@ -47,9 +47,9 @@ spec:
               - name: OVERWRITEPROTOCOL
                 value: https
               - name: OVERWRITEHOST
-                value: cloud.k8s.wlkr.ch
+                value: cloud.infra.k8s.wlkr.ch
               - name: OVERWRITECLIURL
-                value: https://cloud.k8s.wlkr.ch
+                value: https://cloud.infra.k8s.wlkr.ch
               - name: TRUSTED_PROXIES
                 value: "10.244.0.0/16"
               - name: NEXTCLOUD_OIDC_CLIENT_ID
@@ -76,6 +76,14 @@ spec:
                 for cidr in $(echo "${OPENMETRICS_ALLOWED_CLIENTS:-}" | tr ',' ' '); do
                   php occ config:system:set openmetrics_allowed_clients "$i" \
                     --value="$cidr"
+                  i=$((i + 1))
+                done
+
+                # The image sets trusted_domains only at install: docs/nextcloud.md#configuration
+                php occ config:system:delete trusted_domains
+                i=0
+                for domain in localhost $NEXTCLOUD_TRUSTED_DOMAINS; do
+                  php occ config:system:set trusted_domains "$i" --value="$domain"
                   i=$((i + 1))
                 done
 
