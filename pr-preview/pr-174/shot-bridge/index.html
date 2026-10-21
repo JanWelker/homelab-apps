@@ -1142,7 +1142,7 @@ chart is published to <code>ghcr.io/janwelker/charts</code>, per
 </tr>
 <tr>
 <td>Database</td>
-<td>None; SQLite on the PVC</td>
+<td>CloudNativePG <code>Cluster</code> <code>shot-bridge-db</code>, a primary and a streaming replica</td>
 </tr>
 <tr>
 <td>Dials</td>
@@ -1213,8 +1213,8 @@ chart is published to <code>ghcr.io/janwelker/charts</code>, per
 <td>The bridge reads <code>DATABASE_URL</code> from the Secret CloudNativePG writes for <code>shot-bridge-db</code> (<code>uri</code> key); without it the chart falls back to the SQLite file on the PVC. The PVC stays for the La Marzocco installation key</td>
 </tr>
 <tr>
-<td><code>Cluster</code> <code>shot-bridge-db</code>, one instance, 1Gi</td>
-<td>A few rows a day; one instance with <code>enablePDB: false</code> like the other databases, WAL and a nightly base backup through <code>backup.yaml</code></td>
+<td><code>Cluster</code> <code>shot-bridge-db</code>, two instances, 1Gi</td>
+<td>A few rows a day, but the phones log every shot as it happens; a replica turns a drain or a node loss into a failover of seconds instead of a restart. <code>enablePDB: false</code> still, so the drain triggers that failover rather than hanging, and a topology spread keeps the two on different nodes. WAL and a nightly base backup through <code>backup.yaml</code></td>
 </tr>
 <tr>
 <td><code>HTTPRoute</code> targets the bridge's Service</td>
