@@ -1237,6 +1237,10 @@ blueprint) come from a second source pointing at this repository.</p>
 <td>Only <code>apps-gateway</code> gets a public DNS record, so the PHP stack is reachable from the LAN and the VPN and not from the internet. Sync clients use app passwords on <code>/remote.php</code>, which an outpost in front would either break or have to exempt</td>
 </tr>
 <tr>
+<td><code>image.tag</code> pinned by digest, though the chart derives it from its <code>appVersion</code></td>
+<td>The official image rebuilds the same tag when its PHP or Debian base gets a fix, and Renovate only sees a rebuild through a digest. The tag and the chart move in one PR, so a chart bump never leaves the pod on the previous major</td>
+</tr>
+<tr>
 <td><code>trusted_domains</code> rewritten by the startup hook</td>
 <td>The image applies <code>NEXTCLOUD_TRUSTED_DOMAINS</code>, which the chart fills from <code>nextcloud.host</code>, only on the first install, so a later hostname change would otherwise answer every request with "untrusted domain". Deleted first for the same reason as <code>allowedClients</code> below</td>
 </tr>
