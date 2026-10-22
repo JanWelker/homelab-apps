@@ -19,6 +19,9 @@ spec:
           image:
             repository: library/nextcloud
             flavor: apache
+            # Pinned by digest so a rebuild of the same tag reaches the pod: docs/nextcloud.md#configuration
+            # renovate: datasource=docker depName=docker.io/library/nextcloud
+            tag: 35.0.2-apache@sha256:3f05f4d5eded9d3d029e617926500645cca6344710364737a374088f6811095a
 
           nextcloud:
             host: cloud.infra.k8s.wlkr.ch

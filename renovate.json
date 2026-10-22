@@ -65,6 +65,14 @@
       "separateMultipleMinor": true
     },
     {
+      "description": "The image tag overrides the chart's appVersion, so the two move in one PR: a chart bump alone would leave the pod on the old Nextcloud.",
+      "matchPackageNames": [
+        "nextcloud",
+        "docker.io/library/nextcloud"
+      ],
+      "groupName": "nextcloud"
+    },
+    {
       "description": "Flowscape is our own image, built by the release workflow in JanWelker/flowscape; the three-day wait guards against upstream tags being pulled, which does not apply here.",
       "matchDatasources": [
         "docker"
@@ -158,15 +166,27 @@
       "autoReplaceStringTemplate": "imageName: {{{depName}}}{{#if newValue}}:{{{newValue}}}{{/if}}{{#if newDigest}}@{{{newDigest}}}{{/if}}"
     },
     {
-      "description": "Track versions annotated with a `# renovate:` comment. Needed for image tags written inline in a Helm `valuesObject:`, which the helm-values manager only reads from real values files.",
+      "description": "Track versions annotated with a `# renovate:` comment. Needed for image tags written inline in a Helm `valuesObject:`, which the helm-values manager only reads from real values files. A value with a digest is left to the next manager.",
       "customType": "regex",
       "managerFilePatterns": [
         "/^[^/]+/.+\\.yaml$/"
       ],
       "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?[^\\n]*\\n\\s*[\\w.-]+:\\s*[\"']?(?<currentValue>[^\"'\\s]+)[\"']?"
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?[^\\n]*\\n\\s*[\\w.-]+:\\s*[\"']?(?<currentValue>[^\"'\\s@]+)[\"']?(?:\\s|$)"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      "description": "A Helm image `tag:` written inline with its digest, under a `# renovate:` comment. Renovate replaces the tag and the digest in place, so a rebuild of the same tag is a digest update.",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^[^/]+/.+\\.yaml$/"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=docker\\s+depName=(?<depName>\\S+)[^\\n]*\\n\\s*tag:\\s*[\"']?(?<currentValue>[^\"'\\s@]+)@(?<currentDigest>sha256:[a-f0-9]+)[\"']?"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
     }
   ]
 }
