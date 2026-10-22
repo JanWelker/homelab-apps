@@ -65,12 +65,25 @@
       "separateMultipleMinor": true
     },
     {
-      "description": "The image tag overrides the chart's appVersion, so the two move in one PR: a chart bump alone would leave the pod on the old Nextcloud.",
+      "description": "The image tag overrides the chart's appVersion, so a patch of both moves in one PR. scripts/render-charts.py fails a PR whose tag leaves the chart's major or falls behind its appVersion.",
       "matchPackageNames": [
         "nextcloud",
         "docker.io/library/nextcloud"
       ],
       "groupName": "nextcloud"
+    },
+    {
+      "description": "A Nextcloud major arrives as a chart minor, which waits for a human. Renovate would put the image major on a branch of its own, so it is off: the render check fails the chart PR until its tag is set there, in the same PR.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "docker.io/library/nextcloud"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "enabled": false
     },
     {
       "description": "Flowscape is our own image, built by the release workflow in JanWelker/flowscape; the three-day wait guards against upstream tags being pulled, which does not apply here.",

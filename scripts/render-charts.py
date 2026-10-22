@@ -6,6 +6,11 @@ repository it is given, and it is pointed at the platform one. This is the
 cheap half of what it would have caught. A chart that refuses the values in
 an Application fails here rather than on the cluster.
 
+It also holds an `image.tag` override to the chart it overrides. Where the
+chart derives its tag from `appVersion`, a pinned tag stops following it, so
+a chart bump would leave the pod on the old release. The pinned version
+must share the chart's major and must not be older than `appVersion`.
+
     render-charts.py [--out <dir>] [<glob> ...]
 
 The globs select Applications and default to this repository's layout. With
@@ -23,6 +28,7 @@ something that was never asked for.
 import argparse
 import os
 import pathlib
+import re
 import subprocess
 import sys
 import tempfile
@@ -49,6 +55,39 @@ def chart_args(source):
     if source["repoURL"].startswith(("http://", "https://")):
         return [source["chart"], "--repo", source["repoURL"], *version]
     return [f"oci://{source['repoURL'].rstrip('/')}/{source['chart']}", *version]
+
+
+def helm_show(what, source):
+    """`helm show chart|values` for one source, parsed; from an empty directory as in render()."""
+    with tempfile.TemporaryDirectory() as workdir:
+        result = subprocess.run(
+            ["helm", "show", what, *chart_args(source)],
+            cwd=workdir, capture_output=True, text=True, check=True)
+    return yaml.safe_load(result.stdout) or {}
+
+
+def version_tuple(text):
+    match = re.match(r"v?(\d+(?:\.\d+)*)", str(text))
+    return tuple(int(part) for part in match.group(1).split(".")) if match else None
+
+
+def check_tag(source):
+    """None if the source's image.tag override is in step with the chart, else why not."""
+    image = source.get("helm", {}).get("valuesObject", {}).get("image") or {}
+    tag = image.get("tag")
+    if not tag:
+        return None
+    # A chart that ships its own default tag does not tie it to appVersion.
+    if (helm_show("values", source).get("image") or {}).get("tag"):
+        return None
+    app_version = helm_show("chart", source).get("appVersion")
+    pinned, expected = version_tuple(tag), version_tuple(app_version)
+    if pinned is None or expected is None:
+        return f"cannot compare image.tag {tag} with appVersion {app_version}"
+    if pinned[0] != expected[0] or pinned < expected:
+        return (f"image.tag {tag.split('@')[0]} is out of step with appVersion {app_version}; "
+                f"set it to the {app_version} tag with its digest in the same pull request")
+    return None
 
 
 def render(name, source):
@@ -97,6 +136,14 @@ def main(argv):
                     failed = True
                     prefix = f"::error title={name}::" if ACTIONS else "error: "
                     print(f"{prefix}helm template failed for {label}\n{output}", file=sys.stderr)
+                try:
+                    problem = ok and check_tag(source)
+                except subprocess.CalledProcessError as error:
+                    problem = f"helm show failed: {error.stderr.strip()}"
+                if problem:
+                    failed = True
+                    prefix = f"::error title={name}::" if ACTIONS else "error: "
+                    print(f"{prefix}{label}: {problem}", file=sys.stderr)
     return 1 if failed else 0
 
 
