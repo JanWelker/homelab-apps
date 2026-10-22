@@ -1238,7 +1238,7 @@ blueprint) come from a second source pointing at this repository.</p>
 </tr>
 <tr>
 <td><code>image.tag</code> pinned by digest, though the chart derives it from its <code>appVersion</code></td>
-<td>The official image rebuilds the same tag when its PHP or Debian base gets a fix, and Renovate only sees a rebuild through a digest. The tag and the chart move in one PR, so a chart bump never leaves the pod on the previous major</td>
+<td>The official image rebuilds the same tag when its PHP or Debian base gets a fix, and Renovate only sees a rebuild through a digest. <code>scripts/render-charts.py</code> fails a PR whose tag leaves the chart's major or falls behind its <code>appVersion</code>, so a chart bump never leaves the pod on the previous release. A major is the chart-minor PR plus its tag, by hand</td>
 </tr>
 <tr>
 <td><code>trusted_domains</code> rewritten by the startup hook</td>
