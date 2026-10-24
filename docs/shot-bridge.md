@@ -48,6 +48,7 @@ chart is published to `ghcr.io/janwelker/charts`, per
 | `apns.env: sandbox` | The iPhone app is installed from Xcode with development signing; TestFlight builds need `production` |
 | `apns.bundleId` and `apns.teamId` | Must match the app's bundle ID and team, or APNs rejects every push |
 | `lm.serial` | The machine to watch; required since chart 0.1.4 |
+| `timeZone: Europe/Zurich` | The bridge dates a bag's opening by the day of its first shot (chart 0.1.15); the image runs in UTC otherwise, so a shot before 01:00 or 02:00 would land on the day before |
 
 ### Network policy
 
