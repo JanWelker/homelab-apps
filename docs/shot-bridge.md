@@ -48,6 +48,7 @@ chart is published to `ghcr.io/janwelker/charts`, per
 | `apns.env: sandbox` | The iPhone app is installed from Xcode with development signing; TestFlight builds need `production` |
 | `apns.bundleId` and `apns.teamId` | Must match the app's bundle ID and team, or APNs rejects every push |
 | `lm.serial` | The machine to watch; required since chart 0.1.4 |
+| `admin.enabled: true` | The [admin UI](extractor-admin.md)'s read-only token, and its pods let in on 8080 |
 | `timeZone: Europe/Zurich` | The bridge dates a bag's opening by the day of its first shot (chart 0.1.15); the image runs in UTC otherwise, so a shot before 01:00 or 02:00 would land on the day before |
 
 ### Network policy
@@ -67,7 +68,7 @@ The chart's `CiliumNetworkPolicy`, at sync wave `-2`. The shape is
 | Path | Keys | Written by |
 | --- | --- | --- |
 | `kv/shot-bridge/accounts` | `lm-username`, `lm-password`, `apns-key-id`, `apns-key-p8` | `make bao-secrets` in the platform repository |
-| `kv/shot-bridge/config` | `api-key` | The `PushSecret` in `secrets.yaml` |
+| `kv/shot-bridge/config` | `api-key`, `admin-read-key` (the [admin UI](extractor-admin.md)'s read-only token) | The `PushSecret` in `secrets.yaml` |
 
 The accounts path holds values from outside the cluster, so it is its own
 path: a `bao kv put` replaces a path wholesale. `make bao-secrets` asks for

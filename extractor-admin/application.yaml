@@ -1,0 +1,52 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: extractor-admin
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/manifest-generate-paths: .
+    link.argocd.argoproj.io/external-link: https://extractor-admin.k8s.wlkr.ch
+spec:
+  project: apps
+  sources:
+    # Why each value is what it is: docs/extractor-admin.md#configuration
+    - repoURL: ghcr.io/janwelker/charts
+      chart: extractor-admin
+      targetRevision: 0.1.0
+      helm:
+        valuesObject:
+          existingSecret: extractor-admin
+          httpRoute:
+            enabled: true
+            hostname: extractor-admin.k8s.wlkr.ch
+            parentRefs:
+              - group: gateway.networking.k8s.io
+                kind: Gateway
+                name: apps-gateway
+                namespace: kube-system
+                sectionName: https
+          networkPolicy:
+            enabled: true
+            annotations:
+              argocd.argoproj.io/sync-wave: "-2"
+    - repoURL: https://github.com/JanWelker/homelab-apps.git
+      targetRevision: HEAD
+      path: extractor-admin
+      directory:
+        exclude: "application.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: extractor-admin
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 10
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m
+    syncOptions:
+      - ServerSideApply=true
