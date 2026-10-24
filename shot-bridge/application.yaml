@@ -13,9 +13,10 @@ spec:
     # Why each value is what it is: docs/shot-bridge.md#configuration
     - repoURL: ghcr.io/janwelker/charts
       chart: shot-bridge
-      targetRevision: 0.1.14
+      targetRevision: 0.1.15
       helm:
         valuesObject:
+          timeZone: Europe/Zurich
           lm:
             serial: MR054797
           apns:
