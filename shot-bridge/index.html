@@ -1236,6 +1236,10 @@ chart is published to <code>ghcr.io/janwelker/charts</code>, per
 <td><code>lm.serial</code></td>
 <td>The machine to watch; required since chart 0.1.4</td>
 </tr>
+<tr>
+<td><code>timeZone: Europe/Zurich</code></td>
+<td>The bridge dates a bag's opening by the day of its first shot (chart 0.1.15); the image runs in UTC otherwise, so a shot before 01:00 or 02:00 would land on the day before</td>
+</tr>
 </tbody>
 </table>
 <h3 id="network-policy">Network policy<a class="headerlink" href="#network-policy" title="Permanent link">&para;</a></h3>
