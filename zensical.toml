@@ -24,6 +24,7 @@ nav = [
   { "Conventions" = "conventions.md" },
   { "Claude agents" = "claude-agents.md" },
   { "Dependency-Track" = "dependency-track.md" },
+  { "Extractor admin UI" = "extractor-admin.md" },
   { "Flowscape" = "flowscape.md" },
   { "Home Assistant" = "home-assistant.md" },
   { "Knead Time" = "kneadtime.md" },
