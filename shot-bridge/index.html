@@ -273,6 +273,22 @@
   
   
     <li class="md-tabs__item">
+      <a href="../extractor-admin/" class="md-tabs__link">
+        
+  
+  Extractor admin UI
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
       <a href="../flowscape/" class="md-tabs__link">
         
   
@@ -556,6 +572,32 @@
     
   
   Dependency-Track
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../extractor-admin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+  Extractor admin UI
 
     
   </span>
@@ -1237,6 +1279,10 @@ chart is published to <code>ghcr.io/janwelker/charts</code>, per
 <td>The machine to watch; required since chart 0.1.4</td>
 </tr>
 <tr>
+<td><code>admin.enabled: true</code></td>
+<td>The <a href="../extractor-admin/">admin UI</a>'s read-only token, and its pods let in on 8080</td>
+</tr>
+<tr>
 <td><code>timeZone: Europe/Zurich</code></td>
 <td>The bridge dates a bag's opening by the day of its first shot (chart 0.1.15); the image runs in UTC otherwise, so a shot before 01:00 or 02:00 would land on the day before</td>
 </tr>
@@ -1288,7 +1334,7 @@ chart is published to <code>ghcr.io/janwelker/charts</code>, per
 </tr>
 <tr>
 <td><code>kv/shot-bridge/config</code></td>
-<td><code>api-key</code></td>
+<td><code>api-key</code>, <code>admin-read-key</code> (the <a href="../extractor-admin/">admin UI</a>'s read-only token)</td>
 <td>The <code>PushSecret</code> in <code>secrets.yaml</code></td>
 </tr>
 </tbody>
