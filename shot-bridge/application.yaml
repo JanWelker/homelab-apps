@@ -26,6 +26,8 @@ spec:
           existingSecret: shot-bridge
           database:
             existingSecret: shot-bridge-db-app
+          admin:
+            enabled: true
           persistence:
             storageClassName: rook-ceph-block
             annotations:
