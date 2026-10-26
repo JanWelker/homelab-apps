@@ -13,7 +13,7 @@ spec:
     # Why each value is what it is: docs/extractor-admin.md#configuration
     - repoURL: ghcr.io/janwelker/charts
       chart: extractor-admin
-      targetRevision: 0.1.0
+      targetRevision: 0.1.1
       helm:
         valuesObject:
           existingSecret: extractor-admin
