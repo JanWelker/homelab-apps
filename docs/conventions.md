@@ -144,6 +144,15 @@ against the provider must tolerate it not existing yet: fail soft and log.
 Watch for SSRF guards, too: `auth.k8s.wlkr.ch` resolves to a private address,
 and Nextcloud needed `allow_local_remote_servers` before discovery worked.
 
+**Account keys rest on usernames staying put.** Nextcloud and
+Dependency-Track key an account on `preferred_username`, which is the
+Authentik username, so a user who could rename themselves to someone else's
+name would log in as that account. The platform's Authentik brand turns
+self-service username changes off for that reason; see
+[Authentik](https://homelab.wlkr.ch/platform/authentik/). A new application
+keys on `sub` instead. An existing one stays on `preferred_username`, because
+switching gives every account a new ID and orphans its data.
+
 **Use `auth.k8s.wlkr.ch`**, Authentik's only hostname, for the discovery URI
 and the redirect alike: the `iss` claim is the name the token was issued
 through, and a client that mixes names fails every login — see
@@ -152,7 +161,11 @@ through, and a client that mixes names fails every login — see
 ### 7. Real secrets come from OpenBao
 
 An `ExternalSecret` reading `kv/<app>/config`, with a comment at the top of
-the file naming what writes it. Random values — session keys, admin
+the file naming what writes it. It and any `PushSecret` name the
+`openbao-apps` store, and `secrets.yaml` starts with an
+`external-secrets-vault` ServiceAccount at sync wave `-2`: the store logs in
+as it and reaches `kv/<namespace>/` only, so `<app>` is the namespace — see
+[Kubernetes auth](https://homelab.wlkr.ch/platform/openbao/#kubernetes-auth). Random values — session keys, admin
 passwords, OIDC client pairs — come from a `Password` generator and a
 `PushSecret` at the end of the same `secrets.yaml`, at sync wave `-2` so they
 land before the `ExternalSecret` at `-1` — see [Generated secrets](https://homelab.wlkr.ch/platform/openbao/#generated-secrets). A value from an

@@ -68,7 +68,7 @@ The chart's `CiliumNetworkPolicy`, at sync wave `-2`. The shape is
 | Path | Keys | Written by |
 | --- | --- | --- |
 | `kv/shot-bridge/accounts` | `lm-username`, `lm-password`, `apns-key-id`, `apns-key-p8` | `make bao-secrets` in the platform repository |
-| `kv/shot-bridge/config` | `api-key`, `admin-read-key` (the [admin UI](extractor-admin.md)'s read-only token) | The `PushSecret` in `secrets.yaml` |
+| `kv/shot-bridge/config` | `api-key`, `admin-read-key` (the [admin UI](extractor-admin.md)'s read-only token, which it reads from [a copy](extractor-admin.md#copying-the-read-key)) | The `PushSecret` in `secrets.yaml` |
 
 The accounts path holds values from outside the cluster, so it is its own
 path: a `bao kv put` replaces a path wholesale. `make bao-secrets` asks for

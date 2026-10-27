@@ -24,6 +24,10 @@ spec:
           access: none
         argocd:
           enabled: false
+        # The session tokens live at kv/claude-<session>/; see docs/claude-agents.md#secrets
+        secretStore:
+          name: openbao-claude-agents
+          kind: ClusterSecretStore
         # Idle most of the time; see docs/claude-agents.md#configuration
         resources:
           requests:

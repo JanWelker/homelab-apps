@@ -101,8 +101,11 @@ form stays visible, the pod logs a warning, and the next restart configures it.
 Two details of that call:
 
 - `--unique-uid=0` makes the Nextcloud user ID the raw `preferred_username`
-  claim, so an Authentik user named like the local admin logs in as that
-  admin. Acceptable only while one person hands out Authentik usernames.
+  claim, so an Authentik user named like the local admin, or like anyone
+  else, logs in as that account. That holds only while users cannot rename
+  themselves in Authentik, and switching to `sub` now would orphan every
+  account's files: see
+  [Conventions → Authentication](conventions.md#6-authentication-is-authentiks-not-the-applications).
 - `user_oidc:provider` never fetches the discovery document, so its exit code
   says nothing about whether the provider exists. Hiding the login form on that
   exit code locks everyone out behind a button that 404s. The hook fetches the
