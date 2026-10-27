@@ -21,12 +21,14 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           path: head
+          persist-credentials: false
 
       - name: Checkout main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           ref: main
           path: base
+          persist-credentials: false
 
       - name: Install Trivy
         uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
@@ -34,7 +36,10 @@ jobs:
           version: v0.76.1
 
       - name: Install PyYAML
-        run: pip install --quiet pyyaml
+        env:
+          # renovate: datasource=pypi depName=pyyaml
+          PYYAML_VERSION: 6.0.3
+        run: pip install --quiet "pyyaml==${PYYAML_VERSION}"
 
       - name: Scan changed images
         run: python3 head/scripts/image-scan-diff.py base head
