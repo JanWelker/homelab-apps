@@ -1408,8 +1408,11 @@ form stays visible, the pod logs a warning, and the next restart configures it.<
 <p>Two details of that call:</p>
 <ul>
 <li><code>--unique-uid=0</code> makes the Nextcloud user ID the raw <code>preferred_username</code>
-  claim, so an Authentik user named like the local admin logs in as that
-  admin. Acceptable only while one person hands out Authentik usernames.</li>
+  claim, so an Authentik user named like the local admin, or like anyone
+  else, logs in as that account. That holds only while users cannot rename
+  themselves in Authentik, and switching to <code>sub</code> now would orphan every
+  account's files: see
+  <a href="../conventions/#6-authentication-is-authentiks-not-the-applications">Conventions → Authentication</a>.</li>
 <li><code>user_oidc:provider</code> never fetches the discovery document, so its exit code
   says nothing about whether the provider exists. Hiding the login form on that
   exit code locks everyone out behind a button that 404s. The hook fetches the
