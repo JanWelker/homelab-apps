@@ -690,6 +690,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Usage
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#copying-the-read-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Copying the read key
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#health-check" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1033,6 +1061,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Usage
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#copying-the-read-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Copying the read key
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#health-check" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1165,26 +1221,58 @@ the chart is published to <code>ghcr.io/janwelker/charts</code>, per
 </thead>
 <tbody>
 <tr>
-<td><code>kv/shot-bridge/config</code></td>
+<td><code>kv/extractor-admin/config</code></td>
 <td><code>admin-read-key</code></td>
-<td>The <code>PushSecret</code> in <a href="https://github.com/JanWelker/homelab-apps/blob/main/shot-bridge/secrets.yaml"><code>shot-bridge/secrets.yaml</code></a></td>
+<td>By hand, as a copy of the bridge's property in <code>kv/shot-bridge/config</code>, which the <code>PushSecret</code> in <a href="https://github.com/JanWelker/homelab-apps/blob/main/shot-bridge/secrets.yaml"><code>shot-bridge/secrets.yaml</code></a> generates — see <a href="#copying-the-read-key">Copying the read key</a></td>
 </tr>
 </tbody>
 </table>
-<p>The bridge and this UI read the same property, so the token cannot drift
-apart. It may only read the debug routes and the logs; every other bridge
-route answers 403.</p>
+<p>A copy, because the <code>openbao-apps</code> store confines each namespace to its own
+<code>kv/&lt;namespace&gt;/</code> (<a href="../conventions/#7-real-secrets-come-from-openbao">Conventions → Real secrets come from OpenBao</a>).
+The token may only read the bridge's debug routes and the logs; every other
+bridge route answers 403.</p>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
+<h3 id="copying-the-read-key">Copying the read key<a class="headerlink" href="#copying-the-read-key" title="Permanent link">&para;</a></h3>
+<p>Once before the first sync, and again whenever <code>kv/shot-bridge/config</code> is
+rotated. Run from the platform repository's checkout.</p>
+<ol>
+<li>
+<p>Log in inside the pod with the root token:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>openbao<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>openbao-0<span class="w"> </span>--<span class="w"> </span>bao<span class="w"> </span>login
+</span></code></pre></div>
+</li>
+<li>
+<p>Copy the property; it is alphanumeric, so it needs no JSON escaping:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">key</span><span class="o">=</span><span class="s2">"</span><span class="k">$(</span>kubectl<span class="w"> </span>-n<span class="w"> </span>openbao<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>openbao-0<span class="w"> </span>--<span class="w"> </span>bao<span class="w"> </span>kv<span class="w"> </span>get<span class="w"> </span>-mount<span class="o">=</span>kv<span class="w"> </span>-field<span class="o">=</span>admin-read-key<span class="w"> </span>shot-bridge/config<span class="k">)</span><span class="s2">"</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">printf</span><span class="w"> </span><span class="s1">'{"admin-read-key":"%s"}'</span><span class="w"> </span><span class="s2">"</span><span class="nv">$key</span><span class="s2">"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kubectl<span class="w"> </span>-n<span class="w"> </span>openbao<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>openbao-0<span class="w"> </span>--<span class="w"> </span>bao<span class="w"> </span>kv<span class="w"> </span>put<span class="w"> </span>-mount<span class="o">=</span>kv<span class="w"> </span>extractor-admin/config<span class="w"> </span>-
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nb">unset</span><span class="w"> </span>key
+</span></code></pre></div>
+</li>
+<li>
+<p>Drop the token the login cached in the pod:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>openbao<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>openbao-0<span class="w"> </span>--<span class="w"> </span>sh<span class="w"> </span>-c<span class="w"> </span><span class="s1">'rm -f "$HOME/.bao-token"'</span>
+</span></code></pre></div>
+</li>
+<li>
+<p>After a rotation, push the value through and restart the UI, which reads
+   it into an environment variable:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>extractor-admin<span class="w"> </span>annotate<span class="w"> </span>externalsecret<span class="w"> </span>extractor-admin<span class="w"> </span>force-sync<span class="o">=</span><span class="s2">"</span><span class="k">$(</span>date<span class="w"> </span>+%s<span class="k">)</span><span class="s2">"</span><span class="w"> </span>--overwrite
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>extractor-admin<span class="w"> </span>rollout<span class="w"> </span>restart<span class="w"> </span>deploy/extractor-admin
+</span></code></pre></div>
+</li>
+</ol>
 <h2 id="health-check">Health check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>extractor-admin<span class="w"> </span>get<span class="w"> </span>pods,externalsecret,httproute
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>extractor-admin<span class="w"> </span>logs<span class="w"> </span>deploy/extractor-admin<span class="w">    </span><span class="c1"># view GET /shots user=&lt;you&gt; status=200</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>extractor-admin<span class="w"> </span>get<span class="w"> </span>pods,externalsecret,httproute
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>extractor-admin<span class="w"> </span>logs<span class="w"> </span>deploy/extractor-admin<span class="w">    </span><span class="c1"># view GET /shots user=&lt;you&gt; status=200</span>
 </span></code></pre></div>
 <p>The hostname answers with Authentik's login first, then the shot list.</p>
 <h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>The image and chart have to be public on GHCR</strong>, as for the bridge: the
   cluster has no pull secret for <code>ghcr.io/janwelker</code>.</li>
-<li><strong>401 or 403 from the bridge</strong> in the pod's log means the token differs or
-  the bridge's <code>admin.enabled</code> is off.</li>
+<li><strong>401 or 403 from the bridge</strong> in the pod's log means the copy is stale —
+  <a href="#copying-the-read-key">copy the read key</a> again — or the bridge's
+  <code>admin.enabled</code> is off.</li>
 <li><strong>Only shots recorded with diagnostics on appear.</strong> The token cannot list
   the other shots, by design.</li>
 </ul>
