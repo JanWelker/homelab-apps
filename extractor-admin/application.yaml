@@ -13,7 +13,7 @@ spec:
     # Why each value is what it is: docs/extractor-admin.md#configuration
     - repoURL: ghcr.io/somuch-cloud/charts
       chart: extractor-admin
-      targetRevision: 0.1.2
+      targetRevision: 0.1.3
       helm:
         valuesObject:
           existingSecret: extractor-admin
