@@ -11,9 +11,9 @@ spec:
   project: apps
   sources:
     # Why each value is what it is: docs/extractor-admin.md#configuration
-    - repoURL: ghcr.io/janwelker/charts
+    - repoURL: ghcr.io/somuch-cloud/charts
       chart: extractor-admin
-      targetRevision: 0.1.1
+      targetRevision: 0.1.2
       helm:
         valuesObject:
           existingSecret: extractor-admin

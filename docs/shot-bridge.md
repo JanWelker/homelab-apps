@@ -10,8 +10,8 @@ this one process watches the machine, tracks each shot, looks up the
 machine's exact extraction time afterwards, keeps the shot history in SQLite,
 and starts and updates the phone's Live Activity through APNs. The phone and
 watch apps call its small HTTP API. The source, the image and the chart live
-in [somuch-cloud/shotapp](https://github.com/somuch-cloud/shotapp/tree/main/deploy); the
-chart is published to `ghcr.io/janwelker/charts`, per
+in [somuch-cloud/extractor.cafe](https://github.com/somuch-cloud/extractor.cafe/tree/main/deploy); the
+chart is published to `ghcr.io/somuch-cloud/charts`, per
 [Conventions → Official upstream sources only](conventions.md#2-official-upstream-sources-only).
 
 ## At a glance
@@ -102,7 +102,7 @@ kubectl -n shot-bridge logs deploy/shot-bridge
 ## Pitfalls
 
 - **The image and chart have to be public on GHCR.** The cluster has no pull
-  secret for `ghcr.io/janwelker`, and ArgoCD has no credentials for the chart
+  secret for `ghcr.io/somuch-cloud`, and ArgoCD has no credentials for the chart
   registry.
 - **The sync stops at wave `-1` until `kv/shot-bridge/accounts` exists.** The
   `ExternalSecret` fails on a missing path, so the Deployment is never
