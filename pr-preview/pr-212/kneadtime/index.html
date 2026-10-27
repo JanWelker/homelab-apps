@@ -1175,7 +1175,7 @@ image, per
 <tbody>
 <tr>
 <td>URL</td>
-<td><a href="https://kneadtime.k8s.wlkr.ch/healthz">kneadtime.k8s.wlkr.ch</a>, an API; the app that calls it is <a href="https://kneadtime.pizza">kneadtime.pizza</a></td>
+<td><a href="https://kneadtime.k8s.wlkr.ch/v1/vapid">kneadtime.k8s.wlkr.ch</a>, an API under <code>/v1</code>; the app that calls it is <a href="https://kneadtime.pizza">kneadtime.pizza</a></td>
 </tr>
 <tr>
 <td>Authentication</td>
@@ -1265,6 +1265,10 @@ image, per
 <tr>
 <td><code>HTTPRoute</code> targets the app's own Service</td>
 <td>Nobody logs in — browsers call the API on behalf of a phone that already gave its subscription. The Nextcloud shape, not the Flowscape one</td>
+</tr>
+<tr>
+<td><code>HTTPRoute</code> matches <code>/v1</code> only</td>
+<td>The app serves its API, its probes and <code>/metrics</code> on one port; the browser calls only <code>/v1/vapid</code> and <code>/v1/schedules</code> (<code>src/lib/push/api.ts</code> in the app repository), and the counters describe usage that is nobody else's business</td>
 </tr>
 <tr>
 <td><code>revisionHistoryLimit: 2</code></td>

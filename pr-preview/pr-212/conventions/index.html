@@ -1370,13 +1370,25 @@ platform repository, so going behind SSO is deliberately two pull requests.</p>
 against the provider must tolerate it not existing yet: fail soft and log.
 Watch for SSRF guards, too: <code>auth.k8s.wlkr.ch</code> resolves to a private address,
 and Nextcloud needed <code>allow_local_remote_servers</code> before discovery worked.</p>
+<p><strong>Account keys rest on usernames staying put.</strong> Nextcloud and
+Dependency-Track key an account on <code>preferred_username</code>, which is the
+Authentik username, so a user who could rename themselves to someone else's
+name would log in as that account. The platform's Authentik brand turns
+self-service username changes off for that reason; see
+<a href="https://homelab.wlkr.ch/platform/authentik/">Authentik</a>. A new application
+keys on <code>sub</code> instead. An existing one stays on <code>preferred_username</code>, because
+switching gives every account a new ID and orphans its data.</p>
 <p><strong>Use <code>auth.k8s.wlkr.ch</code></strong>, Authentik's only hostname, for the discovery URI
 and the redirect alike: the <code>iss</code> claim is the name the token was issued
 through, and a client that mixes names fails every login — see
 <a href="https://homelab.wlkr.ch/platform/authentik/#one-hostname">One hostname</a>.</p>
 <h3 id="7-real-secrets-come-from-openbao">7. Real secrets come from OpenBao<a class="headerlink" href="#7-real-secrets-come-from-openbao" title="Permanent link">&para;</a></h3>
 <p>An <code>ExternalSecret</code> reading <code>kv/&lt;app&gt;/config</code>, with a comment at the top of
-the file naming what writes it. Random values — session keys, admin
+the file naming what writes it. It and any <code>PushSecret</code> name the
+<code>openbao-apps</code> store, and <code>secrets.yaml</code> starts with an
+<code>external-secrets-vault</code> ServiceAccount at sync wave <code>-2</code>: the store logs in
+as it and reaches <code>kv/&lt;namespace&gt;/</code> only, so <code>&lt;app&gt;</code> is the namespace — see
+<a href="https://homelab.wlkr.ch/platform/openbao/#kubernetes-auth">Kubernetes auth</a>. Random values — session keys, admin
 passwords, OIDC client pairs — come from a <code>Password</code> generator and a
 <code>PushSecret</code> at the end of the same <code>secrets.yaml</code>, at sync wave <code>-2</code> so they
 land before the <code>ExternalSecret</code> at <code>-1</code> — see <a href="https://homelab.wlkr.ch/platform/openbao/#generated-secrets">Generated secrets</a>. A value from an
