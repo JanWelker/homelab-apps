@@ -36,11 +36,47 @@ the chart is published to `ghcr.io/janwelker/charts`, per
 
 | Path | Keys | Written by |
 | --- | --- | --- |
-| `kv/shot-bridge/config` | `admin-read-key` | The `PushSecret` in [`shot-bridge/secrets.yaml`](https://github.com/JanWelker/homelab-apps/blob/main/shot-bridge/secrets.yaml) |
+| `kv/extractor-admin/config` | `admin-read-key` | By hand, as a copy of the bridge's property in `kv/shot-bridge/config`, which the `PushSecret` in [`shot-bridge/secrets.yaml`](https://github.com/JanWelker/homelab-apps/blob/main/shot-bridge/secrets.yaml) generates — see [Copying the read key](#copying-the-read-key) |
 
-The bridge and this UI read the same property, so the token cannot drift
-apart. It may only read the debug routes and the logs; every other bridge
-route answers 403.
+A copy, because the `openbao-apps` store confines each namespace to its own
+`kv/<namespace>/` ([Conventions → Real secrets come from OpenBao](conventions.md#7-real-secrets-come-from-openbao)).
+The token may only read the bridge's debug routes and the logs; every other
+bridge route answers 403.
+
+## Usage
+
+### Copying the read key
+
+Once before the first sync, and again whenever `kv/shot-bridge/config` is
+rotated. Run from the platform repository's checkout.
+
+1. Log in inside the pod with the root token:
+
+    ```bash
+    kubectl -n openbao exec -it openbao-0 -- bao login
+    ```
+
+2. Copy the property; it is alphanumeric, so it needs no JSON escaping:
+
+    ```bash
+    key="$(kubectl -n openbao exec openbao-0 -- bao kv get -mount=kv -field=admin-read-key shot-bridge/config)"
+    printf '{"admin-read-key":"%s"}' "$key" | kubectl -n openbao exec -i openbao-0 -- bao kv put -mount=kv extractor-admin/config -
+    unset key
+    ```
+
+3. Drop the token the login cached in the pod:
+
+    ```bash
+    kubectl -n openbao exec openbao-0 -- sh -c 'rm -f "$HOME/.bao-token"'
+    ```
+
+4. After a rotation, push the value through and restart the UI, which reads
+   it into an environment variable:
+
+    ```bash
+    kubectl -n extractor-admin annotate externalsecret extractor-admin force-sync="$(date +%s)" --overwrite
+    kubectl -n extractor-admin rollout restart deploy/extractor-admin
+    ```
 
 ## Health check
 
@@ -55,7 +91,8 @@ The hostname answers with Authentik's login first, then the shot list.
 
 - **The image and chart have to be public on GHCR**, as for the bridge: the
   cluster has no pull secret for `ghcr.io/janwelker`.
-- **401 or 403 from the bridge** in the pod's log means the token differs or
-  the bridge's `admin.enabled` is off.
+- **401 or 403 from the bridge** in the pod's log means the copy is stale —
+  [copy the read key](#copying-the-read-key) again — or the bridge's
+  `admin.enabled` is off.
 - **Only shots recorded with diagnostics on appear.** The token cannot list
   the other shots, by design.

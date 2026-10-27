@@ -24,6 +24,10 @@ spec:
           access: none
         argocd:
           enabled: false
+        # The session tokens live at kv/claude-<session>/; see docs/claude-agents.md#secrets
+        secretStore:
+          name: openbao-claude-agents
+          kind: ClusterSecretStore
         # npm for installs and builds; see docs/claude-agents.md#sessions
         extraEgressFQDNs:
           - matchName: registry.npmjs.org
