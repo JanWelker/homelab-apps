@@ -31,6 +31,10 @@ spec:
           access: read
         argocd:
           enabled: true
+        # The session tokens live at kv/claude-<session>/; see docs/claude-agents.md#secrets
+        secretStore:
+          name: openbao-claude-agents
+          kind: ClusterSecretStore
         # OpenAPPA guardrails on the main session; see docs/claude-agents.md#configuration
         appa:
           enabled: true

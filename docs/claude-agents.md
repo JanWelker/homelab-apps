@@ -104,7 +104,11 @@ the Claude apps as `claude-<session>`.
 
 None is generated: each comes from an account outside the cluster. In the
 platform repository, `make claude-session-pat SESSION=<session>` writes a
-session's token and `make bao-secrets` the shared Argo CD one.
+session's token and `make bao-secrets` the shared Argo CD one. Both are read
+through the `openbao-claude-agents` store (`secretStore` in each session's
+values), which reads `kv/claude-*` and nothing else: the session paths sit
+outside the namespace's own prefix, so `openbao-apps` cannot reach them — see
+[Kubernetes auth](https://homelab.wlkr.ch/platform/openbao/#kubernetes-auth).
 
 | Path | Key | Read as |
 | --- | --- | --- |

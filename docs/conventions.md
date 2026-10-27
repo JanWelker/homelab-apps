@@ -161,7 +161,11 @@ through, and a client that mixes names fails every login — see
 ### 7. Real secrets come from OpenBao
 
 An `ExternalSecret` reading `kv/<app>/config`, with a comment at the top of
-the file naming what writes it. Random values — session keys, admin
+the file naming what writes it. It and any `PushSecret` name the
+`openbao-apps` store, and `secrets.yaml` starts with an
+`external-secrets-vault` ServiceAccount at sync wave `-2`: the store logs in
+as it and reaches `kv/<namespace>/` only, so `<app>` is the namespace — see
+[Kubernetes auth](https://homelab.wlkr.ch/platform/openbao/#kubernetes-auth). Random values — session keys, admin
 passwords, OIDC client pairs — come from a `Password` generator and a
 `PushSecret` at the end of the same `secrets.yaml`, at sync wave `-2` so they
 land before the `ExternalSecret` at `-1` — see [Generated secrets](https://homelab.wlkr.ch/platform/openbao/#generated-secrets). A value from an
