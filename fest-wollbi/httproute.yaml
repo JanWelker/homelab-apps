@@ -1,9 +1,11 @@
 ---
 # The site is public -- it is an invitation to the neighbours -- so / reaches
-# the app directly; /admin goes through the Authentik outpost, in front of
-# Payload's own login. The outpost completes the login on this hostname under
-# /outpost.goauthentik.io, so that prefix must reach it too. A longer path
-# prefix wins in Gateway API, so the order of these rules does not matter.
+# the app directly. /admin, Payload's API behind it and the seed route go
+# through the Authentik outpost, in front of Payload's own login; only the
+# uploaded files the pages link to stay public. The outpost completes the
+# login on this hostname under /outpost.goauthentik.io, so that prefix must
+# reach it too. A longer path prefix wins in Gateway API, so the order of
+# these rules does not matter.
 # docs/fest-wollbi.md#configuration
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
@@ -26,11 +28,24 @@ spec:
             value: /admin
         - path:
             type: PathPrefix
+            value: /api
+        - path:
+            type: PathPrefix
+            value: /seed
+        - path:
+            type: PathPrefix
             value: /outpost.goauthentik.io
       backendRefs:
         - name: authentik-server
           namespace: authentik
           port: 80
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api/media/file
+      backendRefs:
+        - name: fest-wollbi
+          port: 3000
     - matches:
         - path:
             type: PathPrefix
