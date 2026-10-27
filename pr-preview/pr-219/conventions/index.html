@@ -1370,6 +1370,14 @@ platform repository, so going behind SSO is deliberately two pull requests.</p>
 against the provider must tolerate it not existing yet: fail soft and log.
 Watch for SSRF guards, too: <code>auth.k8s.wlkr.ch</code> resolves to a private address,
 and Nextcloud needed <code>allow_local_remote_servers</code> before discovery worked.</p>
+<p><strong>Account keys rest on usernames staying put.</strong> Nextcloud and
+Dependency-Track key an account on <code>preferred_username</code>, which is the
+Authentik username, so a user who could rename themselves to someone else's
+name would log in as that account. The platform's Authentik brand turns
+self-service username changes off for that reason; see
+<a href="https://homelab.wlkr.ch/platform/authentik/">Authentik</a>. A new application
+keys on <code>sub</code> instead. An existing one stays on <code>preferred_username</code>, because
+switching gives every account a new ID and orphans its data.</p>
 <p><strong>Use <code>auth.k8s.wlkr.ch</code></strong>, Authentik's only hostname, for the discovery URI
 and the redirect alike: the <code>iss</code> claim is the name the token was issued
 through, and a client that mixes names fails every login — see
