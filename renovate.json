@@ -65,27 +65,6 @@
       "separateMultipleMinor": true
     },
     {
-      "description": "The image tag overrides the chart's appVersion, so a patch of both moves in one PR. scripts/render-charts.py fails a PR whose tag leaves the chart's major or falls behind its appVersion.",
-      "matchPackageNames": [
-        "nextcloud",
-        "docker.io/library/nextcloud"
-      ],
-      "groupName": "nextcloud"
-    },
-    {
-      "description": "A Nextcloud major arrives as a chart minor, which waits for a human. Renovate would put the image major on a branch of its own, so it is off: the render check fails the chart PR until its tag is set there, in the same PR.",
-      "matchDatasources": [
-        "docker"
-      ],
-      "matchPackageNames": [
-        "docker.io/library/nextcloud"
-      ],
-      "matchUpdateTypes": [
-        "major"
-      ],
-      "enabled": false
-    },
-    {
       "description": "Flowscape is our own image, built by the release workflow in JanWelker/flowscape; the three-day wait guards against upstream tags being pulled, which does not apply here.",
       "matchDatasources": [
         "docker"
@@ -188,18 +167,6 @@
         "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?[^\\n]*\\n\\s*[\\w.-]+:\\s*[\"']?(?<currentValue>[^\"'\\s@]+)[\"']?(?:\\s|$)"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
-    },
-    {
-      "description": "A Helm image `tag:` written inline with its digest, under a `# renovate:` comment. Renovate replaces the tag and the digest in place, so a rebuild of the same tag is a digest update.",
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/^[^/]+/.+\\.yaml$/"
-      ],
-      "matchStrings": [
-        "#\\s*renovate:\\s*datasource=docker\\s+depName=(?<depName>\\S+)[^\\n]*\\n\\s*tag:\\s*[\"']?(?<currentValue>[^\"'\\s@]+)@(?<currentDigest>sha256:[a-f0-9]+)[\"']?"
-      ],
-      "datasourceTemplate": "docker",
-      "versioningTemplate": "docker"
     }
   ]
 }
