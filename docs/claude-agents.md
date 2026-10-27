@@ -8,7 +8,7 @@ Each session is a Claude Code instance that keeps running when the laptop is
 closed: a pod with `sshd`, a tmux session and a volume, reached at
 `<session>.ssh.wlkr.ch`. The same session is also driven from the Claude apps
 through Remote Control. The image and the Helm chart are the user's own,
-built in the `claude-agent` repository, which
+built in the [`agent-mooring`](https://github.com/JanWelker/agent-mooring) repository, which
 [Conventions → Official upstream sources only](conventions.md#2-official-upstream-sources-only)
 allows for the same reason as the Flowscape image. This repository holds the
 namespace, the two ServiceAccounts and one directory per session.
@@ -28,7 +28,7 @@ namespace, the two ServiceAccounts and one directory per session.
 
 | Session | Repositories | Cluster access | Why it is its own session |
 | --- | --- | --- | --- |
-| [`homelab`](https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab) | `homelab`, `homelab-apps`, `claude-agent`, `flowscape`, `knead-time`, `fest.wollbi.ch`, `advent.wollbi.ch`, `renovate-config` | read, Argo CD, Prometheus, Hubble, OpenBao; the Internet but not the LAN | Everything that runs on or ships to the cluster, so one agent sees both halves of a rollout |
+| [`homelab`](https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab) | `homelab`, `homelab-apps`, `agent-mooring`, `flowscape`, `knead-time`, `fest.wollbi.ch`, `advent.wollbi.ch`, `renovate-config` | read, Argo CD, Prometheus, Hubble, OpenBao; the Internet but not the LAN | Everything that runs on or ships to the cluster, so one agent sees both halves of a rollout |
 | [`sitzplan`](https://github.com/JanWelker/homelab-apps/tree/main/claude-sitzplan) | `sitzplan.schlumpf.me` | none | Hosted outside the cluster; needs only npm besides GitHub |
 | [`virgil`](https://github.com/JanWelker/homelab-apps/tree/main/claude-virgil) | `virgil` | none | An iOS app: the agent edits and opens pull requests, CI builds, because there is no Xcode on Linux |
 
@@ -46,8 +46,8 @@ namespace, the two ServiceAccounts and one directory per session.
 | `skills.repo: JanWelker/claude-skills` | The private repository behind the laptop's `~/.claude/skills`, cloned into the same place and pulled at every session start, so a session runs the same skills and can push changes to them |
 | `appa.enabled: true` on `claude-homelab` | The session reads cluster state, secrets paths and private repositories and can push and post to GitHub. [OpenAPPA](https://openappa.com) checks each tool call against what the session has read, so private data does not flow to public sinks. Only the tmux main session (and its Remote Control) runs under `clappa`; ACP and hand-started `claude` are not gated. Tune the policy with `/appa-guide` in the session, then copy it into `appa.policy` with the `appa-sync` skill: the pod installs that file over `~/.config/appa/appa.toml` on every start, so a change made only on the PVC lasts until the next restart |
 | `extraEgressFQDNs` per session | A session reaches the package registries its own build needs, and no others |
-| `targetRevision` is the only version | The chart's `appVersion` is the Claude Code version and the image tag defaults to it, so a Claude Code release is a chart release |
-| TLS ends in a `socat` sidecar from the same image, with a per-session `Certificate` | Cilium's Gateway only passes `TLSRoute` traffic through, it cannot terminate it; sshd itself listens on loopback only |
+| `targetRevision` is the only version | The chart's `appVersion` is the Claude Code version and its packaged values pin the image by digest, so a Claude Code or base-image release is a chart release and a re-pushed tag cannot change a running session |
+| TLS ends in a proxy sidecar from the same image, with a per-session `Certificate` | Cilium's Gateway only passes `TLSRoute` traffic through, it cannot terminate it; sshd itself listens on loopback only |
 | `resources`: 768Mi requested, 4Gi limit | An agent idles between prompts at a few hundred MiB; the chart's 2Gi request does not fit beside the rest of the workers. The limit leaves room for builds and subagents |
 | `ssh.authorizedKeys` holds public keys | They are public data: the same lines as `github.com/JanWelker.keys` |
 
