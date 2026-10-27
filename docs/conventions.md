@@ -144,6 +144,15 @@ against the provider must tolerate it not existing yet: fail soft and log.
 Watch for SSRF guards, too: `auth.k8s.wlkr.ch` resolves to a private address,
 and Nextcloud needed `allow_local_remote_servers` before discovery worked.
 
+**Account keys rest on usernames staying put.** Nextcloud and
+Dependency-Track key an account on `preferred_username`, which is the
+Authentik username, so a user who could rename themselves to someone else's
+name would log in as that account. The platform's Authentik brand turns
+self-service username changes off for that reason; see
+[Authentik](https://homelab.wlkr.ch/platform/authentik/). A new application
+keys on `sub` instead. An existing one stays on `preferred_username`, because
+switching gives every account a new ID and orphans its data.
+
 **Use `auth.k8s.wlkr.ch`**, Authentik's only hostname, for the discovery URI
 and the redirect alike: the `iss` claim is the name the token was issued
 through, and a client that mixes names fails every login — see
