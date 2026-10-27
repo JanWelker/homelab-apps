@@ -19,7 +19,7 @@ image, per
 
 | | |
 | --- | --- |
-| URL | [kneadtime.k8s.wlkr.ch](https://kneadtime.k8s.wlkr.ch/healthz), an API; the app that calls it is [kneadtime.pizza](https://kneadtime.pizza) |
+| URL | [kneadtime.k8s.wlkr.ch](https://kneadtime.k8s.wlkr.ch/v1/vapid), an API under `/v1`; the app that calls it is [kneadtime.pizza](https://kneadtime.pizza) |
 | Authentication | None. Browsers on kneadtime.pizza call it directly; CORS admits that origin only |
 | Storage | None on the pod |
 | Database | CloudNativePG `Cluster` `kneadtime-db` |
@@ -46,6 +46,7 @@ image, per
 | `ALLOWED_ORIGINS` is the site | Only pages loaded from `kneadtime.pizza` may call the API from a browser; PR previews of the app live under the same origin |
 | `FORWARDED_ALLOW_IPS` is the pod CIDR | Envoy is the only thing that reaches the pod, and it appends the client's address to `X-Forwarded-For`; uvicorn trusts that header from the pod network only, so the service's per-address rate limit (30 requests a minute on `/v1/`) counts the phone, not the Gateway |
 | `HTTPRoute` targets the app's own Service | Nobody logs in — browsers call the API on behalf of a phone that already gave its subscription. The Nextcloud shape, not the Flowscape one |
+| `HTTPRoute` matches `/v1` only | The app serves its API, its probes and `/metrics` on one port; the browser calls only `/v1/vapid` and `/v1/schedules` (`src/lib/push/api.ts` in the app repository), and the counters describe usage that is nobody else's business |
 | `revisionHistoryLimit: 2` | Superseded ReplicaSets keep their Trivy config-audit reports until garbage collection; the default keeps ten |
 
 ### Network policy
