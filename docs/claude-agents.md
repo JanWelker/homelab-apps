@@ -65,7 +65,7 @@ the chart from its values (`extraEgressFQDNs` adds to them).
 | Rule | Why |
 | --- | --- |
 | Ingress on 2222 from the `ingress` entity | The Gateway passes the TLS stream through by SNI to the pod's TLS sidecar, so the Gateway is the only way in |
-| Ingress from `host` | The kubelet's probes, which come from the pod's own node. The Gateway arrives as the `ingress` entity from any node, so `remote-node` is not needed |
+| Ingress from `host` and `remote-node` | The kubelet's probes, the pair every policy names ([Conventions → rule 5](conventions.md#5-ship-a-ciliumnetworkpolicy)) |
 | Ingress and egress within the namespace | Sessions share the namespace; the policy does not split them further |
 | Default egress to the namespace only | A session reaches nothing else unless its own policy says so. Those names (the Claude API, GitHub when `repo` is set, the Argo CD server) are the agent's reach, so adding one is reviewed like a firewall change |
 | `homelab-session`: every public address, minus the private, carrier-grade and link-local ranges | The cluster session installs tools, reads docs and fetches whatever a diagnosis needs; a name list would be a firewall change per lookup. Cutting the private ranges keeps the LAN, the nodes' LAN side and the Gateway addresses out |
