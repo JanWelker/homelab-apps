@@ -102,8 +102,12 @@ Annotate it `Prune=false`: pruning a `Namespace` deletes every PVC inside it.
 
 Not a plain `NetworkPolicy`, which blocks the kubelet's health probes. Every
 policy needs `fromEntities: [host, remote-node]` for those probes, one rule
-for the way users arrive, and an egress half: the namespace, DNS through the
-proxy, and every outside name as `toFQDNs`. The arrival rule depends on rule
+for the way users arrive, and an egress half: the namespace and every
+outside name as `toFQDNs`. No DNS rule: the platform grants every pod its
+lookups through the proxy in one cluster-wide policy, so a copy here only
+hides what the namespace adds — see
+[Security Policies → Cluster-wide rules](https://homelab.wlkr.ch/platform/security-policies/#cluster-wide-rules).
+The arrival rule depends on rule
 6: `fromEntities: [ingress]` where the Gateway reaches the pod directly, or
 the Authentik server pods and nothing else where the outpost sits in front,
 so a request cannot skip it. The template and the reasons are in the

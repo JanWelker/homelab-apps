@@ -17,6 +17,7 @@ spec:
         - {}
     - fromEntities:
         - host
+        - remote-node
     - fromEntities:
         - ingress
       toPorts:
@@ -46,6 +47,8 @@ kind: CiliumNetworkPolicy
 metadata:
   name: homelab-session
   namespace: claude-agents
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
 spec:
   description: >-
     The homelab session reaches the whole Internet and the cluster's own
