@@ -91,8 +91,13 @@ The hostname answers with Authentik's login first, then the shot list.
 
 - **The image and chart have to be public on GHCR**, as for the bridge: the
   cluster has no pull secret for `ghcr.io/janwelker`.
-- **401 or 403 from the bridge** in the pod's log means the copy is stale —
-  [copy the read key](#copying-the-read-key) again — or the bridge's
-  `admin.enabled` is off.
+- **A rotated bridge key is not copied for you.** `admin-read-key` in
+  `kv/extractor-admin/config` is a hand copy of the bridge's, and nothing
+  writes it: the `openbao-apps` store confines a `PushSecret` to its own
+  `kv/<namespace>/`, so the bridge's namespace cannot push it here. After a
+  [rotation](https://homelab.wlkr.ch/platform/openbao/#rotating-a-credential)
+  of `kv/shot-bridge/config` the UI answers 401 or 403 until the key is
+  [copied again](#copying-the-read-key); the same two codes with no rotation
+  mean the bridge's `admin.enabled` is off.
 - **Only shots recorded with diagnostics on appear.** The token cannot list
   the other shots, by design.
