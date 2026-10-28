@@ -49,7 +49,7 @@ namespace, the two ServiceAccounts and one directory per session.
 | `targetRevision` is the only version | The chart's `appVersion` is the Claude Code version and its packaged values pin the image by digest, so a Claude Code or base-image release is a chart release and a re-pushed tag cannot change a running session |
 | TLS ends in a proxy sidecar from the same image, with a per-session `Certificate` | Cilium's Gateway only passes `TLSRoute` traffic through, it cannot terminate it; sshd itself listens on loopback only |
 | `resources`: 768Mi requested, 4Gi limit | An agent idles between prompts at a few hundred MiB; the chart's 2Gi request does not fit beside the rest of the workers. The limit leaves room for builds and subagents |
-| `ssh.authorizedKeys` holds public keys | They are public data: the same lines as `github.com/JanWelker.keys` |
+| `ssh.authorizedKeys` holds one key per session, used for nothing else | The listener is on the public Gateway, so a key is a login from the Internet; a leaked key then opens one session, not the one with the homelab write token too. Public keys are not secret |
 
 ### Network policy
 
@@ -68,7 +68,7 @@ the chart from its values (`extraEgressFQDNs` adds to them).
 | Ingress from `host` and `remote-node` | The kubelet's probes, the pair every policy names ([Conventions → rule 5](conventions.md#5-ship-a-ciliumnetworkpolicy)) |
 | Ingress and egress within the namespace | Sessions share the namespace; the policy does not split them further |
 | Default egress to the namespace only | A session reaches nothing else unless its own policy says so. Those names (the Claude API, GitHub when `repo` is set, the Argo CD server) are the agent's reach, so adding one is reviewed like a firewall change |
-| `homelab-session`: every public address, minus the private, carrier-grade and link-local ranges | The cluster session installs tools, reads docs and fetches whatever a diagnosis needs; a name list would be a firewall change per lookup. Cutting the private ranges keeps the LAN, the nodes' LAN side and the Gateway addresses out |
+| `homelab-session`: every public address, minus the private, carrier-grade and link-local ranges and the router's public address | The cluster session installs tools, reads docs and fetches whatever a diagnosis needs; a name list would be a firewall change per lookup. Cutting the private ranges keeps the LAN, the nodes' LAN side and the Gateway addresses out; the public address is the `external-dns` target of `apps-gateway`, which hairpin NAT would otherwise hand back to the Gateway and every route on it |
 | `homelab-session`: Prometheus, Hubble Relay, the Argo CD server and OpenBao | The APIs the session diagnoses with; each service's own policy admits the session in the platform repository. The Argo CD server pod is needed for `argo-grpc` too, because the Gateway checks the caller's egress against the backend |
 
 ## Usage
@@ -84,9 +84,25 @@ Host *.ssh.wlkr.ch
   ProxyCommand openssl s_client -quiet -verify_return_error -servername %h -connect %h:443
 ```
 
-`sshd` admits only the user `agent`. Then `ssh homelab.ssh.wlkr.ch` attaches to the tmux session `main`. With a
+`sshd` admits only the user `agent`. Add `IdentityFile` per session, as in
+[SSH keys](#ssh-keys). Then `ssh homelab.ssh.wlkr.ch` attaches to the tmux session `main`. With a
 command, `ssh homelab.ssh.wlkr.ch <command>` runs it directly, so `scp` and
 `rsync` work.
+
+### SSH keys
+
+One key pair per session, generated on the laptop and never reused:
+
+1. `ssh-keygen -t ed25519 -f ~/.ssh/claude-<session> -C claude-<session>`.
+2. Put the content of `~/.ssh/claude-<session>.pub` into the session's
+   `ssh.authorizedKeys`, replacing any other line, and merge.
+3. In `~/.ssh/config`, above the `Host *.ssh.wlkr.ch` block:
+
+    ```text
+    Host <session>.ssh.wlkr.ch
+      IdentityFile ~/.ssh/claude-<session>
+      IdentitiesOnly yes
+    ```
 
 ### First login
 
@@ -144,7 +160,8 @@ The `claude-session` skill walks through these steps.
 1. Copy a session directory, for example `claude-sitzplan/` to
    `claude-<session>/`.
 2. In `application.yaml`, change `metadata.name`, `session`, `repos`, the
-   access toggles and `extraEgressFQDNs`.
+   access toggles and `extraEgressFQDNs`, and replace `ssh.authorizedKeys`
+   with the session's own key (see [SSH keys](#ssh-keys)).
 3. Create the token and write it to OpenBao before the merge, so the
    `ExternalSecret` resolves on the first sync.
 4. Add the session to [Sessions](#sessions) and merge. It answers at

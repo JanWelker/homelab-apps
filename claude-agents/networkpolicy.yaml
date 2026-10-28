@@ -55,7 +55,9 @@ spec:
     APIs, and nothing on the LAN. Every public address on any port, so a
     build, a download or a doc page works without a firewall change; the
     private, carrier-grade and link-local ranges are cut out, which takes
-    the LAN, the nodes' LAN side and the Gateway addresses with them.
+    the LAN, the nodes' LAN side and the Gateway addresses with them, and so
+    is the router's public address, which hairpin NAT would turn back into
+    the apps Gateway.
     Inside the cluster, Prometheus, Hubble Relay, the Argo CD server and
     OpenBao, which the session diagnoses with; the API server is in the
     session's own policy. Argo CD through argo-grpc also needs the server
@@ -73,6 +75,8 @@ spec:
             - 192.168.0.0/16
             - 100.64.0.0/10
             - 169.254.0.0/16
+            # apps-gateway's external-dns target in the platform repository
+            - 212.51.149.132/32
     - toEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: monitoring
