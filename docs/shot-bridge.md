@@ -109,5 +109,8 @@ kubectl -n shot-bridge logs deploy/shot-bridge
   created; run `make bao-secrets`.
 - **The pod crash-loops while the APNs keys are empty.** The bridge exits on a
   missing variable rather than starting half-configured.
-- **A changed API key logs the phone out.** Enter the new one in the app's
-  setup screen; the watch receives it from the phone.
+- **Rotating `kv/shot-bridge/config` changes both keys.** The phone is
+  logged out: enter the new API key in the app's setup screen, the watch
+  receives it from the phone. The [admin UI](extractor-admin.md) reads a
+  hand copy of `admin-read-key` and answers 403 until it is
+  [copied again](extractor-admin.md#copying-the-read-key).
