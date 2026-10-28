@@ -65,6 +65,15 @@
       "separateMultipleMinor": true
     },
     {
+      "description": "The chart's appVersion and the two image pins in dependency-track/application.yaml name the same Dependency-Track release, so the chart and both images move in one PR and a chart bump never leaves a pod on the previous release.",
+      "matchPackageNames": [
+        "dependency-track",
+        "docker.io/dependencytrack/apiserver",
+        "docker.io/dependencytrack/frontend"
+      ],
+      "groupName": "dependency-track"
+    },
+    {
       "description": "Flowscape is our own image, built by the release workflow in JanWelker/flowscape; the three-day wait guards against upstream tags being pulled, which does not apply here.",
       "matchDatasources": [
         "docker"
@@ -167,6 +176,18 @@
         "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>\\S+))?(?:\\s+extractVersion=(?<extractVersion>\\S+))?[^\\n]*\\n\\s*[\\w.-]+:\\s*[\"']?(?<currentValue>[^\"'\\s@]+)[\"']?(?:\\s|$)"
       ],
       "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    },
+    {
+      "description": "A Helm image `tag:` written inline with its digest, under a `# renovate:` comment, in the Dependency-Track Application. Both the tag and the digest are in the matched string, so Renovate replaces them in place and a rebuild of the same tag arrives as a digest update; no autoReplaceStringTemplate is needed because there is no digest to add.",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^dependency-track/application\\.yaml$/"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=docker\\s+depName=(?<depName>\\S+)[^\\n]*\\n\\s*tag:\\s*[\"']?(?<currentValue>[^\"'\\s@]+)@(?<currentDigest>sha256:[a-f0-9]+)[\"']?"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
     }
   ]
 }

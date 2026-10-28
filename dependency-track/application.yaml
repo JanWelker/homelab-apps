@@ -35,6 +35,10 @@ spec:
               existingClaim: dependency-track-data
 
           apiServer:
+            # Pinned by digest, grouped with the chart: docs/dependency-track.md#configuration
+            image:
+              # renovate: datasource=docker depName=docker.io/dependencytrack/apiserver
+              tag: 5.2.0@sha256:7411c390182e6e42156ccf2ab033aa9120a1f37b7ce59e8c2da0d77ec23c0a5f
             extraEnv:
               - name: DT_TELEMETRY_SUBMISSION_DEFAULT_ENABLED
                 value: "false"
@@ -68,6 +72,9 @@ spec:
               namespace: dependency-track
 
           frontend:
+            image:
+              # renovate: datasource=docker depName=docker.io/dependencytrack/frontend
+              tag: 5.2.0@sha256:7e68cc134284d6206e813212cf2a20c72f438d76f2094c0f05fd5d5e14602dda
             revisionHistoryLimit: 2
             extraEnv:
               - name: OIDC_ISSUER
