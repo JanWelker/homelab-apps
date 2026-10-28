@@ -39,7 +39,7 @@ chart is published to `ghcr.io/janwelker/charts`, per
 
 | Setting | Why |
 | --- | --- |
-| Own chart, values in `application.yaml` | The chart ships the Deployment, PVC, Service, `HTTPRoute` and `CiliumNetworkPolicy`; this directory adds the namespace and the secrets |
+| Own chart, values in `application.yaml` | The chart ships the Deployment, PVC, Service, `HTTPRoute` and the bridge's `CiliumNetworkPolicy`; this directory adds the namespace, the secrets and the namespace's default-deny policies in `networkpolicy.yaml`, which are what police the database pods |
 | One replica, `Recreate` | One cloud websocket; two copies would double every push |
 | `database.existingSecret: shot-bridge-db-app` | The bridge reads `DATABASE_URL` from the Secret CloudNativePG writes for `shot-bridge-db` (`uri` key); without it the chart falls back to the SQLite file on the PVC. The PVC stays for the La Marzocco installation key |
 | `Cluster` `shot-bridge-db`, two instances, 1Gi | A few rows a day, but the phones log every shot as it happens; a replica turns a drain or a node loss into a failover of seconds instead of a restart. `enablePDB: false` still, so the drain triggers that failover rather than hanging, and a topology spread keeps the two on different nodes. WAL and a nightly base backup through `backup.yaml` |
@@ -53,7 +53,10 @@ chart is published to `ghcr.io/janwelker/charts`, per
 
 ### Network policy
 
-The chart's `CiliumNetworkPolicy`, at sync wave `-2`. The shape is
+The chart's `CiliumNetworkPolicy` selects the bridge's pod; the
+`default-ingress`, `default-egress` and `database` policies in
+`networkpolicy.yaml` select the whole namespace, so the database pods are
+default-deny too. All at sync wave `-2`. The shape is
 [Conventions → Ship a `CiliumNetworkPolicy`](conventions.md#5-ship-a-ciliumnetworkpolicy).
 
 | Rule | Why |
@@ -62,6 +65,10 @@ The chart's `CiliumNetworkPolicy`, at sync wave `-2`. The shape is
 | Egress to `lion.lamarzocco.io` on 443 | The La Marzocco REST API and websocket |
 | Egress to the four APNs names on 443, 2195 and 2196 | Pushes and broadcasts on 443; channel management on 2195 (sandbox) and 2196 (production) |
 | Egress to the namespace on 5432 | The database's `-rw` Service |
+| Ingress and egress within the namespace | The bridge reaches the database, the replica streams from the primary |
+| Ingress from Prometheus on 9187, `GET /metrics` only | The database's exporter, through its `PodMonitor`; the bridge exposes no metrics |
+| Ingress from `cnpg-system` on 8000 | The operator reads the instance manager's status; without it the `Cluster` never goes Healthy |
+| The instance pods reach `kube-apiserver` | The CloudNativePG instance manager reports its status there; the object store is the platform's `cnpg-backups` rule |
 
 ### Secrets
 
