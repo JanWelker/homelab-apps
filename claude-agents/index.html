@@ -1346,7 +1346,7 @@
 closed: a pod with <code>sshd</code>, a tmux session and a volume, reached at
 <code>&lt;session&gt;.ssh.wlkr.ch</code>. The same session is also driven from the Claude apps
 through Remote Control. The image and the Helm chart are the user's own,
-built in the <code>claude-agent</code> repository, which
+built in the <a href="https://github.com/JanWelker/agent-mooring"><code>agent-mooring</code></a> repository, which
 <a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>
 allows for the same reason as the Flowscape image. This repository holds the
 namespace, the two ServiceAccounts and one directory per session.</p>
@@ -1398,7 +1398,7 @@ namespace, the two ServiceAccounts and one directory per session.</p>
 <tbody>
 <tr>
 <td><a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab"><code>homelab</code></a></td>
-<td><code>homelab</code>, <code>homelab-apps</code>, <code>claude-agent</code>, <code>flowscape</code>, <code>knead-time</code>, <code>fest.wollbi.ch</code>, <code>advent.wollbi.ch</code>, <code>renovate-config</code></td>
+<td><code>homelab</code>, <code>homelab-apps</code>, <code>agent-mooring</code>, <code>flowscape</code>, <code>knead-time</code>, <code>fest.wollbi.ch</code>, <code>advent.wollbi.ch</code>, <code>renovate-config</code></td>
 <td>read, Argo CD, Prometheus, Hubble, OpenBao; the Internet but not the LAN</td>
 <td>Everything that runs on or ships to the cluster, so one agent sees both halves of a rollout</td>
 </tr>
@@ -1467,10 +1467,10 @@ namespace, the two ServiceAccounts and one directory per session.</p>
 </tr>
 <tr>
 <td><code>targetRevision</code> is the only version</td>
-<td>The chart's <code>appVersion</code> is the Claude Code version and the image tag defaults to it, so a Claude Code release is a chart release</td>
+<td>The chart's <code>appVersion</code> is the Claude Code version and its packaged values pin the image by digest, so a Claude Code or base-image release is a chart release and a re-pushed tag cannot change a running session</td>
 </tr>
 <tr>
-<td>TLS ends in a <code>socat</code> sidecar from the same image, with a per-session <code>Certificate</code></td>
+<td>TLS ends in a proxy sidecar from the same image, with a per-session <code>Certificate</code></td>
 <td>Cilium's Gateway only passes <code>TLSRoute</code> traffic through, it cannot terminate it; sshd itself listens on loopback only</td>
 </tr>
 <tr>
