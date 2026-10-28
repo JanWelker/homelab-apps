@@ -1263,6 +1263,10 @@ and an HTTPRoute around the official image, per
 <td>No phone-home: no version check, no usage report, no favicon fetch for each tracked site. The egress policy allows nothing outside the cluster, so these are what keep the log free of drops</td>
 </tr>
 <tr>
+<td>Two replicas, a hard spread across nodes, a <code>PodDisruptionBudget</code></td>
+<td>Nothing lives on the pod and the sessions are JWTs signed by the shared <code>APP_SECRET</code>, so a second instance keeps the tracker up through a Kured drain and an image bump; the migrations at start take a Postgres advisory lock, so two pods starting together do not race</td>
+</tr>
+<tr>
 <td>Probes on <code>/api/heartbeat</code>, a long <code>startupProbe</code></td>
 <td>The first start runs the Prisma migrations before the server answers</td>
 </tr>

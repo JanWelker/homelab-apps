@@ -1285,6 +1285,14 @@ blueprint) come from a second source pointing at this repository.</p>
 <td>The image applies <code>NEXTCLOUD_TRUSTED_DOMAINS</code>, which the chart fills from <code>nextcloud.host</code>, only on the first install, so a later hostname change would otherwise answer every request with "untrusted domain". Deleted first for the same reason as <code>allowedClients</code> below</td>
 </tr>
 <tr>
+<td><code>cronjob.sidecar.resources</code> and <code>metrics.resources</code></td>
+<td>The chart renders both containers without requests by default; every container here carries them, sized like <a href="https://homelab.wlkr.ch/platform/#components">every platform component</a>, so the scheduler can count it</td>
+</tr>
+<tr>
+<td><code>serviceaccount.yaml</code> sets <code>automountServiceAccountToken: false</code> on <code>default</code></td>
+<td>The chart sets no <code>serviceAccountName</code> unless <code>rbac.enabled</code>, so the pod lands on <code>default</code> and would carry an API token nothing in it uses, the case <a href="https://homelab.wlkr.ch/platform/security-policies/#default-serviceaccount-tokens">Default ServiceAccount tokens</a> covers for the platform's own namespaces</td>
+</tr>
+<tr>
 <td><code>podSecurityContext</code> and <code>securityContext</code> set seccomp only; the namespace enforces <code>baseline</code></td>
 <td>The apache flavour of the official image starts as root and drops to <code>www-data</code> itself, so <code>runAsNonRoot</code> and a read-only root would mean changing how the image runs. <code>RuntimeDefault</code> is the profile the image is built for. The metrics exporter is a static Go binary that writes nothing, so it runs fully restricted</td>
 </tr>

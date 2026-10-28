@@ -1336,8 +1336,12 @@ visible.</p>
 <h3 id="5-ship-a-ciliumnetworkpolicy">5. Ship a <code>CiliumNetworkPolicy</code><a class="headerlink" href="#5-ship-a-ciliumnetworkpolicy" title="Permanent link">&para;</a></h3>
 <p>Not a plain <code>NetworkPolicy</code>, which blocks the kubelet's health probes. Every
 policy needs <code>fromEntities: [host, remote-node]</code> for those probes, one rule
-for the way users arrive, and an egress half: the namespace, DNS through the
-proxy, and every outside name as <code>toFQDNs</code>. The arrival rule depends on rule
+for the way users arrive, and an egress half: the namespace and every
+outside name as <code>toFQDNs</code>. No DNS rule: the platform grants every pod its
+lookups through the proxy in one cluster-wide policy, so a copy here only
+hides what the namespace adds — see
+<a href="https://homelab.wlkr.ch/platform/security-policies/#cluster-wide-rules">Security Policies → Cluster-wide rules</a>.
+The arrival rule depends on rule
 6: <code>fromEntities: [ingress]</code> where the Gateway reaches the pod directly, or
 the Authentik server pods and nothing else where the outpost sits in front,
 so a request cannot skip it. The template and the reasons are in the

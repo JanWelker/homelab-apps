@@ -1239,8 +1239,8 @@ image, per
 <td>The image runs as uid 65532, writes nothing and needs no capability; CloudNativePG's pods declare restricted-compliant contexts of their own</td>
 </tr>
 <tr>
-<td><code>strategy: Recreate</code>, one replica</td>
-<td>The dispatcher that sends due reminders runs inside the process; a second copy would race the first on the same rows</td>
+<td>One replica, the default <code>RollingUpdate</code></td>
+<td>The dispatcher that sends due reminders runs inside the process and claims due rows with <code>FOR UPDATE SKIP LOCKED</code>, so the two copies that overlap during a rollout never send the same reminder; nothing on the pod needs a <code>Recreate</code> gap</td>
 </tr>
 <tr>
 <td>A <code>Cluster</code>, not SQLite on a PVC</td>

@@ -1216,8 +1216,8 @@ Deployment, a Service, a PVC and a ConfigMap around the official image, per
 <td>Superseded ReplicaSets keep their Trivy config-audit reports until they are garbage-collected; the Kubernetes default keeps ten</td>
 </tr>
 <tr>
-<td>Seccomp only; the namespace enforces <code>baseline</code></td>
-<td>The image runs as root under s6 and writes <code>/config</code>, and upstream does not support running it otherwise, so <code>runAsNonRoot</code> and a read-only root do not apply</td>
+<td>Root with every capability dropped but <code>NET_BIND_SERVICE</code>, no API token; the namespace enforces <code>baseline</code></td>
+<td>The image runs as root under s6 and writes <code>/config</code>, and upstream does not support running it otherwise, so <code>runAsNonRoot</code> and a read-only root do not apply. Root owns everything it touches, so the one capability it uses is binding SSDP's port 1900; <code>baseline</code> forbids adding <code>NET_RAW</code>, so DHCP discovery joins the <a href="#pitfalls">discovery that does not work here</a> anyway. Nothing in the pod talks to the API server, so the <code>default</code> ServiceAccount's token stays unmounted, per <a href="https://homelab.wlkr.ch/platform/security-policies/#default-serviceaccount-tokens">Default ServiceAccount tokens</a></td>
 </tr>
 <tr>
 <td>An init container from the same image seeds <code>/config</code> on every start</td>

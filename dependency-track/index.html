@@ -1369,6 +1369,10 @@ whether a policy holds across the portfolio.</p>
 <td>The chart's route sends <code>/api</code> to the API server and everything else to the frontend on one hostname, so the frontend's <code>API_BASE_URL</code> stays empty and the browser uses relative URLs</td>
 </tr>
 <tr>
+<td><code>apiServer.image.tag</code> and <code>frontend.image.tag</code> pinned by digest, though the chart derives both from its <code>appVersion</code></td>
+<td>A tag re-pushed upstream would otherwise change what runs without a commit, and Renovate sees a rebuild only through a digest. The chart and the two pins are one Renovate group, so a chart bump cannot leave a pod on the previous release. Nextcloud is the one chart here that follows its <code>appVersion</code> instead, by choice</td>
+</tr>
+<tr>
 <td><code>revisionHistoryLimit: 2</code> on both Deployments</td>
 <td>Superseded ReplicaSets keep their Trivy config-audit reports until garbage collection; the chart keeps five</td>
 </tr>
@@ -1467,6 +1471,10 @@ each distinct image that is running, once, to <code>PUT /api/v1/bom</code> with
 <tr>
 <td>Runs before the platform's <code>findings-history</code> job at 06:30</td>
 <td>Both read the same reports; neither depends on the other</td>
+</tr>
+<tr>
+<td><code>activeDeadlineSeconds</code> ends the Job before 06:30</td>
+<td><code>concurrencyPolicy: Forbid</code> never starts tonight's run behind one still hanging on a request, and the 06:30 run reads the same reports; a run that overran is killed in time for both</td>
 </tr>
 </tbody>
 </table>

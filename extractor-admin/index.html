@@ -1270,9 +1270,14 @@ rotated. Run from the platform repository's checkout.</p>
 <ul>
 <li><strong>The image and chart have to be public on GHCR</strong>, as for the bridge: the
   cluster has no pull secret for <code>ghcr.io/janwelker</code>.</li>
-<li><strong>401 or 403 from the bridge</strong> in the pod's log means the copy is stale —
-  <a href="#copying-the-read-key">copy the read key</a> again — or the bridge's
-  <code>admin.enabled</code> is off.</li>
+<li><strong>A rotated bridge key is not copied for you.</strong> <code>admin-read-key</code> in
+  <code>kv/extractor-admin/config</code> is a hand copy of the bridge's, and nothing
+  writes it: the <code>openbao-apps</code> store confines a <code>PushSecret</code> to its own
+  <code>kv/&lt;namespace&gt;/</code>, so the bridge's namespace cannot push it here. After a
+  <a href="https://homelab.wlkr.ch/platform/openbao/#rotating-a-credential">rotation</a>
+  of <code>kv/shot-bridge/config</code> the UI answers 401 or 403 until the key is
+  <a href="#copying-the-read-key">copied again</a>; the same two codes with no rotation
+  mean the bridge's <code>admin.enabled</code> is off.</li>
 <li><strong>Only shots recorded with diagnostics on appear.</strong> The token cannot list
   the other shots, by design.</li>
 </ul>

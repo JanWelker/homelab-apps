@@ -1302,7 +1302,10 @@ every sync rather than once by hand.</p>
    of those years.</li>
 <li>Writes the two pages: Willkommen and Info.</li>
 </ol>
-<p>Afterwards the database is the source of truth and the seed is a no-op.</p>
+<p>Afterwards the database is the source of truth and the seed is a no-op.
+The Job's <code>activeDeadlineSeconds</code> is the backstop: a site that never answers
+fails the sync instead of holding the Application in Syncing, and the
+curl's own retries fit inside it.</p>
 <h3 id="network-policy">Network policy<a class="headerlink" href="#network-policy" title="Permanent link">&para;</a></h3>
 <p>Every rule in
 <a href="https://github.com/JanWelker/homelab-apps/blob/main/advent-wollbi/networkpolicy.yaml"><code>advent-wollbi/networkpolicy.yaml</code></a>,
