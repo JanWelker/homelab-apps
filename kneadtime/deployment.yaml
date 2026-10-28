@@ -8,8 +8,6 @@ metadata:
 spec:
   replicas: 1
   revisionHistoryLimit: 2
-  strategy:
-    type: Recreate
   selector:
     matchLabels:
       app.kubernetes.io/name: kneadtime
