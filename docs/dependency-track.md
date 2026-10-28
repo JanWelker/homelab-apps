@@ -46,6 +46,7 @@ The chart values in `application.yaml` that are not defaults:
 | `apiServer.web.resources`, 1Gi requested, 3Gi limit | The JVM sizes its heap from the limit. Upstream recommends 8Gi for production; the portfolio here is a few hundred small images |
 | `serviceMonitor.namespace: dependency-track` | The chart defaults to the `monitoring` namespace, which the `apps` project may not write to. Prometheus reads it from here like every other application's |
 | `httpRoute` on `apps-gateway` | The chart's route sends `/api` to the API server and everything else to the frontend on one hostname, so the frontend's `API_BASE_URL` stays empty and the browser uses relative URLs |
+| `apiServer.image.tag` and `frontend.image.tag` pinned by digest, though the chart derives both from its `appVersion` | A tag re-pushed upstream would otherwise change what runs without a commit, and Renovate sees a rebuild only through a digest. The chart and the two pins are one Renovate group, so a chart bump cannot leave a pod on the previous release. Nextcloud is the one chart here that follows its `appVersion` instead, by choice |
 | `revisionHistoryLimit: 2` on both Deployments | Superseded ReplicaSets keep their Trivy config-audit reports until garbage collection; the chart keeps five |
 
 ### Network policy
