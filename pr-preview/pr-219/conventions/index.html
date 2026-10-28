@@ -1336,8 +1336,12 @@ visible.</p>
 <h3 id="5-ship-a-ciliumnetworkpolicy">5. Ship a <code>CiliumNetworkPolicy</code><a class="headerlink" href="#5-ship-a-ciliumnetworkpolicy" title="Permanent link">&para;</a></h3>
 <p>Not a plain <code>NetworkPolicy</code>, which blocks the kubelet's health probes. Every
 policy needs <code>fromEntities: [host, remote-node]</code> for those probes, one rule
-for the way users arrive, and an egress half: the namespace, DNS through the
-proxy, and every outside name as <code>toFQDNs</code>. The arrival rule depends on rule
+for the way users arrive, and an egress half: the namespace and every
+outside name as <code>toFQDNs</code>. No DNS rule: the platform grants every pod its
+lookups through the proxy in one cluster-wide policy, so a copy here only
+hides what the namespace adds — see
+<a href="https://homelab.wlkr.ch/platform/security-policies/#cluster-wide-rules">Security Policies → Cluster-wide rules</a>.
+The arrival rule depends on rule
 6: <code>fromEntities: [ingress]</code> where the Gateway reaches the pod directly, or
 the Authentik server pods and nothing else where the outpost sits in front,
 so a request cannot skip it. The template and the reasons are in the
@@ -1384,7 +1388,11 @@ through, and a client that mixes names fails every login — see
 <a href="https://homelab.wlkr.ch/platform/authentik/#one-hostname">One hostname</a>.</p>
 <h3 id="7-real-secrets-come-from-openbao">7. Real secrets come from OpenBao<a class="headerlink" href="#7-real-secrets-come-from-openbao" title="Permanent link">&para;</a></h3>
 <p>An <code>ExternalSecret</code> reading <code>kv/&lt;app&gt;/config</code>, with a comment at the top of
-the file naming what writes it. Random values — session keys, admin
+the file naming what writes it. It and any <code>PushSecret</code> name the
+<code>openbao-apps</code> store, and <code>secrets.yaml</code> starts with an
+<code>external-secrets-vault</code> ServiceAccount at sync wave <code>-2</code>: the store logs in
+as it and reaches <code>kv/&lt;namespace&gt;/</code> only, so <code>&lt;app&gt;</code> is the namespace — see
+<a href="https://homelab.wlkr.ch/platform/openbao/#kubernetes-auth">Kubernetes auth</a>. Random values — session keys, admin
 passwords, OIDC client pairs — come from a <code>Password</code> generator and a
 <code>PushSecret</code> at the end of the same <code>secrets.yaml</code>, at sync wave <code>-2</code> so they
 land before the <code>ExternalSecret</code> at <code>-1</code> — see <a href="https://homelab.wlkr.ch/platform/openbao/#generated-secrets">Generated secrets</a>. A value from an

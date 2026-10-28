@@ -1246,7 +1246,7 @@ chart is published to <code>ghcr.io/somuch-cloud/charts</code>, per
 <tbody>
 <tr>
 <td>Own chart, values in <code>application.yaml</code></td>
-<td>The chart ships the Deployment, PVC, Service, <code>HTTPRoute</code> and <code>CiliumNetworkPolicy</code>; this directory adds the namespace and the secrets</td>
+<td>The chart ships the Deployment, PVC, Service, <code>HTTPRoute</code> and the bridge's <code>CiliumNetworkPolicy</code>; this directory adds the namespace, the secrets and the namespace's default-deny policies in <code>networkpolicy.yaml</code>, which are what police the database pods</td>
 </tr>
 <tr>
 <td>One replica, <code>Recreate</code></td>
@@ -1291,7 +1291,10 @@ chart is published to <code>ghcr.io/somuch-cloud/charts</code>, per
 </tbody>
 </table>
 <h3 id="network-policy">Network policy<a class="headerlink" href="#network-policy" title="Permanent link">&para;</a></h3>
-<p>The chart's <code>CiliumNetworkPolicy</code>, at sync wave <code>-2</code>. The shape is
+<p>The chart's <code>CiliumNetworkPolicy</code> selects the bridge's pod; the
+<code>default-ingress</code>, <code>default-egress</code> and <code>database</code> policies in
+<code>networkpolicy.yaml</code> select the whole namespace, so the database pods are
+default-deny too. All at sync wave <code>-2</code>. The shape is
 <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → Ship a <code>CiliumNetworkPolicy</code></a>.</p>
 <table>
 <thead>
@@ -1317,6 +1320,22 @@ chart is published to <code>ghcr.io/somuch-cloud/charts</code>, per
 <td>Egress to the namespace on 5432</td>
 <td>The database's <code>-rw</code> Service</td>
 </tr>
+<tr>
+<td>Ingress and egress within the namespace</td>
+<td>The bridge reaches the database, the replica streams from the primary</td>
+</tr>
+<tr>
+<td>Ingress from Prometheus on 9187, <code>GET /metrics</code> only</td>
+<td>The database's exporter, through its <code>PodMonitor</code>; the bridge exposes no metrics</td>
+</tr>
+<tr>
+<td>Ingress from <code>cnpg-system</code> on 8000</td>
+<td>The operator reads the instance manager's status; without it the <code>Cluster</code> never goes Healthy</td>
+</tr>
+<tr>
+<td>The instance pods reach <code>kube-apiserver</code></td>
+<td>The CloudNativePG instance manager reports its status there; the object store is the platform's <code>cnpg-backups</code> rule</td>
+</tr>
 </tbody>
 </table>
 <h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
@@ -1336,7 +1355,7 @@ chart is published to <code>ghcr.io/somuch-cloud/charts</code>, per
 </tr>
 <tr>
 <td><code>kv/shot-bridge/config</code></td>
-<td><code>api-key</code>, <code>admin-read-key</code> (the <a href="../extractor-admin/">admin UI</a>'s read-only token)</td>
+<td><code>api-key</code>, <code>admin-read-key</code> (the <a href="../extractor-admin/">admin UI</a>'s read-only token, which it reads from <a href="../extractor-admin/#copying-the-read-key">a copy</a>)</td>
 <td>The <code>PushSecret</code> in <code>secrets.yaml</code></td>
 </tr>
 </tbody>
@@ -1365,8 +1384,11 @@ app's setup screen; <strong>Test</strong> shows the machine's state.</p>
   created; run <code>make bao-secrets</code>.</li>
 <li><strong>The pod crash-loops while the APNs keys are empty.</strong> The bridge exits on a
   missing variable rather than starting half-configured.</li>
-<li><strong>A changed API key logs the phone out.</strong> Enter the new one in the app's
-  setup screen; the watch receives it from the phone.</li>
+<li><strong>Rotating <code>kv/shot-bridge/config</code> changes both keys.</strong> The phone is
+  logged out: enter the new API key in the app's setup screen, the watch
+  receives it from the phone. The <a href="../extractor-admin/">admin UI</a> reads a
+  hand copy of <code>admin-read-key</code> and answers 403 until it is
+  <a href="../extractor-admin/#copying-the-read-key">copied again</a>.</li>
 </ul>
 
 

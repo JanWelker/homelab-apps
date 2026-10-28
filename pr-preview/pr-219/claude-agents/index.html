@@ -672,6 +672,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#ssh-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        SSH keys
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#first-login" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1194,6 +1205,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#ssh-keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        SSH keys
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#first-login" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1346,7 +1368,7 @@
 closed: a pod with <code>sshd</code>, a tmux session and a volume, reached at
 <code>&lt;session&gt;.ssh.wlkr.ch</code>. The same session is also driven from the Claude apps
 through Remote Control. The image and the Helm chart are the user's own,
-built in the <code>claude-agent</code> repository, which
+built in the <a href="https://github.com/JanWelker/agent-mooring"><code>agent-mooring</code></a> repository, which
 <a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>
 allows for the same reason as the Flowscape image. This repository holds the
 namespace, the two ServiceAccounts and one directory per session.</p>
@@ -1398,7 +1420,7 @@ namespace, the two ServiceAccounts and one directory per session.</p>
 <tbody>
 <tr>
 <td><a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab"><code>homelab</code></a></td>
-<td><code>homelab</code>, <code>homelab-apps</code>, <code>claude-agent</code>, <code>flowscape</code>, <code>knead-time</code>, <code>fest.wollbi.ch</code>, <code>advent.wollbi.ch</code>, <code>renovate-config</code></td>
+<td><code>homelab</code>, <code>homelab-apps</code>, <code>agent-mooring</code>, <code>flowscape</code>, <code>knead-time</code>, <code>fest.wollbi.ch</code>, <code>advent.wollbi.ch</code>, <code>renovate-config</code></td>
 <td>read, Argo CD, Prometheus, Hubble, OpenBao; the Internet but not the LAN</td>
 <td>Everything that runs on or ships to the cluster, so one agent sees both halves of a rollout</td>
 </tr>
@@ -1467,10 +1489,10 @@ namespace, the two ServiceAccounts and one directory per session.</p>
 </tr>
 <tr>
 <td><code>targetRevision</code> is the only version</td>
-<td>The chart's <code>appVersion</code> is the Claude Code version and the image tag defaults to it, so a Claude Code release is a chart release</td>
+<td>The chart's <code>appVersion</code> is the Claude Code version and its packaged values pin the image by digest, so a Claude Code or base-image release is a chart release and a re-pushed tag cannot change a running session</td>
 </tr>
 <tr>
-<td>TLS ends in a <code>socat</code> sidecar from the same image, with a per-session <code>Certificate</code></td>
+<td>TLS ends in a proxy sidecar from the same image, with a per-session <code>Certificate</code></td>
 <td>Cilium's Gateway only passes <code>TLSRoute</code> traffic through, it cannot terminate it; sshd itself listens on loopback only</td>
 </tr>
 <tr>
@@ -1478,8 +1500,8 @@ namespace, the two ServiceAccounts and one directory per session.</p>
 <td>An agent idles between prompts at a few hundred MiB; the chart's 2Gi request does not fit beside the rest of the workers. The limit leaves room for builds and subagents</td>
 </tr>
 <tr>
-<td><code>ssh.authorizedKeys</code> holds public keys</td>
-<td>They are public data: the same lines as <code>github.com/JanWelker.keys</code></td>
+<td><code>ssh.authorizedKeys</code> holds one key per session, used for nothing else</td>
+<td>The listener is on the public Gateway, so a key is a login from the Internet; a leaked key then opens one session, not the one with the homelab write token too. Public keys are not secret</td>
 </tr>
 </tbody>
 </table>
@@ -1505,8 +1527,8 @@ the chart from its values (<code>extraEgressFQDNs</code> adds to them).</p>
 <td>The Gateway passes the TLS stream through by SNI to the pod's TLS sidecar, so the Gateway is the only way in</td>
 </tr>
 <tr>
-<td>Ingress from <code>host</code></td>
-<td>The kubelet's probes, which come from the pod's own node. The Gateway arrives as the <code>ingress</code> entity from any node, so <code>remote-node</code> is not needed</td>
+<td>Ingress from <code>host</code> and <code>remote-node</code></td>
+<td>The kubelet's probes, the pair every policy names (<a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → rule 5</a>)</td>
 </tr>
 <tr>
 <td>Ingress and egress within the namespace</td>
@@ -1517,8 +1539,8 @@ the chart from its values (<code>extraEgressFQDNs</code> adds to them).</p>
 <td>A session reaches nothing else unless its own policy says so. Those names (the Claude API, GitHub when <code>repo</code> is set, the Argo CD server) are the agent's reach, so adding one is reviewed like a firewall change</td>
 </tr>
 <tr>
-<td><code>homelab-session</code>: every public address, minus the private, carrier-grade and link-local ranges</td>
-<td>The cluster session installs tools, reads docs and fetches whatever a diagnosis needs; a name list would be a firewall change per lookup. Cutting the private ranges keeps the LAN, the nodes' LAN side and the Gateway addresses out</td>
+<td><code>homelab-session</code>: every public address, minus the private, carrier-grade and link-local ranges and the router's public address</td>
+<td>The cluster session installs tools, reads docs and fetches whatever a diagnosis needs; a name list would be a firewall change per lookup. Cutting the private ranges keeps the LAN, the nodes' LAN side and the Gateway addresses out; the public address is the <code>external-dns</code> target of <code>apps-gateway</code>, which hairpin NAT would otherwise hand back to the Gateway and every route on it</td>
 </tr>
 <tr>
 <td><code>homelab-session</code>: Prometheus, Hubble Relay, the Argo CD server and OpenBao</td>
@@ -1534,9 +1556,24 @@ differs:</p>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  User agent
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  ProxyCommand openssl s_client -quiet -verify_return_error -servername %h -connect %h:443
 </span></code></pre></div>
-<p><code>sshd</code> admits only the user <code>agent</code>. Then <code>ssh homelab.ssh.wlkr.ch</code> attaches to the tmux session <code>main</code>. With a
+<p><code>sshd</code> admits only the user <code>agent</code>. Add <code>IdentityFile</code> per session, as in
+<a href="#ssh-keys">SSH keys</a>. Then <code>ssh homelab.ssh.wlkr.ch</code> attaches to the tmux session <code>main</code>. With a
 command, <code>ssh homelab.ssh.wlkr.ch &lt;command&gt;</code> runs it directly, so <code>scp</code> and
 <code>rsync</code> work.</p>
+<h3 id="ssh-keys">SSH keys<a class="headerlink" href="#ssh-keys" title="Permanent link">&para;</a></h3>
+<p>One key pair per session, generated on the laptop and never reused:</p>
+<ol>
+<li><code>ssh-keygen -t ed25519 -f ~/.ssh/claude-&lt;session&gt; -C claude-&lt;session&gt;</code>.</li>
+<li>Put the content of <code>~/.ssh/claude-&lt;session&gt;.pub</code> into the session's
+   <code>ssh.authorizedKeys</code>, replacing any other line, and merge.</li>
+<li>
+<p>In <code>~/.ssh/config</code>, above the <code>Host *.ssh.wlkr.ch</code> block:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Host &lt;session&gt;.ssh.wlkr.ch
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  IdentityFile ~/.ssh/claude-&lt;session&gt;
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  IdentitiesOnly yes
+</span></code></pre></div>
+</li>
+</ol>
 <h3 id="first-login">First login<a class="headerlink" href="#first-login" title="Permanent link">&para;</a></h3>
 <p>Once per session, after the first start:</p>
 <ol>
@@ -1550,7 +1587,11 @@ the Claude apps as <code>claude-&lt;session&gt;</code>.</p>
 <h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
 <p>None is generated: each comes from an account outside the cluster. In the
 platform repository, <code>make claude-session-pat SESSION=&lt;session&gt;</code> writes a
-session's token and <code>make bao-secrets</code> the shared Argo CD one.</p>
+session's token and <code>make bao-secrets</code> the shared Argo CD one. Both are read
+through the <code>openbao-claude-agents</code> store (<code>secretStore</code> in each session's
+values), which reads <code>kv/claude-*</code> and nothing else: the session paths sit
+outside the namespace's own prefix, so <code>openbao-apps</code> cannot reach them — see
+<a href="https://homelab.wlkr.ch/platform/openbao/#kubernetes-auth">Kubernetes auth</a>.</p>
 <table>
 <thead>
 <tr>
@@ -1630,7 +1671,8 @@ session's repositories only:</p>
 <li>Copy a session directory, for example <code>claude-sitzplan/</code> to
    <code>claude-&lt;session&gt;/</code>.</li>
 <li>In <code>application.yaml</code>, change <code>metadata.name</code>, <code>session</code>, <code>repos</code>, the
-   access toggles and <code>extraEgressFQDNs</code>.</li>
+   access toggles and <code>extraEgressFQDNs</code>, and replace <code>ssh.authorizedKeys</code>
+   with the session's own key (see <a href="#ssh-keys">SSH keys</a>).</li>
 <li>Create the token and write it to OpenBao before the merge, so the
    <code>ExternalSecret</code> resolves on the first sync.</li>
 <li>Add the session to <a href="#sessions">Sessions</a> and merge. It answers at
@@ -1671,9 +1713,9 @@ which works because a command bypasses tmux.</p>
       requests and merge conflicts.</li>
 </ul>
 <h2 id="health-check">Health check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>claude-agents<span class="w"> </span>get<span class="w"> </span>pods,statefulsets
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>claude-agents<span class="w"> </span>get<span class="w"> </span>tlsroute
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>openssl<span class="w"> </span>s_client<span class="w"> </span>-quiet<span class="w"> </span>-servername<span class="w"> </span>homelab.ssh.wlkr.ch<span class="w"> </span>-connect<span class="w"> </span>homelab.ssh.wlkr.ch:443<span class="w"> </span>&lt;/dev/null<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-1
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>claude-agents<span class="w"> </span>get<span class="w"> </span>pods,statefulsets
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>claude-agents<span class="w"> </span>get<span class="w"> </span>tlsroute
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>openssl<span class="w"> </span>s_client<span class="w"> </span>-quiet<span class="w"> </span>-servername<span class="w"> </span>homelab.ssh.wlkr.ch<span class="w"> </span>-connect<span class="w"> </span>homelab.ssh.wlkr.ch:443<span class="w"> </span>&lt;/dev/null<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-1
 </span></code></pre></div>
 <p>The last command prints the SSH banner (<code>SSH-2.0-OpenSSH_...</code>) when the whole
 path works: DNS, certificate, Gateway, policy and <code>sshd</code>.</p>
