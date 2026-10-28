@@ -6,7 +6,7 @@ metadata:
   name: umami
   namespace: umami
 spec:
-  replicas: 1
+  replicas: 2
   revisionHistoryLimit: 2
   selector:
     matchLabels:
@@ -17,6 +17,14 @@ spec:
         app.kubernetes.io/name: umami
     spec:
       automountServiceAccountToken: false
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          nodeTaintsPolicy: Honor
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: umami
       securityContext:
         runAsNonRoot: true
         runAsUser: 1001
