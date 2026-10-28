@@ -17,6 +17,7 @@ spec:
       labels:
         app.kubernetes.io/name: home-assistant
     spec:
+      automountServiceAccountToken: false
       securityContext:
         seccompProfile:
           type: RuntimeDefault
@@ -47,13 +48,24 @@ spec:
               drop: ["ALL"]
             seccompProfile:
               type: RuntimeDefault
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 128Mi
           volumeMounts:
             - name: config
               mountPath: /config
       containers:
         - name: home-assistant
           image: ghcr.io/home-assistant/home-assistant:2026.10.4@sha256:23f4dfbb69ce76315dbc4de7915504f1c2dcecd7ca2648113a493a385972e133
+          # Root under s6, with only the capability it uses: docs/home-assistant.md#configuration
           securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["NET_BIND_SERVICE"]
             seccompProfile:
               type: RuntimeDefault
           ports:
