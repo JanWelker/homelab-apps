@@ -35,7 +35,7 @@ metadata:
 spec:
   description: >-
     Default-deny egress. The namespace only; every name outside the cluster
-    is in a per-session policy shipped by the claude-agent chart, and that
+    is in a per-session policy shipped by the agent-mooring chart, and that
     list is the agent's reach.
   endpointSelector: {}
   egress:
@@ -62,7 +62,7 @@ spec:
     pod, because the Gateway checks the caller's egress against it.
   endpointSelector:
     matchLabels:
-      app.kubernetes.io/name: claude-agent
+      app.kubernetes.io/name: agent-mooring
       app.kubernetes.io/instance: claude-homelab
   egress:
     - toCIDRSet:
