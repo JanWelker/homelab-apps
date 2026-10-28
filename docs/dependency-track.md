@@ -83,6 +83,7 @@ each distinct image that is running, once, to `PUT /api/v1/bom` with
 | The `ClusterRole` that lets it list reports and ReplicaSets is the platform's | The `apps` project may not create cluster-scoped RBAC, and who may read Trivy's findings is the platform's call. It is `sbom-readers.yaml` next to the operator in the homelab repository |
 | The API key is `optional` on the container, and its `ExternalSecret` is at sync wave 1 | A missing Secret would leave the pod in `CreateContainerConfigError`, and a `Forbid` CronJob never runs again behind a Job that never finishes; the script exits 1 with the reason instead. The wave is the same argument one level up: this is the one secret only a running Dependency-Track can issue, so it is fetched after the application, never in a wave that gates it. `make bao-secrets` writes the path empty rather than leaving it absent, for the same reason |
 | Runs before the platform's `findings-history` job at 06:30 | Both read the same reports; neither depends on the other |
+| `activeDeadlineSeconds` ends the Job before 06:30 | `concurrencyPolicy: Forbid` never starts tonight's run behind one still hanging on a request, and the 06:30 run reads the same reports; a run that overran is killed in time for both |
 
 ### False positives
 

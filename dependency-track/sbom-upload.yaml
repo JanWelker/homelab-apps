@@ -350,6 +350,7 @@ spec:
   jobTemplate:
     spec:
       backoffLimit: 2
+      activeDeadlineSeconds: 3000
       template:
         metadata:
           labels:

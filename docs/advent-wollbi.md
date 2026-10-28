@@ -59,6 +59,9 @@ What it does, in order, and only on an empty database:
 3. Writes the two pages: Willkommen and Info.
 
 Afterwards the database is the source of truth and the seed is a no-op.
+The Job's `activeDeadlineSeconds` is the backstop: a site that never answers
+fails the sync instead of holding the Application in Syncing, and the
+curl's own retries fit inside it.
 
 ### Network policy
 
