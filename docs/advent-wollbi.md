@@ -1,5 +1,5 @@
 ---
-description: "advent.wollbi.ch on the cluster: the Adventsfenster site as Payload CMS on Next.js, public at the root and behind the Authentik outpost at /admin."
+description: "advent.wollbi.ch on the cluster: the Adventsfenster site as Payload CMS on Next.js, public at the root and behind the Authentik outpost at /admin and Payload's API."
 ---
 
 # Wollbi Adventsfenster
@@ -18,7 +18,7 @@ so its upstream is our own — per
 | | |
 | --- | --- |
 | URL | [advent.wollbi.ch](https://advent.wollbi.ch) — public, no login |
-| Authentication | Authentik proxy outpost on `/admin` only, in front of Payload's own login |
+| Authentication | Authentik proxy outpost on `/admin`, `/api` and `/seed`, in front of Payload's own login; uploaded files under `/api/media/file` stay public |
 | Storage | A PVC for what editors upload after the seed |
 | Database | CloudNativePG `Cluster` `advent-wollbi-db` |
 | Secrets | `kv/advent-wollbi/config` in OpenBao |
@@ -36,7 +36,7 @@ so its upstream is our own — per
 | `PAYLOAD_SECRET` from OpenBao | It signs every editor session. Generated in the cluster it would change on every rebuild and log everyone out |
 | `NEXT_PUBLIC_SERVER_URL` | The origin Payload trusts for CSRF and builds absolute URLs from. TLS ends at the Gateway, so the pod's own address is the wrong answer — see [Behind the Gateway](conventions.md#behind-the-gateway) |
 | An `emptyDir` on `/app/.next/cache` | Next.js writes its render cache at runtime and the root filesystem is read-only. It is a cache: losing it on a restart costs one slow first request |
-| Two rules on one `HTTPRoute` | The site is an invitation to the neighbours, so `/` reaches the app directly. `/admin` goes through the outpost, and so does `/outpost.goauthentik.io`, where the outpost finishes the login on this hostname. A longer path prefix wins in Gateway API, so the order of the rules does not matter. The cross-namespace `backendRef` works only because the platform's `referencegrant.yaml` names this namespace |
+| Three rules on one `HTTPRoute` | The site is an invitation to the neighbours, so `/` reaches the app directly. `/admin` goes through the outpost, and so do Payload's `/api`, which the admin UI is only a client of, `/seed`, which the seed hook calls on the Service rather than through the Gateway, and `/outpost.goauthentik.io`, where the outpost finishes the login on this hostname. The pages read Payload in-process, so the browser needs only `/api/media/file`, the uploads they link to, which goes straight to the app. A longer path prefix wins in Gateway API, so the order of the rules does not matter. The cross-namespace `backendRef` works only because the platform's `referencegrant.yaml` names this namespace |
 | The media collection accepts PDFs and `text/calendar` | The flyer and the `.ics` are content here, not attachments; as uploads the CMS knows about them, where the Pelican site had them as links in prose that outlive the file |
 | `/healthz` answers without the database | A database outage should show as an empty page, not as a pod the kubelet restarts in a loop |
 
@@ -75,7 +75,7 @@ rollout and debugging are in
 | Rule | Why |
 | --- | --- |
 | Ingress on 3000 from `ingress` | The public site; it is meant to be read by people Authentik has never heard of |
-| Ingress on 3000 from the Authentik server pods, with an L7 `http` rule | `/admin` through the outpost |
+| Ingress on 3000 from the Authentik server pods, with an L7 `http` rule | `/admin`, `/api` and `/seed` through the outpost |
 | Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics. Payload exposes none |
 | Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](nextcloud.md#sync-stuck-on-the-database) |
 | Egress to the namespace, and nothing else at all | The site renders from its own database and serves its own uploads. There is no `toFQDNs` block, which is the shortest way to say a public site never calls out |
