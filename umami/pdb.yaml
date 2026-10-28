@@ -1,0 +1,12 @@
+---
+# Why each setting is what it is: docs/umami.md#configuration
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: umami
+  namespace: umami
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: umami
