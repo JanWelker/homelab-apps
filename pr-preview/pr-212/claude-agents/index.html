@@ -1527,8 +1527,8 @@ the chart from its values (<code>extraEgressFQDNs</code> adds to them).</p>
 <td>The Gateway passes the TLS stream through by SNI to the pod's TLS sidecar, so the Gateway is the only way in</td>
 </tr>
 <tr>
-<td>Ingress from <code>host</code></td>
-<td>The kubelet's probes, which come from the pod's own node. The Gateway arrives as the <code>ingress</code> entity from any node, so <code>remote-node</code> is not needed</td>
+<td>Ingress from <code>host</code> and <code>remote-node</code></td>
+<td>The kubelet's probes, the pair every policy names (<a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → rule 5</a>)</td>
 </tr>
 <tr>
 <td>Ingress and egress within the namespace</td>
