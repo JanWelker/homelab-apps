@@ -10,7 +10,7 @@ and stop legs, the uploaded logs, and the calibration runs. It has no login of
 its own and reads the bridge server side with the bridge's read-only token,
 which never reaches a browser. The source, the image and the chart live in
 [somuch-cloud/extractor.cafe](https://github.com/somuch-cloud/extractor.cafe/tree/main/admin);
-the chart is published to `ghcr.io/janwelker/charts`, per
+the chart is published to `ghcr.io/somuch-cloud/charts`, per
 [Conventions → Official upstream sources only](conventions.md#2-official-upstream-sources-only).
 
 ## At a glance
@@ -90,7 +90,7 @@ The hostname answers with Authentik's login first, then the shot list.
 ## Pitfalls
 
 - **The image and chart have to be public on GHCR**, as for the bridge: the
-  cluster has no pull secret for `ghcr.io/janwelker`.
+  cluster has no pull secret for `ghcr.io/somuch-cloud`.
 - **A rotated bridge key is not copied for you.** `admin-read-key` in
   `kv/extractor-admin/config` is a hand copy of the bridge's, and nothing
   writes it: the `openbao-apps` store confines a `PushSecret` to its own
