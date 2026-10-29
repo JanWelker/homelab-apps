@@ -105,7 +105,8 @@ Two details of that call:
 - `--unique-uid=0` makes the Nextcloud user ID the raw `preferred_username`
   claim, so an Authentik user named like the local admin, or like anyone
   else, logs in as that account. That holds only while users cannot rename
-  themselves in Authentik, and switching to `sub` now would orphan every
+  themselves in Authentik, which the platform's user settings flow
+  enforces, and switching to `sub` now would orphan every
   account's files: see
   [Conventions → Authentication](conventions.md#6-authentication-is-authentiks-not-the-applications).
 - `user_oidc:provider` never fetches the discovery document, so its exit code
