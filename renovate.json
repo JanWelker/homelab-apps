@@ -94,7 +94,7 @@
       "minimumReleaseAge": "0 days"
     },
     {
-      "description": "The agent-mooring chart is our own, published by the agent-mooring repository, and carries the image digest; its appVersion is the Claude Code version, so a new Claude Code release is a new chart version and the only bump an instance needs. The three-day wait guards against upstream releases being pulled, which does not apply here. One group, so every session moves in the same PR.",
+      "description": "The agent-mooring chart is our own, published by the agent-mooring repository, and carries the image digest; its appVersion is the Claude Code version, so a new Claude Code release is a new chart version and the only bump an instance needs. The three-day wait guards against upstream releases being pulled, which does not apply here. One group, so every session moves in the same PR, and only at night: a bump restarts every session pod and ends the turn in flight, and the chart is released for every Claude Code version. Patches stay apart from a minor, so a minor waiting for a human does not hold them.",
       "matchDatasources": [
         "docker"
       ],
@@ -102,10 +102,14 @@
         "ghcr.io/janwelker/charts/agent-mooring"
       ],
       "minimumReleaseAge": "0 days",
-      "groupName": "agent-mooring"
+      "groupName": "agent-mooring",
+      "separateMinorPatch": true,
+      "schedule": [
+        "* 0-5 * * *"
+      ]
     },
     {
-      "description": "Automerge the agent-mooring chart once ci-ok is green. Limited to patch and minor because the shared preset holds a major for a human, and an unrestricted automerge here would override that.",
+      "description": "Automerge an agent-mooring chart patch, a new Claude Code release, once ci-ok is green. Patch only: a minor changes what the sessions do (0.3.0 added the skills repository) and the shared preset holds a major.",
       "matchDatasources": [
         "docker"
       ],
@@ -113,10 +117,25 @@
         "ghcr.io/janwelker/charts/agent-mooring"
       ],
       "matchUpdateTypes": [
-        "patch",
-        "minor"
+        "patch"
       ],
       "automerge": true
+    },
+    {
+      "description": "An agent-mooring chart minor waits for a human, also from 1.0 on, when the preset's below-1.0 rule no longer holds it.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "ghcr.io/janwelker/charts/agent-mooring"
+      ],
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "automerge": false,
+      "reviewers": [
+        "JanWelker"
+      ]
     },
     {
       "description": "Home Assistant versions its releases as calendar dates, which semver reads as a major bump every month. Without this every routine release would wait for a human and none of them would ever be automerged.",
