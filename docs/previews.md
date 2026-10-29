@@ -33,7 +33,7 @@ the hostname; the base holds placeholders for all three.
 | No `Prune=false` on the namespace or the `Cluster` | Closing the pull request is meant to delete the data |
 | Uploads on an `emptyDir` | A preview shows the seed; uploads made while testing need not outlive the pod |
 | Under `*.k8s.wlkr.ch` on the `https` listener | The platform's wildcard certificate and external-dns already cover it, so a preview needs no platform change |
-| No Authentik outpost on `/admin` | An outpost provider names one hostname, and preview hostnames come and go; Payload's own login is the gate |
+| No Authentik outpost on `/admin` | An outpost provider names one hostname, and preview hostnames come and go; Payload's own login is the gate. `/seed` is not routed, as in production |
 | `X-Robots-Tag: noindex, nofollow` | A public preview must not compete with the real site in search results |
 | The image keeps production's tag and digest in the base | Renovate moves it with production; the ApplicationSet replaces both with the pull request's tag |
 

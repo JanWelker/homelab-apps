@@ -1,7 +1,8 @@
 ---
 # Under *.k8s.wlkr.ch, so the platform's wildcard certificate and external-dns
 # cover every preview without a change there. No outpost on /admin: Payload's
-# own login, with the generated password, is the only gate. The hostname is
+# own login, with the generated password, is the only gate. /seed never
+# reaches the app through the Gateway, as in production. The hostname is
 # replaced per pull request by the ApplicationSet. docs/previews.md
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
@@ -18,6 +19,17 @@ spec:
   hostnames:
     - "advent-wollbi-preview.k8s.wlkr.ch"
   rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /seed
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: /
+            statusCode: 302
     - matches:
         - path:
             type: PathPrefix
