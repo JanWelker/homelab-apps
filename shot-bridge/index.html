@@ -1160,8 +1160,8 @@ this one process watches the machine, tracks each shot, looks up the
 machine's exact extraction time afterwards, keeps the shot history in SQLite,
 and starts and updates the phone's Live Activity through APNs. The phone and
 watch apps call its small HTTP API. The source, the image and the chart live
-in <a href="https://github.com/somuch-cloud/shotapp/tree/main/deploy">somuch-cloud/shotapp</a>; the
-chart is published to <code>ghcr.io/janwelker/charts</code>, per
+in <a href="https://github.com/somuch-cloud/extractor.cafe/tree/main/deploy">somuch-cloud/extractor.cafe</a>; the
+chart is published to <code>ghcr.io/somuch-cloud/charts</code>, per
 <a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>.</p>
 <h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
 <table>
@@ -1377,7 +1377,7 @@ app's setup screen; <strong>Test</strong> shows the machine's state.</p>
 <h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>The image and chart have to be public on GHCR.</strong> The cluster has no pull
-  secret for <code>ghcr.io/janwelker</code>, and ArgoCD has no credentials for the chart
+  secret for <code>ghcr.io/somuch-cloud</code>, and ArgoCD has no credentials for the chart
   registry.</li>
 <li><strong>The sync stops at wave <code>-1</code> until <code>kv/shot-bridge/accounts</code> exists.</strong> The
   <code>ExternalSecret</code> fails on a missing path, so the Deployment is never

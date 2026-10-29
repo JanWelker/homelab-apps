@@ -1150,7 +1150,7 @@ and stop legs, the uploaded logs, and the calibration runs. It has no login of
 its own and reads the bridge server side with the bridge's read-only token,
 which never reaches a browser. The source, the image and the chart live in
 <a href="https://github.com/somuch-cloud/extractor.cafe/tree/main/admin">somuch-cloud/extractor.cafe</a>;
-the chart is published to <code>ghcr.io/janwelker/charts</code>, per
+the chart is published to <code>ghcr.io/somuch-cloud/charts</code>, per
 <a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>.</p>
 <h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
 <table>
@@ -1269,7 +1269,7 @@ rotated. Run from the platform repository's checkout.</p>
 <h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>The image and chart have to be public on GHCR</strong>, as for the bridge: the
-  cluster has no pull secret for <code>ghcr.io/janwelker</code>.</li>
+  cluster has no pull secret for <code>ghcr.io/somuch-cloud</code>.</li>
 <li><strong>A rotated bridge key is not copied for you.</strong> <code>admin-read-key</code> in
   <code>kv/extractor-admin/config</code> is a hand copy of the bridge's, and nothing
   writes it: the <code>openbao-apps</code> store confines a <code>PushSecret</code> to its own
