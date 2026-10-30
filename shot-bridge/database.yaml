@@ -43,6 +43,9 @@ spec:
       shared_buffers: 32MB
       # The bridge's pool holds at most 4, migrate-sqlite 4 more while it runs.
       max_connections: "20"
+      # A quarter of the volume, so a dead replica's slot cannot fill the
+      # primary; see the homelab's docs/platform/cloudnative-pg.md#pitfalls
+      max_slot_wal_keep_size: 256MB
 
   resources:
     requests:
