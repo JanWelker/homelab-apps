@@ -1469,11 +1469,11 @@ namespace, the two ServiceAccounts and one directory per session.</p>
 </tr>
 <tr>
 <td><code>argocd.enabled: true</code></td>
-<td>Lets the agent read and sync applications with the <code>claude</code> account's token instead of guessing from the Git side</td>
+<td>Lets the agent read applications with the <code>claude</code> account's token instead of guessing from the Git side. The platform binds that account to <code>role:readonly</code>, so it cannot sync. Through <code>argo-grpc</code> it also needs the <code>homelab-session</code> rule to the server pod; the chart's name rule alone gets a 403 (<a href="https://github.com/JanWelker/agent-mooring/issues/3">agent-mooring#3</a>)</td>
 </tr>
 <tr>
 <td><code>repos</code> set per session</td>
-<td>Clones each repository once into <code>$HOME</code> and creates the GitHub token <code>ExternalSecret</code>; one token covers the list. Without repositories there is no clone, no token and no GitHub egress</td>
+<td>Clones each repository once into <code>$HOME</code> and creates the GitHub token <code>ExternalSecret</code>; one token covers the list. Without repositories or <code>skills.repo</code> there is no clone, no token and no GitHub egress</td>
 </tr>
 <tr>
 <td><code>skills.repo: JanWelker/claude-skills</code></td>
@@ -1536,7 +1536,7 @@ the chart from its values (<code>extraEgressFQDNs</code> adds to them).</p>
 </tr>
 <tr>
 <td>Default egress to the namespace only</td>
-<td>A session reaches nothing else unless its own policy says so. Those names (the Claude API, GitHub when <code>repo</code> is set, the Argo CD server) are the agent's reach, so adding one is reviewed like a firewall change</td>
+<td>A session reaches nothing else unless its own policy says so. Those names (the Claude API, GitHub when <code>repos</code> or <code>skills.repo</code> is set, the Argo CD server) are the agent's reach, so adding one is reviewed like a firewall change</td>
 </tr>
 <tr>
 <td><code>homelab-session</code>: every public address, minus the private, carrier-grade and link-local ranges and the router's public address</td>
@@ -1582,8 +1582,9 @@ command, <code>ssh homelab.ssh.wlkr.ch &lt;command&gt;</code> runs it directly, 
    and finish the browser flow.</li>
 </ol>
 <p>The login lives on the volume and survives restarts. Remote Control is on for
-every session through the image's managed settings; the session appears in
-the Claude apps as <code>claude-&lt;session&gt;</code>.</p>
+every session through the managed settings the chart renders into the
+session's ConfigMap; the session appears in the Claude apps as
+<code>claude-&lt;session&gt;</code>.</p>
 <h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
 <p>None is generated: each comes from an account outside the cluster. In the
 platform repository, <code>make claude-session-pat SESSION=&lt;session&gt;</code> writes a
@@ -1604,7 +1605,7 @@ outside the namespace's own prefix, so <code>openbao-apps</code> cannot reach th
 <tr>
 <td><code>kv/claude-&lt;session&gt;/github</code></td>
 <td><code>token</code></td>
-<td><code>GH_TOKEN</code>: the fine-grained token for that session's repositories. Only when <code>repos</code> is set</td>
+<td><code>GH_TOKEN</code>: the fine-grained token for that session's repositories and <code>skills.repo</code>. Only when either is set</td>
 </tr>
 <tr>
 <td><code>kv/claude-agents/argocd</code></td>
@@ -1613,9 +1614,13 @@ outside the namespace's own prefix, so <code>openbao-apps</code> cannot reach th
 </tr>
 </tbody>
 </table>
+<p>A rotated token needs no pod restart: the chart mounts both as files and the
+<code>gh</code>, <code>git</code> and <code>argocd</code> wrappers read them on every call. The
+<code>ExternalSecret</code> refreshes hourly, so force-sync it for an immediate switch;
+a login shell opened before keeps the old <code>GH_TOKEN</code> in its environment.</p>
 <h3 id="creating-the-github-token">Creating the GitHub token<a class="headerlink" href="#creating-the-github-token" title="Permanent link">&para;</a></h3>
 <p>A fine-grained personal access token, one per session, so a leak costs that
-session's repositories only:</p>
+session's repositories and the shared skills only:</p>
 <ol>
 <li>GitHub → Settings → Developer settings → Fine-grained tokens → Generate.
    A session that gains a repository keeps its token: edit it and add the
@@ -1660,10 +1665,15 @@ session's repositories only:</p>
 </tr>
 </tbody>
 </table>
+<p>The same permissions cover <code>claude-skills</code>: the session pushes skill
+changes there like in its own repositories.</p>
 </li>
 <li>
-<p>Put the token into <code>kv/claude-&lt;session&gt;/github</code> (see above).</p>
+<p>Set an expiry and put the date in a calendar: the session reports an
+   expired token only at its next start, and tokens created on the same day
+   expire together.</p>
 </li>
+<li>Put the token into <code>kv/claude-&lt;session&gt;/github</code> (see above).</li>
 </ol>
 <h3 id="adding-a-session">Adding a session<a class="headerlink" href="#adding-a-session" title="Permanent link">&para;</a></h3>
 <p>The <code>claude-session</code> skill walks through these steps.</p>
@@ -1671,8 +1681,8 @@ session's repositories only:</p>
 <li>Copy a session directory, for example <code>claude-sitzplan/</code> to
    <code>claude-&lt;session&gt;/</code>.</li>
 <li>In <code>application.yaml</code>, change <code>metadata.name</code>, <code>session</code>, <code>repos</code>, the
-   access toggles and <code>extraEgressFQDNs</code>, and replace <code>ssh.authorizedKeys</code>
-   with the session's own key (see <a href="#ssh-keys">SSH keys</a>).</li>
+   access toggles and <code>extraEgressFQDNs</code>, keep <code>skills.repo</code>, and replace
+   <code>ssh.authorizedKeys</code> with the session's own key (see <a href="#ssh-keys">SSH keys</a>).</li>
 <li>Create the token and write it to OpenBao before the merge, so the
    <code>ExternalSecret</code> resolves on the first sync.</li>
 <li>Add the session to <a href="#sessions">Sessions</a> and merge. It answers at
@@ -1695,7 +1705,7 @@ session's repositories only:</p>
 <p>Every session shares one <code>targetRevision</code> in practice: Renovate groups them
 into one pull request.</p>
 <h3 id="sessions-without-a-repository">Sessions without a repository<a class="headerlink" href="#sessions-without-a-repository" title="Permanent link">&para;</a></h3>
-<p>Leave <code>repos</code> empty. The pod then has no clone, no GitHub token
+<p>Leave <code>repos</code> and <code>skills.repo</code> empty. The pod then has no clone, no GitHub token
 and no GitHub egress, and the <code>kv/claude-&lt;session&gt;/github</code> path is not read.
 Use it for a scratch session that only needs the Claude API.</p>
 <h3 id="acp-from-zed">ACP from Zed<a class="headerlink" href="#acp-from-zed" title="Permanent link">&para;</a></h3>
@@ -1724,14 +1734,21 @@ path works: DNS, certificate, Gateway, policy and <code>sshd</code>.</p>
 <li><strong>An update restarts the pod and ends the running turn.</strong> A new chart
   version is a new pod. The conversation survives on the volume: the start
   script runs <code>claude --continue</code>, which resumes it, but a turn in flight is
-  lost. Merge version bumps between turns.</li>
+  lost. Renovate therefore opens chart bumps only at night and automerges
+  only a patch; merge a minor between turns.</li>
+<li><strong>A chart that changes its selector labels cannot update the
+  StatefulSet.</strong> <code>spec.selector</code> is immutable, so the sync fails and the old
+  pod keeps labels that neither the chart's policy nor <code>homelab-session</code>
+  selects: its Service has no endpoints and its egress drops. Delete
+  <code>statefulset/claude-&lt;session&gt;</code> and let Argo CD recreate it; the PVC is a
+  separate chart resource and stays.</li>
+<li><strong>The merge gate is advisory.</strong> The session tokens are the owner's own
+  fine-grained tokens and the rulesets require no approval, so a session can
+  merge its own pull request. Only Claude Code's managed deny rules and
+  OpenAPPA stand in the way until the agents have their own GitHub identity.</li>
 <li><strong>Remote Control needs a full subscription login.</strong> <code>claude auth login</code>
   works; a <code>setup-token</code> or an API key does not, and the session then shows
   up nowhere in the apps.</li>
-<li><strong>The network policies are not enforced yet.</strong> While the platform runs with
-  <code>policyAuditMode</code>, Cilium logs what it would drop and drops nothing. Treat
-  the egress list as intent until that is switched off; see
-  <a href="https://homelab.wlkr.ch/platform/security-policies/#network-policies">Security Policies</a>.</li>
 </ul>
 
 

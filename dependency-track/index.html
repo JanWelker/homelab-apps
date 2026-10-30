@@ -1354,7 +1354,7 @@ whether a policy holds across the portfolio.</p>
 </tr>
 <tr>
 <td><code>DT_OIDC_*</code> and the frontend's <code>OIDC_*</code></td>
-<td>Both halves must name the same issuer and client ID; the API server validates the ID token the browser obtained. <code>preferred_username</code> is Authentik's username claim, which is safe only while users cannot change it (see <a href="../conventions/#6-authentication-is-authentiks-not-the-applications">Conventions → Authentication</a>), and <code>groups</code> arrives with the <code>profile</code> scope, so team membership follows Authentik's groups. See <a href="#oidc">OIDC</a></td>
+<td>Both halves must name the same issuer and client ID; the API server validates the ID token the browser obtained. <code>preferred_username</code> is Authentik's username claim, which is safe only while users cannot change it (see <a href="../conventions/#6-authentication-is-authentiks-not-the-applications">Conventions → Authentication</a>); Dependency-Track also stores each account's first <code>sub</code> and refuses a later login under another, so a rename could only claim an account that has never logged in. <code>groups</code> arrives with the <code>profile</code> scope, so team membership follows Authentik's groups. See <a href="#oidc">OIDC</a></td>
 </tr>
 <tr>
 <td><code>apiServer.web.resources</code>, 1Gi requested, 3Gi limit</td>

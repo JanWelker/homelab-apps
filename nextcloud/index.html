@@ -1418,7 +1418,8 @@ form stays visible, the pod logs a warning, and the next restart configures it.<
 <li><code>--unique-uid=0</code> makes the Nextcloud user ID the raw <code>preferred_username</code>
   claim, so an Authentik user named like the local admin, or like anyone
   else, logs in as that account. That holds only while users cannot rename
-  themselves in Authentik, and switching to <code>sub</code> now would orphan every
+  themselves in Authentik, which the platform's user settings flow
+  enforces, and switching to <code>sub</code> now would orphan every
   account's files: see
   <a href="../conventions/#6-authentication-is-authentiks-not-the-applications">Conventions → Authentication</a>.</li>
 <li><code>user_oidc:provider</code> never fetches the discovery document, so its exit code

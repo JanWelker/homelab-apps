@@ -1211,7 +1211,7 @@ so its upstream is our own — per
 </tr>
 <tr>
 <td>Authentication</td>
-<td>Authentik proxy outpost on <code>/admin</code>, <code>/api</code> and <code>/seed</code>, in front of Payload's own login; uploaded files under <code>/api/media/file</code> stay public</td>
+<td>Authentik proxy outpost on <code>/admin</code> and <code>/api</code>, in front of Payload's own login; uploaded files under <code>/api/media/file</code> stay public; <code>/seed</code> is not routed</td>
 </tr>
 <tr>
 <td>Storage</td>
@@ -1273,8 +1273,8 @@ so its upstream is our own — per
 <td>Next.js writes its render cache at runtime and the root filesystem is read-only. It is a cache: losing it on a restart costs one slow first request</td>
 </tr>
 <tr>
-<td>Three rules on one <code>HTTPRoute</code></td>
-<td>The site is an invitation to the neighbours, so <code>/</code> reaches the app directly. <code>/admin</code> goes through the outpost, and so do Payload's <code>/api</code>, which the admin UI is only a client of, <code>/seed</code>, which the seed hook calls on the Service rather than through the Gateway, and <code>/outpost.goauthentik.io</code>, where the outpost finishes the login on this hostname. The pages read Payload in-process, so the browser needs only <code>/api/media/file</code>, the uploads they link to, which goes straight to the app. A longer path prefix wins in Gateway API, so the order of the rules does not matter. The cross-namespace <code>backendRef</code> works only because the platform's <code>referencegrant.yaml</code> names this namespace</td>
+<td>Four rules on one <code>HTTPRoute</code></td>
+<td>The site is an invitation to the neighbours, so <code>/</code> reaches the app directly. <code>/admin</code> goes through the outpost, and so do Payload's <code>/api</code>, which the admin UI is only a client of, and <code>/outpost.goauthentik.io</code>, where the outpost finishes the login on this hostname. The pages read Payload in-process, so the browser needs only <code>/api/media/file</code>, the uploads they link to, which goes straight to the app. <code>/seed</code> redirects to <code>/</code>: the seed hook calls the Service, so nothing outside the namespace has a reason to reach it, and Gateway API has no rule that refuses a request. A longer path prefix wins in Gateway API, so the order of the rules does not matter. The cross-namespace <code>backendRef</code> works only because the platform's <code>referencegrant.yaml</code> names this namespace</td>
 </tr>
 <tr>
 <td>The media collection accepts PDFs and <code>text/calendar</code></td>
@@ -1327,7 +1327,7 @@ rollout and debugging are in
 </tr>
 <tr>
 <td>Ingress on 3000 from the Authentik server pods, with an L7 <code>http</code> rule</td>
-<td><code>/admin</code>, <code>/api</code> and <code>/seed</code> through the outpost</td>
+<td><code>/admin</code> and <code>/api</code> through the outpost</td>
 </tr>
 <tr>
 <td>Ingress from Prometheus on 9187, <code>GET /metrics</code> only</td>
