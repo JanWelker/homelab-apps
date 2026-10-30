@@ -349,6 +349,8 @@ spec:
   failedJobsHistoryLimit: 3
   jobTemplate:
     spec:
+      # A failed Job keeps KubeJobFailed firing until it is deleted
+      ttlSecondsAfterFinished: 86400
       backoffLimit: 2
       activeDeadlineSeconds: 3000
       template:
