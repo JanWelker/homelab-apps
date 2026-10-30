@@ -7,6 +7,8 @@
 # /seed never reaches the app through the Gateway: the seed hook calls the
 # Service. A longer path prefix wins in Gateway API, so the order of these
 # rules does not matter.
+# The backendRefs spell out the CRD defaults: beside the redirect-only /seed
+# rule, Argo CD otherwise reports the route OutOfSync forever.
 # docs/fest-wollbi.md#configuration
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
@@ -34,9 +36,12 @@ spec:
             type: PathPrefix
             value: /outpost.goauthentik.io
       backendRefs:
-        - name: authentik-server
+        - group: ""
+          kind: Service
+          name: authentik-server
           namespace: authentik
           port: 80
+          weight: 1
     - matches:
         - path:
             type: PathPrefix
@@ -53,12 +58,18 @@ spec:
             type: PathPrefix
             value: /api/media/file
       backendRefs:
-        - name: fest-wollbi
+        - group: ""
+          kind: Service
+          name: fest-wollbi
           port: 3000
+          weight: 1
     - matches:
         - path:
             type: PathPrefix
             value: /
       backendRefs:
-        - name: fest-wollbi
+        - group: ""
+          kind: Service
+          name: fest-wollbi
           port: 3000
+          weight: 1
