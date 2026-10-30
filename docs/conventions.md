@@ -151,9 +151,10 @@ and Nextcloud needed `allow_local_remote_servers` before discovery worked.
 **Account keys rest on usernames staying put.** Nextcloud and
 Dependency-Track key an account on `preferred_username`, which is the
 Authentik username, so a user who could rename themselves to someone else's
-name would log in as that account. The platform's Authentik brand turns
-self-service username changes off for that reason; see
-[Authentik](https://homelab.wlkr.ch/platform/authentik/). A new application
+name would log in as that account. The platform's Authentik brand therefore
+uses a user settings flow without a username field; see
+[User settings flow](https://homelab.wlkr.ch/platform/authentik/#user-settings-flow).
+A new application
 keys on `sub` instead. An existing one stays on `preferred_username`, because
 switching gives every account a new ID and orphans its data.
 
