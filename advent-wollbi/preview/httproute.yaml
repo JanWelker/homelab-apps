@@ -2,7 +2,8 @@
 # Under *.k8s.wlkr.ch, so the platform's wildcard certificate and external-dns
 # cover every preview without a change there. No outpost on /admin: Payload's
 # own login, with the generated password, is the only gate. /seed never
-# reaches the app through the Gateway, as in production. The hostname is
+# reaches the app through the Gateway, as in production. The backendRef
+# spells out the CRD defaults, as in production. The hostname is
 # replaced per pull request by the ApplicationSet. docs/previews.md
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
@@ -43,5 +44,8 @@ spec:
               - name: X-Robots-Tag
                 value: noindex, nofollow
       backendRefs:
-        - name: advent-wollbi
+        - group: ""
+          kind: Service
+          name: advent-wollbi
           port: 3000
+          weight: 1
