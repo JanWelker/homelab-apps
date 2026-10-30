@@ -41,8 +41,8 @@ namespace, the two ServiceAccounts and one directory per session.
 | The namespace enforces `restricted` | The image runs as uid 1000 with every capability dropped and a read-only root filesystem |
 | `claude-reader` and `claude-writer` are created here with `automountServiceAccountToken: false` | The platform binds them to the read and write ClusterRoles. A pod gets a token only by setting `kubernetes.access`, which keeps the choice visible in the session's own file |
 | `kubernetes.access: read` | The sessions investigate and open pull requests; the cluster changes through Git and ArgoCD, not through the agent |
-| `argocd.enabled: true` | Lets the agent read and sync applications with the `claude` account's token instead of guessing from the Git side |
-| `repos` set per session | Clones each repository once into `$HOME` and creates the GitHub token `ExternalSecret`; one token covers the list. Without repositories there is no clone, no token and no GitHub egress |
+| `argocd.enabled: true` | Lets the agent read applications with the `claude` account's token instead of guessing from the Git side. The platform binds that account to `role:readonly`, so it cannot sync. Through `argo-grpc` it also needs the `homelab-session` rule to the server pod; the chart's name rule alone gets a 403 ([agent-mooring#3](https://github.com/JanWelker/agent-mooring/issues/3)) |
+| `repos` set per session | Clones each repository once into `$HOME` and creates the GitHub token `ExternalSecret`; one token covers the list. Without repositories or `skills.repo` there is no clone, no token and no GitHub egress |
 | `skills.repo: JanWelker/claude-skills` | The private repository behind the laptop's `~/.claude/skills`, cloned into the same place and pulled at every session start, so a session runs the same skills and can push changes to them |
 | `appa.enabled: true` on `claude-homelab` | The session reads cluster state, secrets paths and private repositories and can push and post to GitHub. [OpenAPPA](https://openappa.com) checks each tool call against what the session has read, so private data does not flow to public sinks. Only the tmux main session (and its Remote Control) runs under `clappa`; ACP and hand-started `claude` are not gated. Tune the policy with `/appa-guide` in the session, then copy it into `appa.policy` with the `appa-sync` skill: the pod installs that file over `~/.config/appa/appa.toml` on every start, so a change made only on the PVC lasts until the next restart |
 | `extraEgressFQDNs` per session | A session reaches the package registries its own build needs, and no others |
@@ -67,7 +67,7 @@ the chart from its values (`extraEgressFQDNs` adds to them).
 | Ingress on 2222 from the `ingress` entity | The Gateway passes the TLS stream through by SNI to the pod's TLS sidecar, so the Gateway is the only way in |
 | Ingress from `host` and `remote-node` | The kubelet's probes, the pair every policy names ([Conventions → rule 5](conventions.md#5-ship-a-ciliumnetworkpolicy)) |
 | Ingress and egress within the namespace | Sessions share the namespace; the policy does not split them further |
-| Default egress to the namespace only | A session reaches nothing else unless its own policy says so. Those names (the Claude API, GitHub when `repo` is set, the Argo CD server) are the agent's reach, so adding one is reviewed like a firewall change |
+| Default egress to the namespace only | A session reaches nothing else unless its own policy says so. Those names (the Claude API, GitHub when `repos` or `skills.repo` is set, the Argo CD server) are the agent's reach, so adding one is reviewed like a firewall change |
 | `homelab-session`: every public address, minus the private, carrier-grade and link-local ranges and the router's public address | The cluster session installs tools, reads docs and fetches whatever a diagnosis needs; a name list would be a firewall change per lookup. Cutting the private ranges keeps the LAN, the nodes' LAN side and the Gateway addresses out; the public address is the `external-dns` target of `apps-gateway`, which hairpin NAT would otherwise hand back to the Gateway and every route on it |
 | `homelab-session`: Prometheus, Hubble Relay, the Argo CD server and OpenBao | The APIs the session diagnoses with; each service's own policy admits the session in the platform repository. The Argo CD server pod is needed for `argo-grpc` too, because the Gateway checks the caller's egress against the backend |
 
@@ -113,8 +113,9 @@ Once per session, after the first start:
    and finish the browser flow.
 
 The login lives on the volume and survives restarts. Remote Control is on for
-every session through the image's managed settings; the session appears in
-the Claude apps as `claude-<session>`.
+every session through the managed settings the chart renders into the
+session's ConfigMap; the session appears in the Claude apps as
+`claude-<session>`.
 
 ### Secrets
 
@@ -128,13 +129,18 @@ outside the namespace's own prefix, so `openbao-apps` cannot reach them — see
 
 | Path | Key | Read as |
 | --- | --- | --- |
-| `kv/claude-<session>/github` | `token` | `GH_TOKEN`: the fine-grained token for that session's repositories. Only when `repos` is set |
+| `kv/claude-<session>/github` | `token` | `GH_TOKEN`: the fine-grained token for that session's repositories and `skills.repo`. Only when either is set |
 | `kv/claude-agents/argocd` | `token` | The Argo CD `claude` account's API token, from `argocd account generate-token --account claude`. Only when `argocd.enabled` |
+
+A rotated token needs no pod restart: the chart mounts both as files and the
+`gh`, `git` and `argocd` wrappers read them on every call. The
+`ExternalSecret` refreshes hourly, so force-sync it for an immediate switch;
+a login shell opened before keeps the old `GH_TOKEN` in its environment.
 
 ### Creating the GitHub token
 
 A fine-grained personal access token, one per session, so a leak costs that
-session's repositories only:
+session's repositories and the shared skills only:
 
 1. GitHub → Settings → Developer settings → Fine-grained tokens → Generate.
    A session that gains a repository keeps its token: edit it and add the
@@ -151,7 +157,13 @@ session's repositories only:
     | Actions, Checks, Commit statuses | Read | `gh run` and `gh pr checks` |
     | Metadata | Read | Mandatory, added automatically |
 
-4. Put the token into `kv/claude-<session>/github` (see above).
+    The same permissions cover `claude-skills`: the session pushes skill
+    changes there like in its own repositories.
+
+4. Set an expiry and put the date in a calendar: the session reports an
+   expired token only at its next start, and tokens created on the same day
+   expire together.
+5. Put the token into `kv/claude-<session>/github` (see above).
 
 ### Adding a session
 
@@ -160,8 +172,8 @@ The `claude-session` skill walks through these steps.
 1. Copy a session directory, for example `claude-sitzplan/` to
    `claude-<session>/`.
 2. In `application.yaml`, change `metadata.name`, `session`, `repos`, the
-   access toggles and `extraEgressFQDNs`, and replace `ssh.authorizedKeys`
-   with the session's own key (see [SSH keys](#ssh-keys)).
+   access toggles and `extraEgressFQDNs`, keep `skills.repo`, and replace
+   `ssh.authorizedKeys` with the session's own key (see [SSH keys](#ssh-keys)).
 3. Create the token and write it to OpenBao before the merge, so the
    `ExternalSecret` resolves on the first sync.
 4. Add the session to [Sessions](#sessions) and merge. It answers at
@@ -186,7 +198,7 @@ into one pull request.
 
 ### Sessions without a repository
 
-Leave `repos` empty. The pod then has no clone, no GitHub token
+Leave `repos` and `skills.repo` empty. The pod then has no clone, no GitHub token
 and no GitHub egress, and the `kv/claude-<session>/github` path is not read.
 Use it for a scratch session that only needs the Claude API.
 
@@ -223,11 +235,18 @@ path works: DNS, certificate, Gateway, policy and `sshd`.
 - **An update restarts the pod and ends the running turn.** A new chart
   version is a new pod. The conversation survives on the volume: the start
   script runs `claude --continue`, which resumes it, but a turn in flight is
-  lost. Merge version bumps between turns.
+  lost. Renovate therefore opens chart bumps only at night and automerges
+  only a patch; merge a minor between turns.
+- **A chart that changes its selector labels cannot update the
+  StatefulSet.** `spec.selector` is immutable, so the sync fails and the old
+  pod keeps labels that neither the chart's policy nor `homelab-session`
+  selects: its Service has no endpoints and its egress drops. Delete
+  `statefulset/claude-<session>` and let Argo CD recreate it; the PVC is a
+  separate chart resource and stays.
+- **The merge gate is advisory.** The session tokens are the owner's own
+  fine-grained tokens and the rulesets require no approval, so a session can
+  merge its own pull request. Only Claude Code's managed deny rules and
+  OpenAPPA stand in the way until the agents have their own GitHub identity.
 - **Remote Control needs a full subscription login.** `claude auth login`
   works; a `setup-token` or an API key does not, and the session then shows
   up nowhere in the apps.
-- **The network policies are not enforced yet.** While the platform runs with
-  `policyAuditMode`, Cilium logs what it would drop and drops nothing. Treat
-  the egress list as intent until that is switched off; see
-  [Security Policies](https://homelab.wlkr.ch/platform/security-policies/#network-policies).
