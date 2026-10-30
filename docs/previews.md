@@ -65,5 +65,11 @@ kubectl -n argocd get applicationset previews -o jsonpath='{.status.conditions}'
   scratch, remove the label, wait for the namespace to go, and add it again.
 - **A pull request from a fork gets no preview.** Its workflow cannot push to
   GHCR, so the image never exists and the pod stays in `ImagePullBackOff`.
+- **A new key in `preview/secrets.yaml` reaches new previews only.** The
+  `ExternalSecret` generates once, so a running preview's pod waits on the
+  missing key. Remove the label, wait for the namespace to go, and add it
+  again.
+- **A branch's image meets the manifests of `main`.** A branch older than the
+  manifests can refuse what they send; merge `main` into it.
 - **Production changes reach the preview base only by hand.** A new setting in
   `<site>/deployment.yaml` belongs in `<site>/preview/deployment.yaml` too.

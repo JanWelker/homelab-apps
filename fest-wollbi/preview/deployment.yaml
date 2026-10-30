@@ -57,6 +57,12 @@ spec:
             # Replaced per pull request by the ApplicationSet.
             - name: NEXT_PUBLIC_SERVER_URL
               value: https://fest-wollbi-preview.k8s.wlkr.ch
+            # What the seed hook authenticates with.
+            - name: SEED_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: fest-wollbi-config
+                  key: seed-token
             # Read by the seed route, and only on an empty database.
             - name: SEED_ADMIN_EMAIL
               value: fest@wollbi.ch
