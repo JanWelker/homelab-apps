@@ -1406,11 +1406,11 @@ shape is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → 
 <td>Discovery, the signing keys and the userinfo endpoint, on the public name, for the same reason Nextcloud dials it: the <code>iss</code> claim is that name</td>
 </tr>
 <tr>
-<td>Egress from the API server to <code>nvd.nist.gov</code>, <code>storage.googleapis.com</code>, <code>api.github.com</code>, <code>epss.empiricalsecurity.com</code></td>
-<td>The feeds the internal analyzer mirrors: NVD, OSV, GitHub Advisories, EPSS. GitHub stays off until a token is entered in the UI; the rule is there so entering one is the only step</td>
+<td>Egress from the API server to <code>nvd.nist.gov</code>, <code>storage.googleapis.com</code>, <code>api.github.com</code>, <code>epss.empiricalsecurity.com</code>, <code>www.cisa.gov</code>, <code>raw.githubusercontent.com</code></td>
+<td>The feeds the internal analyzer mirrors: NVD, OSV, GitHub Advisories, EPSS, and the CISA and ENISA known-exploited lists (ENISA publishes on GitHub). GitHub stays off until a token is entered in the UI; the rule is there so entering one is the only step</td>
 </tr>
 <tr>
-<td>Egress from the API server to <code>proxy.golang.org</code>, <code>registry.npmjs.org</code>, <code>pypi.org</code>, <code>repo1.maven.org</code>, <code>api.nuget.org</code>, <code>crates.io</code>, <code>rubygems.org</code></td>
+<td>Egress from the API server to <code>proxy.golang.org</code>, <code>registry.npmjs.org</code>, <code>pypi.org</code>, <code>repo1.maven.org</code>, <code>api.nuget.org</code>, <code>crates.io</code>, <code>index.crates.io</code>, <code>rubygems.org</code></td>
 <td>The registries Dependency-Track asks for the latest version of a component, for the ecosystems the images here contain. The other default repositories are disabled at <a href="#first-login">first login</a> rather than allowed</td>
 </tr>
 <tr>
