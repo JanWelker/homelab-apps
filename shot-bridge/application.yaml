@@ -13,7 +13,7 @@ spec:
     # Why each value is what it is: docs/shot-bridge.md#configuration
     - repoURL: ghcr.io/somuch-cloud/charts
       chart: shot-bridge
-      targetRevision: 0.2.0
+      targetRevision: 0.2.1
       helm:
         valuesObject:
           timeZone: Europe/Zurich
