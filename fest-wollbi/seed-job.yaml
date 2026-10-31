@@ -38,15 +38,15 @@ spec:
               set -eu
               curl -fsS --max-time 240 --retry 2 --retry-delay 15 \
                 --retry-all-errors -X POST \
-                -H "x-seed-token: $PAYLOAD_SECRET" \
+                -H "x-seed-token: $SEED_TOKEN" \
                 http://fest-wollbi:3000/seed
               echo
           env:
-            - name: PAYLOAD_SECRET
+            - name: SEED_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: fest-wollbi-config
-                  key: payload-secret
+                  key: seed-token
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

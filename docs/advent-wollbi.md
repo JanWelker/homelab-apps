@@ -91,12 +91,13 @@ had: prose, a run of images under a heading, and a download.
 
 ### Secrets
 
-`kv/advent-wollbi/config` holds two values, written once by the `PushSecret` in
+`kv/advent-wollbi/config` holds three values, written once by the `PushSecret` in
 `secrets.yaml` and never overwritten — see [Generated secrets](https://homelab.wlkr.ch/platform/openbao/#generated-secrets).
 
 | Key | Read as |
 | --- | --- |
-| `payload-secret` | `PAYLOAD_SECRET`: signs the editor sessions, and the token the seed hook authenticates with |
+| `payload-secret` | `PAYLOAD_SECRET`: signs the editor sessions |
+| `seed-token` | `SEED_TOKEN`: what the seed hook authenticates with, so the hook never holds the key that signs sessions |
 | `admin-password` | The first editor's password, read only while the database is empty |
 
 ## Health check
