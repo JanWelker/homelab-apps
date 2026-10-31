@@ -1179,6 +1179,12 @@ is seeded once and kept across pushes.</p>
   scratch, remove the label, wait for the namespace to go, and add it again.</li>
 <li><strong>A pull request from a fork gets no preview.</strong> Its workflow cannot push to
   GHCR, so the image never exists and the pod stays in <code>ImagePullBackOff</code>.</li>
+<li><strong>A new key in <code>preview/secrets.yaml</code> reaches new previews only.</strong> The
+  <code>ExternalSecret</code> generates once, so a running preview's pod waits on the
+  missing key. Remove the label, wait for the namespace to go, and add it
+  again.</li>
+<li><strong>A branch's image meets the manifests of <code>main</code>.</strong> A branch older than the
+  manifests can refuse what they send; merge <code>main</code> into it.</li>
 <li><strong>Production changes reach the preview base only by hand.</strong> A new setting in
   <code>&lt;site&gt;/deployment.yaml</code> belongs in <code>&lt;site&gt;/preview/deployment.yaml</code> too.</li>
 </ul>
