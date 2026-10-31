@@ -91,8 +91,8 @@ had: prose, a run of images under a heading, and a download.
 
 ### Secrets
 
-`kv/advent-wollbi/config` holds three values, written once by the `PushSecret` in
-`secrets.yaml` and never overwritten — see [Generated secrets](https://homelab.wlkr.ch/platform/openbao/#generated-secrets).
+`kv/advent-wollbi/config` holds two values and `kv/advent-wollbi/seed` the third, each written once
+by a `PushSecret` in `secrets.yaml` and never overwritten — see [Generated secrets](https://homelab.wlkr.ch/platform/openbao/#generated-secrets).
 
 | Key | Read as |
 | --- | --- |
