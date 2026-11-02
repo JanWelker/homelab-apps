@@ -11,7 +11,7 @@ spec:
     # Why each value is what it is: docs/claude-agents.md#configuration
     repoURL: ghcr.io/janwelker/charts
     chart: agent-mooring
-    targetRevision: 0.5.39
+    targetRevision: 0.5.43
     helm:
       valuesObject:
         session: sitzplan
