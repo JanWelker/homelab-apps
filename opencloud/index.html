@@ -1366,11 +1366,11 @@ shape is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → 
 </tr>
 <tr>
 <td>Egress from the server to the Authentik server pods on 9000</td>
-<td>Discovery, the signing keys and the token endpoint go to <code>auth.k8s.wlkr.ch</code>, which resolves to the Gateway's own address and is <code>world</code> to Cilium. The Gateway's Envoy then checks this policy against the Authentik pod it picks and answers 403 itself when that pod is not listed, so both the name and the pod are allowed</td>
+<td>Discovery, the signing keys and the token endpoint go to <code>auth.k8s.wlkr.ch</code>, which resolves to the public address and is <code>world</code> to Cilium. The Gateway's Envoy then checks this policy against the Authentik pod it picks and answers 403 itself when that pod is not listed, so both the name and the pod are allowed</td>
 </tr>
 <tr>
 <td>Egress from the server to <code>auth.k8s.wlkr.ch</code> on 443</td>
-<td>The other half of the same path</td>
+<td>The other half of the same path. Hubble records one dropped SYN to this name at each pod start: the first packet after a fresh DNS answer races the FQDN policy update and the retransmit passes, the <a href="https://homelab.wlkr.ch/platform/security-policies/#network-policies">known artefact</a>, not a missing rule</td>
 </tr>
 </tbody>
 </table>
@@ -1408,7 +1408,9 @@ opens Authentik in the browser.</p>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>https://cloud.infra.k8s.wlkr.ch/.well-known/openid-configuration<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span>.issuer
 </span></code></pre></div>
 <p>The pod is <code>Running</code>, every <code>PushSecret</code> and the <code>ExternalSecret</code> are
-<code>Ready</code>, and the issuer printed is <code>https://auth.k8s.wlkr.ch/</code>.</p>
+<code>Ready</code>, and the issuer printed is <code>https://auth.k8s.wlkr.ch/</code>. After a
+first start, the <code>idm.boltdb</code> on the volume is larger than the 32 KiB of an
+empty Bolt file; see <a href="#pitfalls">Pitfalls</a>.</p>
 <h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1437,6 +1439,10 @@ opens Authentik in the browser.</p>
 <tr>
 <td>Prometheus shows the target down</td>
 <td>The policy allows <code>GET /metrics</code> only; any other path on 9205 from Prometheus is refused</td>
+</tr>
+<tr>
+<td>Login ends on "Not logged in"; the log shows <code>failed to add user</code> with <code>LDAP Result Code 49</code> from <code>graph</code> and <code>not found</code> from <code>idm</code></td>
+<td>The IDM database under <code>idm/</code> on the volume is a bare Bolt file: a first pod that died during the bootstrap, as in the row below, left it created but without the service users, and every later start sees the file and skips the bootstrap. Remove the <code>idm</code> directory the same way as <code>search</code> below and restart; the next start bootstraps it. Only safe while no account exists yet, which is the case when this symptom appears</td>
 </tr>
 <tr>
 <td>The pod exits with <code>error parsing mapping JSON: unexpected end of JSON input</code> from the <code>search</code> service</td>
