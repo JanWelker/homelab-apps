@@ -1274,6 +1274,10 @@ is rebuilt if it disagrees after a restore; nothing is lost.</p>
 <td>Authentik's access tokens are JWTs, so the server checks signature and issuer itself instead of calling userinfo on every request</td>
 </tr>
 <tr>
+<td><code>PROXY_OIDC_AUDIENCES</code>, the four client IDs</td>
+<td>Authentik writes the client ID into <code>aud</code>, so the server accepts only tokens minted for one of its own clients, not any token from the same issuer. Without the list the proxy logs at every start that audience validation is off</td>
+</tr>
+<tr>
 <td><code>PROXY_AUTOPROVISION_ACCOUNTS</code>, with <code>sub</code> as the username</td>
 <td>Accounts are created in the built-in IDM on first login and keyed on the <code>sub</code> claim, which never changes, per <a href="../conventions/#6-authentication-is-authentiks-not-the-applications">Conventions → Authentication</a>. Upstream's own autoprovisioning example does the same</td>
 </tr>
@@ -1421,6 +1425,10 @@ opens Authentik in the browser.</p>
 <tr>
 <td>Prometheus shows the target down</td>
 <td>The policy allows <code>GET /metrics</code> only; any other path on 9205 from Prometheus is refused</td>
+</tr>
+<tr>
+<td>The pod exits with <code>error parsing mapping JSON: unexpected end of JSON input</code> from the <code>search</code> service</td>
+<td>The Bleve index under <code>search/</code> on the volume was created by a pod that died before writing the mapping, which happens when another service fails on the same first start. Remove the <code>search</code> directory from the volume, from a pod on the same node that mounts the PVC while the container is in its back-off, and the index is rebuilt from the files on the next start. Scaling the Deployment to zero first does not hold: self-heal restores the replica within a minute</td>
 </tr>
 </tbody>
 </table>
