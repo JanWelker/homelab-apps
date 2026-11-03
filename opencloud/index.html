@@ -1266,6 +1266,10 @@ is rebuilt if it disagrees after a restore; nothing is lost.</p>
 <td>The four Authentik providers run in global issuer mode, whose issuer is the bare hostname; see <a href="#oidc">OIDC</a></td>
 </tr>
 <tr>
+<td><code>PROXY_CSP_CONFIG_FILE_LOCATION</code>, the policy in <code>opencloud/csp.yaml</code></td>
+<td>The default Content-Security-Policy allows connections and frames to the server itself only, so the browser refuses the discovery, token and silent-renew requests to an external IdP and the page spins forever. The file is upstream's default with <code>auth.k8s.wlkr.ch</code> added to <code>connect-src</code> and <code>frame-src</code>, and without the default's <code>update.opencloud.eu</code> and GitHub app-store hosts, which the server never contacts here</td>
+</tr>
+<tr>
 <td><code>PROXY_OIDC_REWRITE_WELLKNOWN</code></td>
 <td>The desktop and mobile clients discover the identity provider through the server's own <code>/.well-known/openid-configuration</code></td>
 </tr>
@@ -1413,6 +1417,10 @@ opens Authentik in the browser.</p>
 <tr>
 <td><code>ExternalSecret</code> stays <code>SecretSyncedError</code> on the first sync</td>
 <td>The <code>PushSecret</code>s and the <code>ExternalSecret</code> are in different waves but OpenBao is written asynchronously; the retry covers it within minutes</td>
+</tr>
+<tr>
+<td>The web page shows the loading animation forever, the console reports a Content-Security-Policy violation for <code>auth.k8s.wlkr.ch</code></td>
+<td>The served policy is the default, not <code>csp.yaml</code>: the ConfigMap or <code>PROXY_CSP_CONFIG_FILE_LOCATION</code> is missing, or the mount path differs from the variable</td>
 </tr>
 <tr>
 <td>Login succeeds in Authentik, OpenCloud answers 403</td>
