@@ -88,6 +88,8 @@ spec:
               value: sub
             - name: PROXY_USER_CS3_CLAIM
               value: username
+            - name: GRAPH_USERNAME_MATCH
+              value: none
             - name: OC_LDAP_SERVER_WRITE_ENABLED
               value: "true"
             - name: FRONTEND_READONLY_USER_ATTRIBUTES
