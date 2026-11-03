@@ -341,22 +341,6 @@
   
   
     <li class="md-tabs__item">
-      <a href="../nextcloud/" class="md-tabs__link">
-        
-  
-  Nextcloud
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
       <a href="../previews/" class="md-tabs__link">
         
   
@@ -721,6 +705,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#sync-stuck-on-the-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sync stuck on the database
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -874,32 +869,6 @@
     
   
   Knead Time
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../nextcloud/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Nextcloud
 
     
   </span>
@@ -1230,6 +1199,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#sync-stuck-on-the-database" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sync stuck on the database
+      </span>
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1286,7 +1266,7 @@ why every Application excludes it from its own source:</p>
 workload has no business reaching.</p>
 <h3 id="2-official-upstream-sources-only">2. Official upstream sources only<a class="headerlink" href="#2-official-upstream-sources-only" title="Permanent link">&para;</a></h3>
 <p>The vendor's own Helm chart, or the vendor's own container image, never a
-repackager's. Nextcloud publishes its own chart; Home Assistant publishes
+repackager's. Dependency-Track publishes its own chart; Home Assistant publishes
 none, so it is plain manifests around the official
 <code>ghcr.io/home-assistant/home-assistant</code> image.</p>
 <p>The user's own chart wrapping the user's own image is allowed, as with the Flowscape images and the <code>agent-mooring</code> chart.</p>
@@ -1353,13 +1333,13 @@ platform's
 </span></code></pre></div>
 <p>At the default wave it lands after the <code>Cluster</code> from rule 3, and a rule the
 <code>Cluster</code> needs in order to go Healthy can never unblock the wave it is stuck
-behind — see <a href="../nextcloud/#sync-stuck-on-the-database">Sync stuck on the database</a>.</p>
+behind — see <a href="#sync-stuck-on-the-database">Sync stuck on the database</a>.</p>
 <h3 id="6-authentication-is-authentiks-not-the-applications">6. Authentication is Authentik's, not the application's<a class="headerlink" href="#6-authentication-is-authentiks-not-the-applications" title="Permanent link">&para;</a></h3>
 <p>Which shape applies is decided by what the application supports:</p>
 <ul>
 <li><strong>It speaks OIDC.</strong> Configure it against Authentik, hide the local login
-  form, and keep at most one local admin as break-glass. Nextcloud is the
-  worked example.</li>
+  form, and keep at most one local admin as break-glass. Dependency-Track is
+  the worked example.</li>
 <li><strong>It does not.</strong> Point its <code>HTTPRoute</code> at <code>authentik-server</code> in the
   <code>authentik</code> namespace, so the outpost authenticates in front of it. Home
   Assistant is the worked example; where the application has its own login this
@@ -1367,15 +1347,18 @@ behind — see <a href="../nextcloud/#sync-stuck-on-the-database">Sync stuck on 
 </ul>
 <p>The OIDC provider's blueprint lives here, in the application's directory, as a
 ConfigMap targeted at the <code>authentik</code> namespace with a key ending in <code>.yaml</code>
-(see <code>nextcloud/authentik-blueprint.yaml</code>). The client credentials, the
-outpost's provider list and any <code>referencegrant.yaml</code> entry stay in the
-platform repository, so going behind SSO is deliberately two pull requests.</p>
+(see <code>dependency-track/authentik-blueprint.yaml</code>). The platform mounts it as
+an optional projected volume, because a fresh cluster has Authentik before it
+has any workload, and discovers it on the worker's startup, hourly, and
+through a file watcher. The client credentials, the outpost's provider list
+and any <code>referencegrant.yaml</code> entry stay in the platform repository, so going
+behind SSO is deliberately two pull requests.</p>
 <p>Because blueprint discovery is asynchronous, anything that configures itself
 against the provider must tolerate it not existing yet: fail soft and log.
 Watch for SSRF guards, too: <code>auth.k8s.wlkr.ch</code> resolves to a private address,
-and Nextcloud needed <code>allow_local_remote_servers</code> before discovery worked.</p>
-<p><strong>Account keys rest on usernames staying put.</strong> Nextcloud and
-Dependency-Track key an account on <code>preferred_username</code>, which is the
+which an application that refuses local addresses rejects.</p>
+<p><strong>Account keys rest on usernames staying put.</strong> Dependency-Track keys an
+account on <code>preferred_username</code>, which is the
 Authentik username, so a user who could rename themselves to someone else's
 name would log in as that account. The platform's Authentik brand therefore
 uses a user settings flow without a username field; see
@@ -1490,6 +1473,41 @@ trusts <code>REMOTE_ADDR</code> sees the proxy, and one that builds absolute URL
 request scheme produces <code>http://</code> links on an <code>https://</code> site. Look for a
 trusted-proxies setting and an overwrite-protocol setting; if the login
 redirect loops, this is why.</p>
+<h2 id="sync-stuck-on-the-database">Sync stuck on the database<a class="headerlink" href="#sync-stuck-on-the-database" title="Permanent link">&para;</a></h2>
+<p>The default-deny policy must allow the <code>cnpg-system</code> namespace to reach the
+database pod on port 8000, the instance manager's status endpoint the operator
+polls, and the policy must sit at sync wave <code>-2</code> with the namespace. At the
+default wave it lands after the <code>Cluster</code> at <code>-1</code>, and a wave that never
+finishes never applies the rule that would unblock it.</p>
+<ol>
+<li>
+<p><strong>Symptom.</strong> Postgres serves the application and <code>kubectl get cluster</code>
+   reads <code>1/1</code>, but the phase is <code>Instance Status Extraction Error: HTTP
+   communication issue</code>. The Application is <code>Synced</code> with health <code>Unknown</code> and
+   every entry in <code>status.resources</code> lacks a health field: a genuinely
+   unhealthy workload names the failing resource.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>$ kubectl get application -n argocd &lt;app&gt; -o jsonpath='{.status.operationState.message}'
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>waiting for healthy state of postgresql.cnpg.io/Cluster/&lt;app&gt;-db
+</span></code></pre></div>
+</li>
+<li>
+<p><strong>Confirm the drop</strong> from the node running the database:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-n<span class="w"> </span>kube-system<span class="w"> </span>&lt;cilium-pod-on-that-node&gt;<span class="w"> </span>-c<span class="w"> </span>cilium-agent<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>hubble<span class="w"> </span>observe<span class="w"> </span>--verdict<span class="w"> </span>DROPPED<span class="w"> </span>--from-namespace<span class="w"> </span>cnpg-system<span class="w"> </span>--last<span class="w"> </span><span class="m">20</span>
+</span></code></pre></div>
+</li>
+<li>
+<p><strong>Check which waves ran.</strong> If <code>CiliumNetworkPolicy</code> is missing while
+   <code>Cluster</code> reads <code>Running</code>, the policy is behind the thing it should unblock:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>application<span class="w"> </span>-n<span class="w"> </span>argocd<span class="w"> </span>&lt;app&gt;<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{range .status.operationState.syncResult.resources[*]}{.kind}{"\t"}{.hookPhase}{"\n"}{end}'</span>
+</span></code></pre></div>
+</li>
+<li>
+<p><strong>Fix.</strong> Put the policy at wave <code>-2</code>, then terminate the stuck operation.
+   The next sync applies the policy first and the <code>Cluster</code> goes Healthy.</p>
+</li>
+</ol>
 
 
 
