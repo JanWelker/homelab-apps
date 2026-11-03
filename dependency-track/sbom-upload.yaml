@@ -320,20 +320,7 @@ data:
         sys.exit(main())
   # Findings that are not findings. Why each one: docs/dependency-track.md#false-positives
   false-positives.json: |
-    [
-      {
-        "project": "docker.io/library/nextcloud",
-        "vulnerability": "MAL-2022-3033",
-        "component": "pkg:npm/files_pdfviewer",
-        "details": "Nextcloud's own files_pdfviewer app under apps/, which shares its name with an unrelated package on npm."
-      },
-      {
-        "project": "docker.io/library/nextcloud",
-        "vulnerability": "MAL-2022-3056",
-        "component": "pkg:npm/firstrunwizard",
-        "details": "Nextcloud's own firstrunwizard app under apps/, which shares its name with an unrelated package on npm."
-      }
-    ]
+    []
 ---
 apiVersion: batch/v1
 kind: CronJob

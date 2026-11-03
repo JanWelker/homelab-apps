@@ -36,7 +36,7 @@ workload has no business reaching.
 ### 2. Official upstream sources only
 
 The vendor's own Helm chart, or the vendor's own container image, never a
-repackager's. Nextcloud publishes its own chart; Home Assistant publishes
+repackager's. Dependency-Track publishes its own chart; Home Assistant publishes
 none, so it is plain manifests around the official
 `ghcr.io/home-assistant/home-assistant` image.
 
@@ -123,15 +123,15 @@ Put it at sync wave `-2`, with the namespace:
 
 At the default wave it lands after the `Cluster` from rule 3, and a rule the
 `Cluster` needs in order to go Healthy can never unblock the wave it is stuck
-behind — see [Sync stuck on the database](nextcloud.md#sync-stuck-on-the-database).
+behind — see [Sync stuck on the database](#sync-stuck-on-the-database).
 
 ### 6. Authentication is Authentik's, not the application's
 
 Which shape applies is decided by what the application supports:
 
 - **It speaks OIDC.** Configure it against Authentik, hide the local login
-  form, and keep at most one local admin as break-glass. Nextcloud is the
-  worked example.
+  form, and keep at most one local admin as break-glass. Dependency-Track is
+  the worked example.
 - **It does not.** Point its `HTTPRoute` at `authentik-server` in the
   `authentik` namespace, so the outpost authenticates in front of it. Home
   Assistant is the worked example; where the application has its own login this
@@ -139,17 +139,20 @@ Which shape applies is decided by what the application supports:
 
 The OIDC provider's blueprint lives here, in the application's directory, as a
 ConfigMap targeted at the `authentik` namespace with a key ending in `.yaml`
-(see `nextcloud/authentik-blueprint.yaml`). The client credentials, the
-outpost's provider list and any `referencegrant.yaml` entry stay in the
-platform repository, so going behind SSO is deliberately two pull requests.
+(see `dependency-track/authentik-blueprint.yaml`). The platform mounts it as
+an optional projected volume, because a fresh cluster has Authentik before it
+has any workload, and discovers it on the worker's startup, hourly, and
+through a file watcher. The client credentials, the outpost's provider list
+and any `referencegrant.yaml` entry stay in the platform repository, so going
+behind SSO is deliberately two pull requests.
 
 Because blueprint discovery is asynchronous, anything that configures itself
 against the provider must tolerate it not existing yet: fail soft and log.
 Watch for SSRF guards, too: `auth.k8s.wlkr.ch` resolves to a private address,
-and Nextcloud needed `allow_local_remote_servers` before discovery worked.
+which an application that refuses local addresses rejects.
 
-**Account keys rest on usernames staying put.** Nextcloud and
-Dependency-Track key an account on `preferred_username`, which is the
+**Account keys rest on usernames staying put.** Dependency-Track keys an
+account on `preferred_username`, which is the
 Authentik username, so a user who could rename themselves to someone else's
 name would log in as that account. The platform's Authentik brand therefore
 uses a user settings flow without a username field; see
@@ -228,3 +231,40 @@ trusts `REMOTE_ADDR` sees the proxy, and one that builds absolute URLs from the
 request scheme produces `http://` links on an `https://` site. Look for a
 trusted-proxies setting and an overwrite-protocol setting; if the login
 redirect loops, this is why.
+
+## Sync stuck on the database
+
+The default-deny policy must allow the `cnpg-system` namespace to reach the
+database pod on port 8000, the instance manager's status endpoint the operator
+polls, and the policy must sit at sync wave `-2` with the namespace. At the
+default wave it lands after the `Cluster` at `-1`, and a wave that never
+finishes never applies the rule that would unblock it.
+
+1. **Symptom.** Postgres serves the application and `kubectl get cluster`
+   reads `1/1`, but the phase is `Instance Status Extraction Error: HTTP
+   communication issue`. The Application is `Synced` with health `Unknown` and
+   every entry in `status.resources` lacks a health field: a genuinely
+   unhealthy workload names the failing resource.
+
+    ```text
+    $ kubectl get application -n argocd <app> -o jsonpath='{.status.operationState.message}'
+    waiting for healthy state of postgresql.cnpg.io/Cluster/<app>-db
+    ```
+
+2. **Confirm the drop** from the node running the database:
+
+    ```bash
+    kubectl exec -n kube-system <cilium-pod-on-that-node> -c cilium-agent -- \
+      hubble observe --verdict DROPPED --from-namespace cnpg-system --last 20
+    ```
+
+3. **Check which waves ran.** If `CiliumNetworkPolicy` is missing while
+   `Cluster` reads `Running`, the policy is behind the thing it should unblock:
+
+    ```bash
+    kubectl get application -n argocd <app> \
+      -o jsonpath='{range .status.operationState.syncResult.resources[*]}{.kind}{"\t"}{.hookPhase}{"\n"}{end}'
+    ```
+
+4. **Fix.** Put the policy at wave `-2`, then terminate the stuck operation.
+   The next sync applies the policy first and the `Cluster` goes Healthy.
