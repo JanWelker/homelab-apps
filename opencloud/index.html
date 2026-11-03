@@ -1267,7 +1267,7 @@ is rebuilt if it disagrees after a restore; nothing is lost.</p>
 </tr>
 <tr>
 <td><code>PROXY_CSP_CONFIG_FILE_LOCATION</code>, the policy in <code>opencloud/csp.yaml</code></td>
-<td>The default Content-Security-Policy allows connections and frames to the server itself only, so the browser refuses the discovery, token and silent-renew requests to an external IdP and the page spins forever. The file is upstream's default with <code>auth.k8s.wlkr.ch</code> added to <code>connect-src</code> and <code>frame-src</code>, and without the default's <code>update.opencloud.eu</code> and GitHub app-store hosts, which the server never contacts here</td>
+<td>The default Content-Security-Policy allows connections and frames to the server itself only, so the browser refuses the discovery, token and silent-renew requests to an external IdP and the page spins forever. The file adds <code>auth.k8s.wlkr.ch</code> to <code>connect-src</code> and <code>frame-src</code>; OpenCloud merges it into the default rather than replacing it, so the default's <code>update.opencloud.eu</code> and GitHub app-store hosts stay in the browser policy. They matter only to a browser, the update check is off, and the server itself reaches neither</td>
 </tr>
 <tr>
 <td><code>PROXY_OIDC_REWRITE_WELLKNOWN</code></td>
@@ -1283,7 +1283,11 @@ is rebuilt if it disagrees after a restore; nothing is lost.</p>
 </tr>
 <tr>
 <td><code>PROXY_AUTOPROVISION_ACCOUNTS</code>, with <code>sub</code> as the username</td>
-<td>Accounts are created in the built-in IDM on first login and keyed on the <code>sub</code> claim, which never changes, per <a href="../conventions/#6-authentication-is-authentiks-not-the-applications">Conventions → Authentication</a>. Upstream's own autoprovisioning example does the same</td>
+<td>Accounts are created in the built-in IDM on first login and keyed on the <code>sub</code> claim, which never changes, per <a href="../conventions/#6-authentication-is-authentiks-not-the-applications">Conventions → Authentication</a>. Upstream's own autoprovisioning example does the same. Users see display names, never this value</td>
+</tr>
+<tr>
+<td><code>GRAPH_USERNAME_MATCH=none</code></td>
+<td>Authentik's <code>sub</code> is a SHA-256 hex string, and the default rule refuses a username that starts with a digit: <code>Invalid username</code>, and the first login ends in a 400</td>
 </tr>
 <tr>
 <td><code>FRONTEND_READONLY_USER_ATTRIBUTES</code></td>
