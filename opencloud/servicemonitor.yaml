@@ -1,0 +1,18 @@
+---
+# The proxy's debug endpoint; one port for every service in the binary.
+# docs/opencloud.md#configuration
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: opencloud
+  namespace: opencloud
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: opencloud
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s

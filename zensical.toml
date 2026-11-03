@@ -28,6 +28,7 @@ nav = [
   { "Flowscape" = "flowscape.md" },
   { "Home Assistant" = "home-assistant.md" },
   { "Knead Time" = "kneadtime.md" },
+  { "OpenCloud" = "opencloud.md" },
   { "Pull request previews" = "previews.md" },
   { "Shot Timer bridge" = "shot-bridge.md" },
   { "Umami" = "umami.md" },

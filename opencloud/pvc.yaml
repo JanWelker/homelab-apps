@@ -1,0 +1,17 @@
+---
+# PosixFS: the files as the user sees them, metadata in xattrs, versions,
+# trash and the search index, all on one volume. docs/opencloud.md#storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: opencloud-data
+  namespace: opencloud
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: rook-ceph-block
+  resources:
+    requests:
+      storage: 200Gi
