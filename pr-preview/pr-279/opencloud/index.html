@@ -1242,8 +1242,8 @@ is rebuilt if it disagrees after a restore; nothing is lost.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>opencloudeu/opencloud</code>, not <code>opencloud-rolling</code></td>
-<td>The production line, a release about every six months with patches between; rolling ships every three weeks. A new production line is a major bump, which the Renovate preset holds for a human</td>
+<td><code>opencloudeu/opencloud-rolling</code>, not the production <code>opencloudeu/opencloud</code></td>
+<td>Rolling ships every three weeks on a current Alpine; the production line gets a release about every six months, and its image carried a fixable critical in an Alpine package that the <a href="../conventions/#2-official-upstream-sources-only">image-scan gate</a> refuses. Move to the production line at a release that passes the gate. Either way a major bump waits for a human</td>
 </tr>
 <tr>
 <td><code>args: ["server"]</code>, no <code>init</code></td>
