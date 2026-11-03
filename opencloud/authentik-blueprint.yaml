@@ -1,0 +1,161 @@
+---
+# Lands in the authentik namespace; the key must end in .yaml. docs/opencloud.md#oidc
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: authentik-blueprint-opencloud
+  namespace: authentik
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+data:
+  opencloud.yaml: |
+    version: 1
+    metadata:
+      name: homelab-opencloud
+    entries:
+      # Four public clients whose IDs are fixed by the clients, so four
+      # providers. All in global issuer mode: one issuer for every token,
+      # the one the server verifies against. docs/opencloud.md#oidc
+      - model: authentik_providers_oauth2.oauth2provider
+        state: present
+        id: opencloud-provider
+        identifiers:
+          name: opencloud
+        attrs:
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+          client_type: public
+          client_id: web
+          issuer_mode: global
+          grant_types:
+            - authorization_code
+            - refresh_token
+          redirect_uris:
+            - matching_mode: strict
+              url: https://cloud.infra.k8s.wlkr.ch/
+            - matching_mode: strict
+              url: https://cloud.infra.k8s.wlkr.ch/oidc-callback.html
+            - matching_mode: strict
+              url: https://cloud.infra.k8s.wlkr.ch/oidc-silent-redirect.html
+          signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
+          property_mappings:
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, email]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, profile]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, offline_access]]
+      - model: authentik_providers_oauth2.oauth2provider
+        state: present
+        id: opencloud-desktop-provider
+        identifiers:
+          name: opencloud-desktop
+        attrs:
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+          client_type: public
+          client_id: OpenCloudDesktop
+          issuer_mode: global
+          grant_types:
+            - authorization_code
+            - refresh_token
+          redirect_uris:
+            - matching_mode: regex
+              url: ^http://(127\.0\.0\.1|localhost)(:\d+)?(/.*)?$
+          signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
+          property_mappings:
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, email]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, profile]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, offline_access]]
+      - model: authentik_providers_oauth2.oauth2provider
+        state: present
+        id: opencloud-ios-provider
+        identifiers:
+          name: opencloud-ios
+        attrs:
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+          client_type: public
+          client_id: OpenCloudIOS
+          issuer_mode: global
+          grant_types:
+            - authorization_code
+            - refresh_token
+          redirect_uris:
+            - matching_mode: strict
+              url: oc://ios.opencloud.eu
+          signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
+          property_mappings:
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, email]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, profile]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, offline_access]]
+      - model: authentik_providers_oauth2.oauth2provider
+        state: present
+        id: opencloud-android-provider
+        identifiers:
+          name: opencloud-android
+        attrs:
+          authorization_flow: !Find [authentik_flows.flow, [slug, default-provider-authorization-implicit-consent]]
+          invalidation_flow: !Find [authentik_flows.flow, [slug, default-provider-invalidation-flow]]
+          client_type: public
+          client_id: OpenCloudAndroid
+          issuer_mode: global
+          grant_types:
+            - authorization_code
+            - refresh_token
+          redirect_uris:
+            - matching_mode: strict
+              url: oc://android.opencloud.eu
+          signing_key: !Find [authentik_crypto.certificatekeypair, [name, authentik Self-signed Certificate]]
+          property_mappings:
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, openid]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, email]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, profile]]
+            - !Find [authentik_providers_oauth2.scopemapping, [scope_name, offline_access]]
+      # OpenCloud reads its roles off the groups claim, and these are the
+      # two names its default mapping knows. Membership stays in Authentik
+      # and out of Git: the group is the contract, the people in it are not.
+      - model: authentik_core.group
+        state: present
+        identifiers:
+          name: opencloudAdmin
+      - model: authentik_core.group
+        state: present
+        identifiers:
+          name: opencloudUser
+      - model: authentik_core.application
+        state: present
+        identifiers:
+          slug: opencloud
+        attrs:
+          name: OpenCloud
+          provider: !KeyOf opencloud-provider
+          meta_launch_url: https://cloud.infra.k8s.wlkr.ch
+          meta_description: Files, synced to every device
+      - model: authentik_core.application
+        state: present
+        identifiers:
+          slug: opencloud-desktop
+        attrs:
+          name: OpenCloud Desktop
+          provider: !KeyOf opencloud-desktop-provider
+          meta_launch_url: blank://blank
+          meta_description: The desktop client's loopback redirect
+      - model: authentik_core.application
+        state: present
+        identifiers:
+          slug: opencloud-ios
+        attrs:
+          name: OpenCloud iOS
+          provider: !KeyOf opencloud-ios-provider
+          meta_launch_url: blank://blank
+          meta_description: The iOS app
+      - model: authentik_core.application
+        state: present
+        identifiers:
+          slug: opencloud-android
+        attrs:
+          name: OpenCloud Android
+          provider: !KeyOf opencloud-android-provider
+          meta_launch_url: blank://blank
+          meta_description: The Android app
