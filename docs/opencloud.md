@@ -89,7 +89,8 @@ blueprint.
 `secrets.yaml` generates what `opencloud init` would: a `Password`
 generator for the JWT, transfer, URL-signing and service-account secrets,
 the machine-auth and system-user API keys and the IDM service passwords,
-and one `UUID` generator per ID, because a `UUID` generator yields one
+which the `users`, `groups`, `auth-basic` and `graph` services also receive
+as their LDAP bind passwords, and one `UUID` generator per ID, because a `UUID` generator yields one
 value and a `PushSecret` reads one generator. Each `PushSecret` writes its
 keys into `kv/opencloud/config` once; the `ExternalSecret` templates them
 into `opencloud-env` under the environment variable names. Losing the
