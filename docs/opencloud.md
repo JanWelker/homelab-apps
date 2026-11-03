@@ -46,7 +46,7 @@ The values in `opencloud/deployment.yaml` that are not self-explanatory:
 
 | Setting | Why |
 | --- | --- |
-| `opencloudeu/opencloud`, not `opencloud-rolling` | The production line, a release about every six months with patches between; rolling ships every three weeks. A new production line is a major bump, which the Renovate preset holds for a human |
+| `opencloudeu/opencloud-rolling`, not the production `opencloudeu/opencloud` | Rolling ships every three weeks on a current Alpine; the production line gets a release about every six months, and its image carried a fixable critical in an Alpine package that the [image-scan gate](conventions.md#2-official-upstream-sources-only) refuses. Move to the production line at a release that passes the gate. Either way a major bump waits for a human |
 | `args: ["server"]`, no `init` | `opencloud init` only writes random secrets and IDs into `opencloud.yaml`. Every one of them arrives as an environment variable from `opencloud-env` instead, so `/etc/opencloud` is an emptyDir and the pod carries nothing a backup would have to protect |
 | `strategy: Recreate`, one replica | The volume is `ReadWriteOnce`, and PosixFS in non-collaborative mode tolerates one writer |
 | `runAsUser: 1000`, `fsGroup: 1000`, read-only root, the namespace enforces `restricted` | The image runs as that user and writes only under `/var/lib/opencloud`, `/etc/opencloud` and `/tmp`, the last two emptyDirs |

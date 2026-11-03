@@ -29,7 +29,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: opencloud
-          image: docker.io/opencloudeu/opencloud:7.2.4@sha256:6d992ccc5f1cbc7b2a9b272ba25f879b1b159c2d7ed7f5527e09059f16295697
+          image: docker.io/opencloudeu/opencloud-rolling:9.0.0@sha256:bd57f039d0dd3df510fb25f178beefdf0b1f049097285feead607824460e6506
           args: ["server"]
           envFrom:
             - secretRef:
