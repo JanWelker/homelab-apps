@@ -70,6 +70,8 @@ spec:
               value: https://auth.k8s.wlkr.ch/
             - name: PROXY_OIDC_REWRITE_WELLKNOWN
               value: "true"
+            - name: PROXY_CSP_CONFIG_FILE_LOCATION
+              value: /etc/opencloud-csp/csp.yaml
             - name: PROXY_OIDC_ACCESS_TOKEN_VERIFY_METHOD
               value: jwt
             - name: PROXY_OIDC_AUDIENCES
@@ -143,6 +145,9 @@ spec:
               mountPath: /etc/opencloud
             - name: tmp
               mountPath: /tmp
+            - name: csp
+              mountPath: /etc/opencloud-csp
+              readOnly: true
       volumes:
         - name: data
           persistentVolumeClaim:
@@ -151,3 +156,6 @@ spec:
           emptyDir: {}
         - name: tmp
           emptyDir: {}
+        - name: csp
+          configMap:
+            name: opencloud-csp

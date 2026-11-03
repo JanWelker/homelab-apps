@@ -52,6 +52,7 @@ The values in `opencloud/deployment.yaml` that are not self-explanatory:
 | `runAsUser: 1000`, `fsGroup: 1000`, read-only root, the namespace enforces `restricted` | The image runs as that user and writes only under `/var/lib/opencloud`, `/etc/opencloud` and `/tmp`, the last two emptyDirs |
 | `OC_EXCLUDE_RUN_SERVICES=idp` | Authentik is the identity provider; the built-in one would be a second login |
 | `OC_OIDC_ISSUER=https://auth.k8s.wlkr.ch/` | The four Authentik providers run in global issuer mode, whose issuer is the bare hostname; see [OIDC](#oidc) |
+| `PROXY_CSP_CONFIG_FILE_LOCATION`, the policy in `opencloud/csp.yaml` | The default Content-Security-Policy allows connections and frames to the server itself only, so the browser refuses the discovery, token and silent-renew requests to an external IdP and the page spins forever. The file is upstream's default with `auth.k8s.wlkr.ch` added to `connect-src` and `frame-src`, and without the default's `update.opencloud.eu` and GitHub app-store hosts, which the server never contacts here |
 | `PROXY_OIDC_REWRITE_WELLKNOWN` | The desktop and mobile clients discover the identity provider through the server's own `/.well-known/openid-configuration` |
 | `PROXY_OIDC_ACCESS_TOKEN_VERIFY_METHOD=jwt` | Authentik's access tokens are JWTs, so the server checks signature and issuer itself instead of calling userinfo on every request |
 | `PROXY_OIDC_AUDIENCES`, the four client IDs | Authentik writes the client ID into `aud`, so the server accepts only tokens minted for one of its own clients, not any token from the same issuer. Without the list the proxy logs at every start that audience validation is off |
@@ -147,6 +148,7 @@ The pod is `Running`, every `PushSecret` and the `ExternalSecret` are
 | Symptom | Cause |
 | --- | --- |
 | `ExternalSecret` stays `SecretSyncedError` on the first sync | The `PushSecret`s and the `ExternalSecret` are in different waves but OpenBao is written asynchronously; the retry covers it within minutes |
+| The web page shows the loading animation forever, the console reports a Content-Security-Policy violation for `auth.k8s.wlkr.ch` | The served policy is the default, not `csp.yaml`: the ConfigMap or `PROXY_CSP_CONFIG_FILE_LOCATION` is missing, or the mount path differs from the variable |
 | Login succeeds in Authentik, OpenCloud answers 403 | The user is in neither group, or the issuer in the token differs from `OC_OIDC_ISSUER`: a provider without `issuer_mode: global` |
 | The desktop client's login tab never returns | The loopback redirect did not match the regular expression; the port is random and the path may be empty |
 | Prometheus shows the target down | The policy allows `GET /metrics` only; any other path on 9205 from Prometheus is refused |
