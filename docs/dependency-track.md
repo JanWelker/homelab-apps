@@ -46,7 +46,7 @@ The chart values in `application.yaml` that are not defaults:
 | `apiServer.web.resources`, 1Gi requested, 3Gi limit | The JVM sizes its heap from the limit. Upstream recommends 8Gi for production; the portfolio here is a few hundred small images |
 | `serviceMonitor.namespace: dependency-track` | The chart defaults to the `monitoring` namespace, which the `apps` project may not write to. Prometheus reads it from here like every other application's |
 | `httpRoute` on `apps-gateway` | The chart's route sends `/api` to the API server and everything else to the frontend on one hostname, so the frontend's `API_BASE_URL` stays empty and the browser uses relative URLs |
-| `apiServer.image.tag` and `frontend.image.tag` pinned by digest, though the chart derives both from its `appVersion` | A tag re-pushed upstream would otherwise change what runs without a commit, and Renovate sees a rebuild only through a digest. The chart and the two pins are one Renovate group, so a chart bump cannot leave a pod on the previous release. Nextcloud is the one chart here that follows its `appVersion` instead, by choice |
+| `apiServer.image.tag` and `frontend.image.tag` pinned by digest, though the chart derives both from its `appVersion` | A tag re-pushed upstream would otherwise change what runs without a commit, and Renovate sees a rebuild only through a digest. The chart and the two pins are one Renovate group, so a chart bump cannot leave a pod on the previous release. |
 | `revisionHistoryLimit: 2` on both Deployments | Superseded ReplicaSets keep their Trivy config-audit reports until garbage collection; the chart keeps five |
 
 ### Network policy
@@ -58,8 +58,8 @@ shape is [Conventions → Ship a `CiliumNetworkPolicy`](conventions.md#5-ship-a-
 | --- | --- |
 | Ingress on 8080 from `ingress` | The Gateway reaches the API server and the frontend directly; the login is OIDC, so no outpost sits in front |
 | Ingress from Prometheus on 9000 and 9187, `GET /metrics` only | The API server's management port and the database's exporter |
-| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy. See [Sync stuck on the database](nextcloud.md#sync-stuck-on-the-database) |
-| Egress from the API server to Authentik | Discovery, the signing keys and the userinfo endpoint, on the public name, for the same reason Nextcloud dials it: the `iss` claim is that name |
+| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy. See [Sync stuck on the database](conventions.md#sync-stuck-on-the-database) |
+| Egress from the API server to Authentik | Discovery, the signing keys and the userinfo endpoint, on the public name, because the `iss` claim is that name |
 | Egress from the API server to `nvd.nist.gov`, `storage.googleapis.com`, `api.github.com`, `epss.empiricalsecurity.com`, `www.cisa.gov`, `raw.githubusercontent.com` | The feeds the internal analyzer mirrors: NVD, OSV, GitHub Advisories, EPSS, and the CISA and ENISA known-exploited lists (ENISA publishes on GitHub). GitHub stays off until a token is entered in the UI; the rule is there so entering one is the only step |
 | Egress from the API server to `proxy.golang.org`, `registry.npmjs.org`, `pypi.org`, `repo1.maven.org`, `api.nuget.org`, `crates.io`, `index.crates.io`, `rubygems.org` | The registries Dependency-Track asks for the latest version of a component, for the ecosystems the images here contain. The other default repositories are disabled at [first login](#first-login) rather than allowed |
 | Egress from the upload job to `kube-apiserver` | It lists the `SbomReport` objects; the API it posts to is in the namespace |
@@ -118,8 +118,9 @@ to say, not the job's.
 ### OIDC
 
 The provider is `dependency-track/authentik-blueprint.yaml`, a ConfigMap
-targeted at the `authentik` namespace, mounted and discovered the way
-[Nextcloud's](nextcloud.md#oidc) is. What differs:
+targeted at the `authentik` namespace, mounted and discovered as
+[Conventions → Authentication](conventions.md#6-authentication-is-authentiks-not-the-applications)
+describes. The fields that matter:
 
 | Blueprint field | Why |
 | --- | --- |

@@ -5,7 +5,7 @@ description: "Umami on the cluster: cookieless web analytics for every site, pla
 # Umami
 
 [Umami](https://umami.is/) counts the visits to every site: the two
-documentation sites, the GitHub Pages projects, Nextcloud and Home Assistant.
+documentation sites, the GitHub Pages projects and Home Assistant.
 It sets no cookie and stores no address, so the sites need no consent banner.
 Upstream publishes an image and no chart, so this is a Deployment, a Service
 and an HTTPRoute around the official image, per
@@ -49,7 +49,7 @@ rollout and debugging are in
 | --- | --- |
 | Ingress on 3000 from the Authentik server pods only | The outpost proxies the tracker paths as well as the dashboard, so the Gateway never talks to the pod. No `fromEntities: ingress`, so a request straight from the Gateway cannot skip the login |
 | Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics. Umami itself exposes none |
-| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](nextcloud.md#sync-stuck-on-the-database) |
+| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](conventions.md#sync-stuck-on-the-database) |
 | Egress to the namespace only | The database. With the three phone-home switches off, nothing else is dialled |
 | Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise |
 

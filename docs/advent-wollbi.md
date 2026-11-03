@@ -77,7 +77,7 @@ rollout and debugging are in
 | Ingress on 3000 from `ingress` | The public site; it is meant to be read by people Authentik has never heard of |
 | Ingress on 3000 from the Authentik server pods, with an L7 `http` rule | `/admin` and `/api` through the outpost |
 | Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics. Payload exposes none |
-| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](nextcloud.md#sync-stuck-on-the-database) |
+| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](conventions.md#sync-stuck-on-the-database) |
 | Egress to the namespace, and nothing else at all | The site renders from its own database and serves its own uploads. There is no `toFQDNs` block, which is the shortest way to say a public site never calls out |
 | Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise |
 
