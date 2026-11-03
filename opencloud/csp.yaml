@@ -1,6 +1,6 @@
 ---
-# Upstream's default policy with Authentik added to connect-src and
-# frame-src, and the update and app-store hosts removed. docs/opencloud.md#csp
+# Merged into upstream's default policy, not replacing it: Authentik for the
+# discovery, token and silent-renew requests. docs/opencloud.md#configuration
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -9,37 +9,7 @@ metadata:
 data:
   csp.yaml: |
     directives:
-      child-src:
-        - "'self'"
       connect-src:
-        - "'self'"
-        - "blob:"
         - "https://auth.k8s.wlkr.ch"
-      default-src:
-        - "'none'"
-      font-src:
-        - "'self'"
-      frame-ancestors:
-        - "'self'"
       frame-src:
-        - "'self'"
-        - "blob:"
         - "https://auth.k8s.wlkr.ch"
-      img-src:
-        - "'self'"
-        - "data:"
-        - "blob:"
-      manifest-src:
-        - "'self'"
-      media-src:
-        - "'self'"
-      object-src:
-        - "'self'"
-        - "blob:"
-      script-src:
-        - "'self'"
-        - "'unsafe-inline'"
-      style-src:
-        - "'self'"
-        - "'unsafe-inline'"
-        - "blob:"
