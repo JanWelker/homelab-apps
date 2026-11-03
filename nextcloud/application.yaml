@@ -4,6 +4,9 @@ kind: Application
 metadata:
   name: nextcloud
   namespace: argocd
+  # Nextcloud is being removed: deleting the directory cascades through this.
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
   annotations:
     argocd.argoproj.io/manifest-generate-paths: .
     link.argocd.argoproj.io/external-link: https://cloud.infra.k8s.wlkr.ch
