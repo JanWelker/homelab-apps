@@ -72,6 +72,8 @@ spec:
               value: "true"
             - name: PROXY_OIDC_ACCESS_TOKEN_VERIFY_METHOD
               value: jwt
+            - name: PROXY_OIDC_AUDIENCES
+              value: web,OpenCloudDesktop,OpenCloudIOS,OpenCloudAndroid
             - name: WEB_OIDC_CLIENT_ID
               value: web
             - name: WEB_OIDC_SCOPE
