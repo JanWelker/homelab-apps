@@ -1224,11 +1224,6 @@ chart is published to <code>ghcr.io/somuch-cloud/charts</code>, per
 <td>History from its WAL archive, to any point inside its retention window; phones re-register on their next launch</td>
 </tr>
 <tr>
-<td>The SQLite file from before 2026-10-19</td>
-<td><code>bridge.db</code> on the PVC, read once by <code>migrate-sqlite</code></td>
-<td>Kept as a fallback; delete it once the PostgreSQL history has been checked</td>
-</tr>
-<tr>
 <td>La Marzocco installation key</td>
 <td><code>installation_key.json</code> on the PVC</td>
 <td>Yes, the bridge registers a new one on start</td>
@@ -1288,7 +1283,7 @@ chart is published to <code>ghcr.io/somuch-cloud/charts</code>, per
 </tr>
 <tr>
 <td><code>lm.serial</code></td>
-<td>The machine to watch; required since chart 0.1.4</td>
+<td>The machine to watch; the chart requires it</td>
 </tr>
 <tr>
 <td><code>admin.enabled: true</code></td>
@@ -1296,7 +1291,7 @@ chart is published to <code>ghcr.io/somuch-cloud/charts</code>, per
 </tr>
 <tr>
 <td><code>timeZone: Europe/Zurich</code></td>
-<td>The bridge dates a bag's opening by the day of its first shot (chart 0.1.15); the image runs in UTC otherwise, so a shot before 01:00 or 02:00 would land on the day before</td>
+<td>The bridge dates a bag's opening by the day of its first shot; the image runs in UTC otherwise, so a shot before 01:00 or 02:00 would land on the day before</td>
 </tr>
 </tbody>
 </table>
@@ -1309,42 +1304,66 @@ default-deny too. All at sync wave <code>-2</code>. The shape is
 <table>
 <thead>
 <tr>
+<th>File</th>
 <th>Rule</th>
 <th>Why</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Ingress on 8080 from <code>ingress</code>, <code>host</code> and <code>remote-node</code></td>
-<td>The Gateway, and the kubelet's probes</td>
+<td>Chart</td>
+<td>Ingress on 8080 from <code>ingress</code> and <code>host</code></td>
+<td>The Gateway, and the kubelet's probes; the chart admits <code>host</code> alone where the namespace policies below admit <code>remote-node</code> too</td>
 </tr>
 <tr>
+<td>Chart</td>
+<td>Ingress on 8080 from the admin UI's pods</td>
+<td><code>admin.enabled</code>; the <a href="../extractor-admin/">admin UI</a> reads with its token</td>
+</tr>
+<tr>
+<td>Chart</td>
 <td>Egress to <code>lion.lamarzocco.io</code> on 443</td>
 <td>The La Marzocco REST API and websocket</td>
 </tr>
 <tr>
+<td>Chart</td>
+<td>Egress to the Kaffeemacher shop and <code>cdn.shopify.com</code> on 443</td>
+<td>The coffee catalog and the bag photos</td>
+</tr>
+<tr>
+<td>Chart</td>
 <td>Egress to the four APNs names on 443, 2195 and 2196</td>
 <td>Pushes and broadcasts on 443; channel management on 2195 (sandbox) and 2196 (production)</td>
 </tr>
 <tr>
-<td>Egress to the namespace on 5432</td>
-<td>The database's <code>-rw</code> Service</td>
+<td>Chart</td>
+<td>Egress to the namespace on <code>database.port</code></td>
+<td>The database's <code>-rw</code> Service, rendered because <code>database.existingSecret</code> is set</td>
 </tr>
 <tr>
-<td>Ingress and egress within the namespace</td>
-<td>The bridge reaches the database, the replica streams from the primary</td>
+<td>Chart</td>
+<td>Egress to <code>kube-dns</code> on 53</td>
+<td>The chart's own DNS rule; the platform's cluster-wide rule grants the same, so it adds nothing here</td>
 </tr>
 <tr>
+<td><code>networkpolicy.yaml</code></td>
+<td>Ingress from the namespace, from <code>host</code> and <code>remote-node</code>; egress to the namespace</td>
+<td>The rules every policy carries, here for the database pods too: <a href="https://homelab.wlkr.ch/platform/security-policies/#what-every-policy-contains">What every policy contains</a>; the replica streams from the primary through them</td>
+</tr>
+<tr>
+<td><code>networkpolicy.yaml</code></td>
 <td>Ingress from Prometheus on 9187, <code>GET /metrics</code> only</td>
 <td>The database's exporter, through its <code>PodMonitor</code>; the bridge exposes no metrics</td>
 </tr>
 <tr>
+<td><code>networkpolicy.yaml</code></td>
 <td>Ingress from <code>cnpg-system</code> on 8000</td>
 <td>The operator reads the instance manager's status; without it the <code>Cluster</code> never goes Healthy</td>
 </tr>
 <tr>
+<td><code>networkpolicy.yaml</code></td>
 <td>The instance pods reach <code>kube-apiserver</code></td>
-<td>The CloudNativePG instance manager reports its status there; the object store is the platform's <code>cnpg-backups</code> rule</td>
+<td>The CloudNativePG instance manager reports its status there; the object store for WAL and base backups is the platform's <code>cnpg-backups</code> policy, see <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#backups">CloudNativePG → Backups</a></td>
 </tr>
 </tbody>
 </table>
@@ -1394,8 +1413,10 @@ app's setup screen; <strong>Test</strong> shows the machine's state.</p>
   created; run <code>make bao-secrets</code>.</li>
 <li><strong>The pod crash-loops while the APNs keys are empty.</strong> The bridge exits on a
   missing variable rather than starting half-configured.</li>
-<li><strong>Rotating <code>kv/shot-bridge/config</code> changes both keys.</strong> The phone is
-  logged out: enter the new API key in the app's setup screen, the watch
+<li><strong>Rotating <code>kv/shot-bridge/config</code> changes both keys.</strong> The <code>PushSecret</code>
+  writes <code>IfNotExists</code>, so rotating is
+  <a href="https://homelab.wlkr.ch/platform/openbao/#rotating-a-credential">deleting the path</a>.
+  The phone is logged out: enter the new API key in the app's setup screen, the watch
   receives it from the phone. The <a href="../extractor-admin/">admin UI</a> reads a
   hand copy of <code>admin-read-key</code> and answers 403 until it is
   <a href="../extractor-admin/#copying-the-read-key">copied again</a>.</li>

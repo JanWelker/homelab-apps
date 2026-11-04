@@ -1,6 +1,6 @@
 # Home Assistant
 
-[Home Assistant](<https://www.home-assistant.io/>) runs the house. Upstream publishes no Helm chart and the community ones are repackagers, so this is a Deployment, a Service, a PVC and a ConfigMap around the official image, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
+[Home Assistant](<https://www.home-assistant.io/>) runs the house. Upstream publishes no Helm chart and the community ones are repackagers, so `home-assistant/` is plain manifests around the official image: `deployment.yaml`, `service.yaml`, `pvc.yaml`, `configmap.yaml`, `httproute.yaml`, `database.yaml` with `backup.yaml`, `networkpolicy.yaml` and `namespace.yaml`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -27,7 +27,7 @@
 | Plain manifests, no chart | Home Assistant is one stateful process with one volume and one port; a Deployment is less work than auditing a third-party chart on every bump |
 | `strategy: Recreate`, one replica | The `/config` PVC is `ReadWriteOnce`, and two Home Assistant processes against one `/config` corrupt the `.storage` registries |
 | `revisionHistoryLimit: 2` | Superseded ReplicaSets keep their Trivy config-audit reports until they are garbage-collected; the Kubernetes default keeps ten |
-| Root with every capability dropped but `NET_BIND_SERVICE`, no API token; the namespace enforces `baseline` | The image runs as root under s6 and writes `/config`, and upstream does not support running it otherwise, so `runAsNonRoot` and a read-only root do not apply. Root owns everything it touches, so the one capability it uses is binding SSDP's port 1900; `baseline` forbids adding `NET_RAW`, so DHCP discovery joins the [discovery that does not work here](<#pitfalls>) anyway. Nothing in the pod talks to the API server, so the `default` ServiceAccount's token stays unmounted, per [Default ServiceAccount tokens](<https://homelab.wlkr.ch/platform/security-policies/#default-serviceaccount-tokens>) |
+| Root with every capability dropped but `NET_BIND_SERVICE`, no API token; the namespace enforces `baseline` | The image runs as root under s6 and writes `/config`, and upstream does not support running it otherwise, so `runAsNonRoot` and a read-only root do not apply. Root owns everything it touches; `deployment.yaml` keeps `NET_BIND_SERVICE`, which no port it opens needs, 1900 and 8123 being above 1024. `baseline` forbids adding `NET_RAW`, so DHCP discovery joins the [discovery that does not work here](<#pitfalls>) anyway. Nothing in the pod talks to the API server, so the `default` ServiceAccount's token stays unmounted, per [Default ServiceAccount tokens](<https://homelab.wlkr.ch/platform/security-policies/#default-serviceaccount-tokens>) |
 | An init container from the same image seeds `/config` on every start | `configuration.yaml` includes `automations.yaml`, `scripts.yaml` and `scenes.yaml` so the UI editors can save; on a fresh volume they do not exist and Home Assistant fails to start rather than create them. Same image as the main container because Renovate updates every occurrence in one pull request, so the two cannot drift |
 | A long `startupProbe` | Home Assistant loads every integration before it serves anything, minutes rather than seconds on a cold start with a populated registry. The startup probe buys that time without making the liveness probe useless afterwards |
 | Recorder on CloudNativePG, not SQLite | SQLite's locking on a network block device is the usual cause of a Home Assistant that feels slow. `purge_keep_days` is raised because the default of 10 is shorter than the moment you look for a graph. See [the contract](<https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract>) |
@@ -38,16 +38,17 @@
 
 ### Network policy
 
-Every rule in `home-assistant/networkpolicy.yaml`, and why it is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
+The rules in `home-assistant/networkpolicy.yaml`, and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
 
 | Rule | Why |
 | --- | --- |
+| Ingress from the namespace, from `host` and `remote-node`; egress to the namespace | The rules every policy carries: [What every policy contains](<https://homelab.wlkr.ch/platform/security-policies/#what-every-policy-contains>) |
 | Ingress on 8123 from the Authentik server pods only | The outpost is the only path to the UI. No `fromEntities: ingress`, so a request straight from the Gateway cannot skip it. Nothing else in the cluster has a reason to connect: this namespace holds a long-lived token for every device in the house. With the rule missing, the hostname answers with a gateway error after a successful Authentik login |
 | Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics; a week of Hubble records showed no other request |
 | Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/#sync-stuck-on-the-database>) |
 | Egress to `*.home-assistant.io` | The alerts feed and version data. An integration that talks to a device or a cloud is a line here first |
 | Egress to the multicast and limited-broadcast ranges on 5353 and 1900 | The mDNS and SSDP discovery sockets keep sending, and the overlay carries it nowhere. Allowed only so it does not fill the drop log |
-| Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise |
+| Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise. The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](<https://homelab.wlkr.ch/platform/cloudnative-pg/#backups>) |
 
 ## Usage
 
@@ -74,7 +75,7 @@ The database should report `Cluster in healthy state`. A pod stuck in `Init` is 
 >
 > **The API is not behind Authentik**
 >
-> The companion apps and every webhook authenticate with a long-lived token and cannot complete an interactive login, so `skip_path_regex` on the provider lets `/api/`, `/auth/token` and the external-auth callback through. Home Assistant's own accounts are the only thing guarding those paths. Revoking an Authentik account does not revoke a Home Assistant token; do that under Settings → People.
+> `/api/`, `/auth/token` and the external-auth callback are exempt on the provider, so Home Assistant's own accounts guard them and revoking an Authentik account does not revoke a Home Assistant token: do that under Settings → People. See [Authentik → Pitfalls](<https://homelab.wlkr.ch/platform/authentik/#pitfalls>).
 
 - **No local device discovery.** mDNS and SSDP need host networking, which needs a `privileged` namespace. Add devices by IP, or through an integration that does not rely on broadcast, and add the address to the egress policy.
 - **No USB devices.** A Zigbee or Z-Wave stick pins the pod to one machine. Use a network-attached coordinator instead.

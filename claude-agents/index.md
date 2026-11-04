@@ -1,6 +1,6 @@
 # Claude agents
 
-Each session is a Claude Code instance that keeps running when the laptop is closed: a pod with `sshd`, a tmux session and a volume, reached at `<session>.ssh.wlkr.ch`. The same session is also driven from the Claude apps through Remote Control. The image and the Helm chart are the user's own, built in the [`agent-mooring`](<https://github.com/JanWelker/agent-mooring>) repository, which [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>) allows for the same reason as the Flowscape image. This repository holds the namespace, the two ServiceAccounts and one directory per session.
+Each session is a Claude Code instance that keeps running when the laptop is closed: a pod with `sshd`, a tmux session and a volume, reached at `<session>.ssh.wlkr.ch`. The same session is also driven from the Claude apps through Remote Control. The image and the Helm chart are the user's own, built in the [`agent-mooring`](<https://github.com/JanWelker/agent-mooring>) repository, which [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>) allows for the same reason as the Flowscape image. This repository holds the namespace, three ServiceAccounts (two the platform binds to its ClusterRoles, one the `openbao-claude-agents` store logs in as) and one directory per session.
 
 ## At a glance
 
@@ -29,16 +29,16 @@ Each session is a Claude Code instance that keeps running when the laptop is clo
 | Session Applications have a single source and no `directory.exclude` | `exclude` filters a Git directory source. An OCI chart has none, so there is nothing for `application.yaml` to be excluded from |
 | The namespace enforces `restricted` | The image runs as uid 1000 with every capability dropped and a read-only root filesystem |
 | `claude-reader` and `claude-writer` are created here with `automountServiceAccountToken: false` | The platform binds them to the read and write ClusterRoles. A pod gets a token only by setting `kubernetes.access`, which keeps the choice visible in the session's own file |
-| `kubernetes.access: read` | The sessions investigate and open pull requests; the cluster changes through Git and ArgoCD, not through the agent |
-| `argocd.enabled: true` | Lets the agent read applications with the `claude` account's token instead of guessing from the Git side. The platform binds that account to `role:readonly`, so it cannot sync. Through `argo-grpc` it also needs the `homelab-session` rule to the server pod; the chart's name rule alone gets a 403 ([agent-mooring\#3](<https://github.com/JanWelker/agent-mooring/issues/3>)) |
+| `kubernetes.access`, per session | Only the cluster session has a token, and a read-only one: it investigates and opens pull requests; the cluster changes through Git and ArgoCD, not through the agent. The sessions hosted elsewhere set no access |
+| `argocd.enabled`, per session | On for the cluster session only. Lets the agent read applications with the `claude` account's token instead of guessing from the Git side. The platform binds that account to `role:readonly`, so it cannot sync. Through `argo-grpc` it also needs the `homelab-session` rule to the server pod; the chart's name rule alone gets a 403 ([agent-mooring\#3](<https://github.com/JanWelker/agent-mooring/issues/3>)) |
 | `repos` set per session | Clones each repository once into `$HOME` and creates the GitHub token `ExternalSecret`; one token covers the list. Without repositories or `skills.repo` there is no clone, no token and no GitHub egress |
 | `skills.repo: JanWelker/claude-skills` | The private repository behind the laptop's `~/.claude/skills`, cloned into the same place and pulled at every session start, so a session runs the same skills and can push changes to them |
 | `appa.enabled: true` on `claude-homelab` | The session reads cluster state, secrets paths and private repositories and can push and post to GitHub. [OpenAPPA](<https://openappa.com>) checks each tool call against what the session has read, so private data does not flow to public sinks. Only the tmux main session (and its Remote Control) runs under `clappa`; ACP and hand-started `claude` are not gated. Tune the policy with `/appa-guide` in the session, then copy it into `appa.policy` with the `appa-sync` skill: the pod installs that file over `~/.config/appa/appa.toml` on every start, so a change made only on the PVC lasts until the next restart |
 | `extraEgressFQDNs` per session | A session reaches the package registries its own build needs, and no others |
 | `targetRevision` is the only version | The chart's `appVersion` is the Claude Code version and its packaged values pin the image by digest, so a Claude Code or base-image release is a chart release and a re-pushed tag cannot change a running session |
 | TLS ends in a proxy sidecar from the same image, with a per-session `Certificate` | Cilium's Gateway only passes `TLSRoute` traffic through, it cannot terminate it; sshd itself listens on loopback only |
-| `resources`: 768Mi requested, 4Gi limit | An agent idles between prompts at a few hundred MiB; the chart's 2Gi request does not fit beside the rest of the workers. The limit leaves room for builds and subagents |
-| `ssh.authorizedKeys` holds one key per session, used for nothing else | The listener is on the public Gateway, so a key is a login from the Internet; a leaked key then opens one session, not the one with the homelab write token too. Public keys are not secret |
+| `resources` in each session's values | An agent idles between prompts at a few hundred MiB; the chart's default request does not fit beside the rest of the workers. The limit leaves room for builds and subagents |
+| `ssh.authorizedKeys` holds the laptop's one key, the same in every session | The listener is on the public Gateway, so a key is a login from the Internet, and this one opens every session, the one with the homelab write token included. Public keys are not secret; the private one is guarded like the laptop itself |
 
 ### Network policy
 
@@ -65,19 +65,18 @@ Host *.ssh.wlkr.ch
   ProxyCommand openssl s_client -quiet -verify_return_error -servername %h -connect %h:443
 ```
 
-`sshd` admits only the user `agent`. Add `IdentityFile` per session, as in [SSH keys](<#ssh-keys>). Then `ssh homelab.ssh.wlkr.ch` attaches to the tmux session `main`. With a command, `ssh homelab.ssh.wlkr.ch <command>` runs it directly, so `scp` and `rsync` work.
+`sshd` admits only the user `agent`. Add the `IdentityFile` from [SSH keys](<#ssh-keys>). Then `ssh homelab.ssh.wlkr.ch` attaches to the tmux session `main`. With a command, `ssh homelab.ssh.wlkr.ch <command>` runs it directly, so `scp` and `rsync` work.
 
 ### SSH keys
 
-One key pair per session, generated on the laptop and never reused:
+One key pair for the sessions, generated on the laptop and used for nothing else:
 
-1. `ssh-keygen -t ed25519 -f ~/.ssh/claude-<session> -C claude-<session>`.
-2. Put the content of `~/.ssh/claude-<session>.pub` into the session's `ssh.authorizedKeys`, replacing any other line, and merge.
-3. In `~/.ssh/config`, above the `Host *.ssh.wlkr.ch` block:
+1. `ssh-keygen -t ed25519 -f ~/.ssh/claude-agents -C claude-agents`.
+2. Put the content of `~/.ssh/claude-agents.pub` into every session's `ssh.authorizedKeys`, replacing any other line, and merge.
+3. In the `Host *.ssh.wlkr.ch` block of `~/.ssh/config`:
 
    ```text
-   Host <session>.ssh.wlkr.ch
-     IdentityFile ~/.ssh/claude-<session>
+     IdentityFile ~/.ssh/claude-agents
      IdentitiesOnly yes
    ```
 
@@ -126,7 +125,7 @@ A fine-grained personal access token, one per session, so a leak costs that sess
 The `claude-session` skill walks through these steps.
 
 1. Copy a session directory, for example `claude-sitzplan/` to `claude-<session>/`.
-2. In `application.yaml`, change `metadata.name`, `session`, `repos`, the access toggles and `extraEgressFQDNs`, keep `skills.repo`, and replace `ssh.authorizedKeys` with the session's own key (see [SSH keys](<#ssh-keys>)).
+2. In `application.yaml`, change `metadata.name`, `session`, `repos`, the access toggles and `extraEgressFQDNs`, and keep `skills.repo` and `ssh.authorizedKeys` (see [SSH keys](<#ssh-keys>)).
 3. Create the token and write it to OpenBao before the merge, so the `ExternalSecret` resolves on the first sync.
 4. Add the session to [Sessions](<#sessions>) and merge. It answers at `<session>.ssh.wlkr.ch` once the Application is Healthy; then do the [first login](<#first-login>).
 

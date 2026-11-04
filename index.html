@@ -1117,6 +1117,13 @@ runs on top.</p>
 <td>Authentik OIDC</td>
 </tr>
 <tr>
+<td><a href="extractor-admin/">Extractor admin UI</a></td>
+<td><a href="https://extractor-admin.k8s.wlkr.ch">extractor-admin.k8s.wlkr.ch</a></td>
+<td>None</td>
+<td>None</td>
+<td>Authentik proxy</td>
+</tr>
+<tr>
 <td><a href="flowscape/">Flowscape</a></td>
 <td><a href="https://flowscape.k8s.wlkr.ch">flowscape.k8s.wlkr.ch</a></td>
 <td>None</td>
@@ -1131,11 +1138,25 @@ runs on top.</p>
 <td>Authentik proxy, in front of its own login</td>
 </tr>
 <tr>
+<td><a href="kneadtime/">Knead Time</a></td>
+<td><a href="https://kneadtime.k8s.wlkr.ch/v1/vapid">kneadtime.k8s.wlkr.ch</a></td>
+<td>None</td>
+<td>CloudNativePG</td>
+<td>None; CORS admits kneadtime.pizza only</td>
+</tr>
+<tr>
 <td><a href="opencloud/">OpenCloud</a></td>
 <td><a href="https://cloud.infra.k8s.wlkr.ch">cloud.infra.k8s.wlkr.ch</a></td>
 <td>A PVC for the files, metadata and index</td>
 <td>None</td>
 <td>Authentik OIDC, web and native clients</td>
+</tr>
+<tr>
+<td><a href="shot-bridge/">Shot Timer bridge</a></td>
+<td><a href="https://shot.k8s.wlkr.ch/healthz">shot.k8s.wlkr.ch</a></td>
+<td>A PVC for SQLite and the installation key</td>
+<td>CloudNativePG</td>
+<td>The bridge's own bearer key</td>
 </tr>
 <tr>
 <td><a href="umami/">Umami</a></td>
@@ -1168,10 +1189,13 @@ Pushing a directory deploys an application; there is no list to register it in.<
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  Application argocd
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    └── ApplicationSet platform
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>          └── Application workloads     ──▶  ApplicationSet apps
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                                                └── one Application per directory
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                                           │      └── one Application per directory
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                                           └──▶  ApplicationSet previews
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>                                                  └── one Application per labelled pull request
 </span></code></pre></div>
-<p>The platform references this repository exactly once, as a <code>repoURL</code>, and
-never reads what is in it. Nothing orders a workload after the platform it
+<p>The platform names this repository in three places, the two ApplicationSets'
+<code>repoURL</code> and the <code>apps</code> project's <code>sourceRepos</code>, and never reads what is in
+it. Nothing orders a workload after the platform it
 uses: each Application syncs as soon as it exists and retries until the
 Gateway, StorageClass or <code>ClusterSecretStore</code> it names is there — the
 <a href="conventions/#8-the-shared-syncpolicy">sync policy</a> is the same one every
@@ -1181,16 +1205,18 @@ platform Application carries. Why the split exists is in
 <p>Every directory follows the same eight rules, each with one sentence of why:
 <a href="conventions/">Conventions</a>.</p>
 <h2 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h2>
-<p>Every application goes through
+<p>Every application with a browser login goes through
 <a href="https://homelab.wlkr.ch/platform/authentik/">Authentik</a>, in the shape each one
 supports. <a href="dependency-track/">Dependency-Track</a> and <a href="opencloud/">OpenCloud</a> speak
 OIDC, so they are real single sign-on. <a href="home-assistant/">Home Assistant</a> and
 <a href="umami/">Umami</a> ship no OIDC provider, so the Authentik outpost sits in
 front of their own logins and browser users authenticate twice;
-<a href="flowscape/">Flowscape</a> has no login, so the outpost is the only one. All
-use <code>auth.k8s.wlkr.ch</code>, never the <code>auth.infra</code> name, which resolves only on
-the local network — see
-<a href="https://homelab.wlkr.ch/platform/authentik/#two-hostnames">Two hostnames</a>.</p>
+<a href="flowscape/">Flowscape</a> and the <a href="extractor-admin/">Extractor admin UI</a>
+have no login, so the outpost is the only one. All use <code>auth.k8s.wlkr.ch</code>,
+Authentik's only hostname; see
+<a href="https://homelab.wlkr.ch/platform/authentik/#one-hostname">One hostname</a>.
+The three APIs without a browser session carry their own credential, the
+exception in <a href="conventions/#6-authentication-is-authentiks-not-the-applications">Conventions → rule 6</a>.</p>
 <h2 id="adding-one">Adding one<a class="headerlink" href="#adding-one" title="Permanent link">&para;</a></h2>
 <p>Read <a href="conventions/">Conventions</a> first; it is short. The step-by-step version
 is <a href="https://homelab.wlkr.ch/development/add-workload/">Adding a Workload</a> in the

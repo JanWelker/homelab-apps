@@ -1381,7 +1381,9 @@ through Remote Control. The image and the Helm chart are the user's own,
 built in the <a href="https://github.com/JanWelker/agent-mooring"><code>agent-mooring</code></a> repository, which
 <a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>
 allows for the same reason as the Flowscape image. This repository holds the
-namespace, the two ServiceAccounts and one directory per session.</p>
+namespace, three ServiceAccounts (two the platform binds to its ClusterRoles,
+one the <code>openbao-claude-agents</code> store logs in as) and one directory per
+session.</p>
 <h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1474,12 +1476,12 @@ namespace, the two ServiceAccounts and one directory per session.</p>
 <td>The platform binds them to the read and write ClusterRoles. A pod gets a token only by setting <code>kubernetes.access</code>, which keeps the choice visible in the session's own file</td>
 </tr>
 <tr>
-<td><code>kubernetes.access: read</code></td>
-<td>The sessions investigate and open pull requests; the cluster changes through Git and ArgoCD, not through the agent</td>
+<td><code>kubernetes.access</code>, per session</td>
+<td>Only the cluster session has a token, and a read-only one: it investigates and opens pull requests; the cluster changes through Git and ArgoCD, not through the agent. The sessions hosted elsewhere set no access</td>
 </tr>
 <tr>
-<td><code>argocd.enabled: true</code></td>
-<td>Lets the agent read applications with the <code>claude</code> account's token instead of guessing from the Git side. The platform binds that account to <code>role:readonly</code>, so it cannot sync. Through <code>argo-grpc</code> it also needs the <code>homelab-session</code> rule to the server pod; the chart's name rule alone gets a 403 (<a href="https://github.com/JanWelker/agent-mooring/issues/3">agent-mooring#3</a>)</td>
+<td><code>argocd.enabled</code>, per session</td>
+<td>On for the cluster session only. Lets the agent read applications with the <code>claude</code> account's token instead of guessing from the Git side. The platform binds that account to <code>role:readonly</code>, so it cannot sync. Through <code>argo-grpc</code> it also needs the <code>homelab-session</code> rule to the server pod; the chart's name rule alone gets a 403 (<a href="https://github.com/JanWelker/agent-mooring/issues/3">agent-mooring#3</a>)</td>
 </tr>
 <tr>
 <td><code>repos</code> set per session</td>
@@ -1506,12 +1508,12 @@ namespace, the two ServiceAccounts and one directory per session.</p>
 <td>Cilium's Gateway only passes <code>TLSRoute</code> traffic through, it cannot terminate it; sshd itself listens on loopback only</td>
 </tr>
 <tr>
-<td><code>resources</code>: 768Mi requested, 4Gi limit</td>
-<td>An agent idles between prompts at a few hundred MiB; the chart's 2Gi request does not fit beside the rest of the workers. The limit leaves room for builds and subagents</td>
+<td><code>resources</code> in each session's values</td>
+<td>An agent idles between prompts at a few hundred MiB; the chart's default request does not fit beside the rest of the workers. The limit leaves room for builds and subagents</td>
 </tr>
 <tr>
-<td><code>ssh.authorizedKeys</code> holds one key per session, used for nothing else</td>
-<td>The listener is on the public Gateway, so a key is a login from the Internet; a leaked key then opens one session, not the one with the homelab write token too. Public keys are not secret</td>
+<td><code>ssh.authorizedKeys</code> holds the laptop's one key, the same in every session</td>
+<td>The listener is on the public Gateway, so a key is a login from the Internet, and this one opens every session, the one with the homelab write token included. Public keys are not secret; the private one is guarded like the laptop itself</td>
 </tr>
 </tbody>
 </table>
@@ -1566,21 +1568,21 @@ differs:</p>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  User agent
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  ProxyCommand openssl s_client -quiet -verify_return_error -servername %h -connect %h:443
 </span></code></pre></div>
-<p><code>sshd</code> admits only the user <code>agent</code>. Add <code>IdentityFile</code> per session, as in
+<p><code>sshd</code> admits only the user <code>agent</code>. Add the <code>IdentityFile</code> from
 <a href="#ssh-keys">SSH keys</a>. Then <code>ssh homelab.ssh.wlkr.ch</code> attaches to the tmux session <code>main</code>. With a
 command, <code>ssh homelab.ssh.wlkr.ch &lt;command&gt;</code> runs it directly, so <code>scp</code> and
 <code>rsync</code> work.</p>
 <h3 id="ssh-keys">SSH keys<a class="headerlink" href="#ssh-keys" title="Permanent link">&para;</a></h3>
-<p>One key pair per session, generated on the laptop and never reused:</p>
+<p>One key pair for the sessions, generated on the laptop and used for nothing
+else:</p>
 <ol>
-<li><code>ssh-keygen -t ed25519 -f ~/.ssh/claude-&lt;session&gt; -C claude-&lt;session&gt;</code>.</li>
-<li>Put the content of <code>~/.ssh/claude-&lt;session&gt;.pub</code> into the session's
+<li><code>ssh-keygen -t ed25519 -f ~/.ssh/claude-agents -C claude-agents</code>.</li>
+<li>Put the content of <code>~/.ssh/claude-agents.pub</code> into every session's
    <code>ssh.authorizedKeys</code>, replacing any other line, and merge.</li>
 <li>
-<p>In <code>~/.ssh/config</code>, above the <code>Host *.ssh.wlkr.ch</code> block:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Host &lt;session&gt;.ssh.wlkr.ch
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  IdentityFile ~/.ssh/claude-&lt;session&gt;
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  IdentitiesOnly yes
+<p>In the <code>Host *.ssh.wlkr.ch</code> block of <code>~/.ssh/config</code>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>  IdentityFile ~/.ssh/claude-agents
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  IdentitiesOnly yes
 </span></code></pre></div>
 </li>
 </ol>
@@ -1691,8 +1693,8 @@ changes there like in its own repositories.</p>
 <li>Copy a session directory, for example <code>claude-sitzplan/</code> to
    <code>claude-&lt;session&gt;/</code>.</li>
 <li>In <code>application.yaml</code>, change <code>metadata.name</code>, <code>session</code>, <code>repos</code>, the
-   access toggles and <code>extraEgressFQDNs</code>, keep <code>skills.repo</code>, and replace
-   <code>ssh.authorizedKeys</code> with the session's own key (see <a href="#ssh-keys">SSH keys</a>).</li>
+   access toggles and <code>extraEgressFQDNs</code>, and keep <code>skills.repo</code> and
+   <code>ssh.authorizedKeys</code> (see <a href="#ssh-keys">SSH keys</a>).</li>
 <li>Create the token and write it to OpenBao before the merge, so the
    <code>ExternalSecret</code> resolves on the first sync.</li>
 <li>Add the session to <a href="#sessions">Sessions</a> and merge. It answers at

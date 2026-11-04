@@ -1367,7 +1367,7 @@ whether a policy holds across the portfolio.</p>
 <td>Both halves must name the same issuer and client ID; the API server validates the ID token the browser obtained. <code>preferred_username</code> is Authentik's username claim, which is safe only while users cannot change it (see <a href="../conventions/#6-authentication-is-authentiks-not-the-applications">Conventions → Authentication</a>); Dependency-Track also stores each account's first <code>sub</code> and refuses a later login under another, so a rename could only claim an account that has never logged in. <code>groups</code> arrives with the <code>profile</code> scope, so team membership follows Authentik's groups. See <a href="#oidc">OIDC</a></td>
 </tr>
 <tr>
-<td><code>apiServer.web.resources</code>, 1Gi requested, 3Gi limit</td>
+<td><code>apiServer.web.resources</code>, below upstream's advice</td>
 <td>The JVM sizes its heap from the limit. Upstream recommends 8Gi for production; the portfolio here is a few hundred small images</td>
 </tr>
 <tr>
@@ -1435,7 +1435,8 @@ shape is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → 
 </table>
 <h3 id="sbom-upload">SBOM upload<a class="headerlink" href="#sbom-upload" title="Permanent link">&para;</a></h3>
 <p><code>sbom-upload.yaml</code> is a CronJob, a ConfigMap holding the script, and a
-ServiceAccount. At 05:00 it lists every <code>SbomReport</code> in the cluster and sends
+ServiceAccount. Nightly, on the CronJob's <code>schedule</code>, it lists every
+<code>SbomReport</code> in the cluster and sends
 each distinct image that is running, once, to <code>PUT /api/v1/bom</code> with
 <code>autoCreate</code>.</p>
 <table>
@@ -1479,12 +1480,12 @@ each distinct image that is running, once, to <code>PUT /api/v1/bom</code> with
 <td>A missing Secret would leave the pod in <code>CreateContainerConfigError</code>, and a <code>Forbid</code> CronJob never runs again behind a Job that never finishes; the script exits 1 with the reason instead. The wave is the same argument one level up: this is the one secret only a running Dependency-Track can issue, so it is fetched after the application, never in a wave that gates it. <code>make bao-secrets</code> writes the path empty rather than leaving it absent, for the same reason</td>
 </tr>
 <tr>
-<td>Runs before the platform's <code>findings-history</code> job at 06:30</td>
+<td>Runs before the platform's <a href="https://homelab.wlkr.ch/platform/trivy-operator/#history"><code>findings-history</code></a> job</td>
 <td>Both read the same reports; neither depends on the other</td>
 </tr>
 <tr>
-<td><code>activeDeadlineSeconds</code> ends the Job before 06:30</td>
-<td><code>concurrencyPolicy: Forbid</code> never starts tonight's run behind one still hanging on a request, and the 06:30 run reads the same reports; a run that overran is killed in time for both</td>
+<td><code>activeDeadlineSeconds</code> ends the Job before <code>findings-history</code> starts</td>
+<td><code>concurrencyPolicy: Forbid</code> never starts tonight's run behind one still hanging on a request, and the later job reads the same reports; a run that overran is killed in time for both</td>
 </tr>
 </tbody>
 </table>
@@ -1683,14 +1684,17 @@ after the source is switched on, not the minute it is.
 <p>The portfolio is one project per image; the <code>namespace:</code> tags say where it
 runs. A vulnerability's Affected Projects view is the cross-image question
 Trivy's per-container reports cannot answer directly. The same objects are
-in the API:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Every project and its version, newest upload first</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-Api-Key: </span><span class="nv">$KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"https://sbom.k8s.wlkr.ch/api/v1/project?sortName=lastBomImport&amp;sortOrder=desc"</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.[] | [.name, .version, .lastBomImport] | @tsv'</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># Findings for one project</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-Api-Key: </span><span class="nv">$KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"https://sbom.k8s.wlkr.ch/api/v1/finding/project/&lt;uuid&gt;"</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.[] | [.vulnerability.severity, .vulnerability.vulnId, .component.purl] | @tsv'</span>
+in the API, with <code>$KEY</code> an API key of a team created under Administration →
+Access Management → Teams, or the upload job's:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">KEY</span><span class="o">=</span><span class="s2">"</span><span class="k">$(</span>kubectl<span class="w"> </span>-n<span class="w"> </span>dependency-track<span class="w"> </span>get<span class="w"> </span>secret<span class="w"> </span>sbom-upload<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.data.api-key}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>base64<span class="w"> </span>-d<span class="k">)</span><span class="s2">"</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Every project and its version, newest upload first</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-Api-Key: </span><span class="nv">$KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"https://sbom.k8s.wlkr.ch/api/v1/project?sortName=lastBomImport&amp;sortOrder=desc"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.[] | [.name, .version, .lastBomImport] | @tsv'</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Findings for one project</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-Api-Key: </span><span class="nv">$KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"https://sbom.k8s.wlkr.ch/api/v1/finding/project/&lt;uuid&gt;"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.[] | [.vulnerability.severity, .vulnerability.vulnId, .component.purl] | @tsv'</span>
 </span></code></pre></div>
 <h2 id="health-check">Health check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>dependency-track<span class="w"> </span>get<span class="w"> </span>pods,cronjob
@@ -1699,9 +1703,9 @@ in the API:</p>
 </span></code></pre></div>
 <p>The database should report <code>Cluster in healthy state</code>, the version endpoint
 answers without a login, and the last <code>sbom-upload</code> job should have
-succeeded with a line like <code>66 images, 0 failed, 0 reports skipped, 110 from
-superseded revisions</code>. In the UI, the Dashboard's
-portfolio count should match that number.</p>
+succeeded with its closing line of images uploaded, failed, reports skipped
+and superseded revisions, the first three of which should read <code>0</code>. In the
+UI, the Dashboard's portfolio count should match the images number.</p>
 <h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
 <div class="admonition warning">
 <p class="admonition-title">The KEK is the database</p>
@@ -1713,19 +1717,21 @@ restore of the database is only a restore together with the key.</p>
 </div>
 <ul>
 <li><strong>A login that fails on <code>iss</code></strong> is a mismatch between the issuer in
-  <code>application.yaml</code> and Authentik's, usually the trailing slash. Both
-  Deployments carry the value; change it in one place.</li>
+  <code>application.yaml</code> and Authentik's, usually the trailing slash. The value
+  is written twice there, as <code>DT_OIDC_ISSUER</code> and the frontend's
+  <code>OIDC_ISSUER</code>; change both.</li>
 <li><strong>A first login that lands nowhere</strong> is a user with no team. Provisioning
   creates the account; the group mapping in <a href="#first-login">First login</a> is
   what grants it anything.</li>
 <li><strong>A job that reports <code>no API key yet</code></strong> is the <a href="#first-login">first-login</a>
   step not done, or the <code>ExternalSecret</code> not refreshed since it was; the
   Secret carries a <code>data-hash</code> annotation that moves when the value does.</li>
-<li><strong>A sync that stops at the database</strong> with <code>could not get secret data from
-  provider</code> is <code>kv/dependency-track/sbom-upload</code> missing entirely. Run
-  <code>make bao-secrets</code> in the platform repository, which writes the path empty
-  when there is no key yet; an absent path fails the <code>ExternalSecret</code>, and a
-  failed resource stops the wave it is in.</li>
+<li><strong>A sync that fails at the <code>sbom-upload</code> <code>ExternalSecret</code></strong> with <code>could
+  not get secret data from provider</code> is <code>kv/dependency-track/sbom-upload</code>
+  missing entirely. Run <code>make bao-secrets</code> in the platform repository, which
+  writes the path empty when there is no key yet; an absent path fails the
+  <code>ExternalSecret</code>. It sits at wave 1, so Dependency-Track itself is up, only
+  the job's key is not.</li>
 <li><strong>Old image versions pile up as projects</strong> when inactive project
   deletion is off under Maintenance, or the team lacks the permission to
   <a href="#retired-projects">retire</a> them. The job never deletes.</li>

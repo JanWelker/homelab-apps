@@ -864,6 +864,34 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Recovery
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recovery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#removing-a-directory-from-the-volume" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Removing a directory from the volume
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1147,6 +1175,34 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#recovery" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Recovery
+      </span>
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recovery">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#removing-a-directory-from-the-volume" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Removing a directory from the volume
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1188,8 +1244,11 @@
 <h1 id="opencloud">OpenCloud<a class="headerlink" href="#opencloud" title="Permanent link">&para;</a></h1>
 <p><a href="https://opencloud.eu/">OpenCloud</a> is the household's file sync and share:
 one Go binary, no database, with desktop, iOS and Android clients. Upstream
-publishes no open Helm chart, so this is a Deployment, a Service and a PVC
-around the official image, per
+publishes no open Helm chart, so <code>opencloud/</code> is plain manifests around the
+official image: <code>deployment.yaml</code>, <code>service.yaml</code>, <code>pvc.yaml</code>,
+<code>httproute.yaml</code>, <code>servicemonitor.yaml</code>, <code>secrets.yaml</code>, <code>networkpolicy.yaml</code>,
+<code>namespace.yaml</code> and two ConfigMaps, <code>csp.yaml</code> and
+<code>authentik-blueprint.yaml</code>, per
 <a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>.</p>
 <h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
 <table>
@@ -1239,7 +1298,7 @@ one instance across two backup mechanisms, one of which does not exist for
 buckets here, and upstream documents no migration into or out of it.</p>
 <p>Upstream's backup guidance is to stop the instance first. The RBD snapshot
 is crash-consistent instead: metadata is written per operation on the same
-filesystem, and the run at 02:00 sees no sync traffic. The search index
+filesystem, and the nightly <a href="https://homelab.wlkr.ch/platform/velero/">Velero</a> run sees no sync traffic. The search index
 is rebuilt if it disagrees after a restore; nothing is lost.</p>
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
 <p>The values in <code>opencloud/deployment.yaml</code> that are not self-explanatory:</p>
@@ -1355,8 +1414,13 @@ into <code>opencloud-env</code> under the environment variable names. Losing the
 OpenBao path and regenerating is a new instance: the JWT secret signs the
 internal tokens and the IDs name the storage mount and the system user, so
 the data on the volume would no longer match.</p>
+<p><code>idm-admin-password</code> is the built-in IDM's <code>admin</code> account, which the first
+start creates. With the IdP excluded nothing presents a login form for it, so
+there is no local break-glass account here, not even the one
+<a href="../conventions/#6-authentication-is-authentiks-not-the-applications">rule 6</a>
+allows: Authentik is the only way in.</p>
 <h3 id="network-policy">Network policy<a class="headerlink" href="#network-policy" title="Permanent link">&para;</a></h3>
-<p>Every rule in <code>opencloud/networkpolicy.yaml</code>, and why it is there. The
+<p>The rules in <code>opencloud/networkpolicy.yaml</code>, and why each is there. The
 shape is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → Ship a <code>CiliumNetworkPolicy</code></a>.</p>
 <table>
 <thead>
@@ -1367,6 +1431,10 @@ shape is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → 
 </thead>
 <tbody>
 <tr>
+<td>Ingress from the namespace, from <code>host</code> and <code>remote-node</code>; egress to the namespace</td>
+<td>The rules every policy carries: <a href="https://homelab.wlkr.ch/platform/security-policies/#what-every-policy-contains">What every policy contains</a></td>
+</tr>
+<tr>
 <td>Ingress from <code>ingress</code> on 9200</td>
 <td>The Gateway reaches the server directly; OpenCloud handles its own login, and the desktop and mobile clients arrive the same way</td>
 </tr>
@@ -1376,7 +1444,7 @@ shape is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → 
 </tr>
 <tr>
 <td>Egress from the server to the Authentik server pods on 9000</td>
-<td>Discovery, the signing keys and the token endpoint go to <code>auth.k8s.wlkr.ch</code>, which resolves to the public address and is <code>world</code> to Cilium. The Gateway's Envoy then checks this policy against the Authentik pod it picks and answers 403 itself when that pod is not listed, so both the name and the pod are allowed</td>
+<td>Discovery, the signing keys and the token endpoint go to <code>auth.k8s.wlkr.ch</code>, which resolves to the Gateway's own address, private but <code>world</code> to Cilium. The Gateway's Envoy then checks this policy against the Authentik pod it picks and answers 403 itself when that pod is not listed, so both the name and the pod are allowed</td>
 </tr>
 <tr>
 <td>Egress from the server to <code>auth.k8s.wlkr.ch</code> on 443</td>
@@ -1384,8 +1452,8 @@ shape is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → 
 </tr>
 </tbody>
 </table>
-<p>That is the complete list. No app store, no update check, no mail, no
-object store: the search index and NATS run inside the process.</p>
+<p>No app store, no update check, no mail, no object store: the search index
+and NATS run inside the process.</p>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
 <p>Membership in one of two Authentik groups is an account:</p>
 <table>
@@ -1421,6 +1489,8 @@ opens Authentik in the browser.</p>
 <code>Ready</code>, and the issuer printed is <code>https://auth.k8s.wlkr.ch/</code>. After a
 first start, the <code>idm.boltdb</code> on the volume is larger than the 32 KiB of an
 empty Bolt file; see <a href="#pitfalls">Pitfalls</a>.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>opencloud<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>deploy/opencloud<span class="w"> </span>--<span class="w"> </span>ls<span class="w"> </span>-l<span class="w"> </span>/var/lib/opencloud/idm/
+</span></code></pre></div>
 <h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1452,14 +1522,72 @@ empty Bolt file; see <a href="#pitfalls">Pitfalls</a>.</p>
 </tr>
 <tr>
 <td>Login ends on "Not logged in"; the log shows <code>failed to add user</code> with <code>LDAP Result Code 49</code> from <code>graph</code> and <code>not found</code> from <code>idm</code></td>
-<td>The IDM database under <code>idm/</code> on the volume is a bare Bolt file: a first pod that died during the bootstrap, as in the row below, left it created but without the service users, and every later start sees the file and skips the bootstrap. Remove the <code>idm</code> directory the same way as <code>search</code> below and restart; the next start bootstraps it. Only safe while no account exists yet, which is the case when this symptom appears</td>
+<td>The IDM database under <code>idm/</code> on the volume is a bare Bolt file: a first pod that died during the bootstrap, as in the row below, left it created but without the service users, and every later start sees the file and skips the bootstrap. Remove the <code>idm</code> directory (<a href="#recovery">Recovery</a>); the next start bootstraps it. Only safe while no account exists yet, which is the case when this symptom appears</td>
 </tr>
 <tr>
 <td>The pod exits with <code>error parsing mapping JSON: unexpected end of JSON input</code> from the <code>search</code> service</td>
-<td>The Bleve index under <code>search/</code> on the volume was created by a pod that died before writing the mapping, which happens when another service fails on the same first start. Remove the <code>search</code> directory from the volume, from a pod on the same node that mounts the PVC while the container is in its back-off, and the index is rebuilt from the files on the next start. Scaling the Deployment to zero first does not hold: self-heal restores the replica within a minute</td>
+<td>The Bleve index under <code>search/</code> on the volume was created by a pod that died before writing the mapping, which happens when another service fails on the same first start. Remove the <code>search</code> directory (<a href="#recovery">Recovery</a>); the index is rebuilt from the files on the next start</td>
 </tr>
 </tbody>
 </table>
+<h2 id="recovery">Recovery<a class="headerlink" href="#recovery" title="Permanent link">&para;</a></h2>
+<h3 id="removing-a-directory-from-the-volume">Removing a directory from the volume<a class="headerlink" href="#removing-a-directory-from-the-volume" title="Permanent link">&para;</a></h3>
+<p>For the two first-start failures above. The volume is <code>ReadWriteOnce</code> and
+stays attached to the node of the crashing pod, so the debug pod goes on that
+node; scaling the Deployment to zero first does not hold, self-heal restores
+the replica within a minute.</p>
+<ol>
+<li>
+<p>Start a debug pod beside the crashing one, on its node and from its image,
+   with the <code>restricted</code> context the namespace enforces:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">NODE</span><span class="o">=</span><span class="k">$(</span>kubectl<span class="w"> </span>-n<span class="w"> </span>opencloud<span class="w"> </span>get<span class="w"> </span>pod<span class="w"> </span>-l<span class="w"> </span>app.kubernetes.io/name<span class="o">=</span>opencloud<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.items[0].spec.nodeName}'</span><span class="k">)</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nv">IMAGE</span><span class="o">=</span><span class="k">$(</span>kubectl<span class="w"> </span>-n<span class="w"> </span>opencloud<span class="w"> </span>get<span class="w"> </span>deploy<span class="w"> </span>opencloud<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.spec.template.spec.containers[0].image}'</span><span class="k">)</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>opencloud<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;EOF</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="s">apiVersion: v1</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="s">kind: Pod</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="s">metadata:</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="s">  name: opencloud-debug</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="s">spec:</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="s">  nodeName: $NODE</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="s">  restartPolicy: Never</span>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="s">  automountServiceAccountToken: false</span>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="s">  securityContext:</span>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="s">    runAsNonRoot: true</span>
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="s">    runAsUser: 1000</span>
+</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="s">    runAsGroup: 1000</span>
+</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="s">    fsGroup: 1000</span>
+</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="s">    seccompProfile:</span>
+</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="s">      type: RuntimeDefault</span>
+</span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="s">  containers:</span>
+</span><span id="__span-2-20"><a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="s">    - name: shell</span>
+</span><span id="__span-2-21"><a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="s">      image: $IMAGE</span>
+</span><span id="__span-2-22"><a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="s">      command: ["sleep", "3600"]</span>
+</span><span id="__span-2-23"><a id="__codelineno-2-23" name="__codelineno-2-23" href="#__codelineno-2-23"></a><span class="s">      securityContext:</span>
+</span><span id="__span-2-24"><a id="__codelineno-2-24" name="__codelineno-2-24" href="#__codelineno-2-24"></a><span class="s">        allowPrivilegeEscalation: false</span>
+</span><span id="__span-2-25"><a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a><span class="s">        capabilities:</span>
+</span><span id="__span-2-26"><a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a><span class="s">          drop: ["ALL"]</span>
+</span><span id="__span-2-27"><a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a><span class="s">      volumeMounts:</span>
+</span><span id="__span-2-28"><a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a><span class="s">        - name: data</span>
+</span><span id="__span-2-29"><a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a><span class="s">          mountPath: /var/lib/opencloud</span>
+</span><span id="__span-2-30"><a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a><span class="s">  volumes:</span>
+</span><span id="__span-2-31"><a id="__codelineno-2-31" name="__codelineno-2-31" href="#__codelineno-2-31"></a><span class="s">    - name: data</span>
+</span><span id="__span-2-32"><a id="__codelineno-2-32" name="__codelineno-2-32" href="#__codelineno-2-32"></a><span class="s">      persistentVolumeClaim:</span>
+</span><span id="__span-2-33"><a id="__codelineno-2-33" name="__codelineno-2-33" href="#__codelineno-2-33"></a><span class="s">        claimName: opencloud-data</span>
+</span><span id="__span-2-34"><a id="__codelineno-2-34" name="__codelineno-2-34" href="#__codelineno-2-34"></a><span class="s">EOF</span>
+</span></code></pre></div>
+</li>
+<li>
+<p>Remove the directory, <code>idm</code> or <code>search</code>:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>opencloud<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>opencloud-debug<span class="w"> </span>--<span class="w"> </span>rm<span class="w"> </span>-r<span class="w"> </span>/var/lib/opencloud/search
+</span></code></pre></div>
+</li>
+<li>
+<p>Delete the debug pod; the container's next restart recreates what was
+   removed:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>opencloud<span class="w"> </span>delete<span class="w"> </span>pod<span class="w"> </span>opencloud-debug
+</span></code></pre></div>
+</li>
+</ol>
 
 
 

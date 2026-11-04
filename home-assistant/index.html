@@ -1143,8 +1143,11 @@
 
 <h1 id="home-assistant">Home Assistant<a class="headerlink" href="#home-assistant" title="Permanent link">&para;</a></h1>
 <p><a href="https://www.home-assistant.io/">Home Assistant</a> runs the house. Upstream
-publishes no Helm chart and the community ones are repackagers, so this is a
-Deployment, a Service, a PVC and a ConfigMap around the official image, per
+publishes no Helm chart and the community ones are repackagers, so
+<code>home-assistant/</code> is plain manifests around the official image:
+<code>deployment.yaml</code>, <code>service.yaml</code>, <code>pvc.yaml</code>, <code>configmap.yaml</code>,
+<code>httproute.yaml</code>, <code>database.yaml</code> with <code>backup.yaml</code>, <code>networkpolicy.yaml</code> and
+<code>namespace.yaml</code>, per
 <a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>.</p>
 <h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
 <table>
@@ -1227,7 +1230,7 @@ Deployment, a Service, a PVC and a ConfigMap around the official image, per
 </tr>
 <tr>
 <td>Root with every capability dropped but <code>NET_BIND_SERVICE</code>, no API token; the namespace enforces <code>baseline</code></td>
-<td>The image runs as root under s6 and writes <code>/config</code>, and upstream does not support running it otherwise, so <code>runAsNonRoot</code> and a read-only root do not apply. Root owns everything it touches, so the one capability it uses is binding SSDP's port 1900; <code>baseline</code> forbids adding <code>NET_RAW</code>, so DHCP discovery joins the <a href="#pitfalls">discovery that does not work here</a> anyway. Nothing in the pod talks to the API server, so the <code>default</code> ServiceAccount's token stays unmounted, per <a href="https://homelab.wlkr.ch/platform/security-policies/#default-serviceaccount-tokens">Default ServiceAccount tokens</a></td>
+<td>The image runs as root under s6 and writes <code>/config</code>, and upstream does not support running it otherwise, so <code>runAsNonRoot</code> and a read-only root do not apply. Root owns everything it touches; <code>deployment.yaml</code> keeps <code>NET_BIND_SERVICE</code>, which no port it opens needs, 1900 and 8123 being above 1024. <code>baseline</code> forbids adding <code>NET_RAW</code>, so DHCP discovery joins the <a href="#pitfalls">discovery that does not work here</a> anyway. Nothing in the pod talks to the API server, so the <code>default</code> ServiceAccount's token stays unmounted, per <a href="https://homelab.wlkr.ch/platform/security-policies/#default-serviceaccount-tokens">Default ServiceAccount tokens</a></td>
 </tr>
 <tr>
 <td>An init container from the same image seeds <code>/config</code> on every start</td>
@@ -1260,7 +1263,7 @@ Deployment, a Service, a PVC and a ConfigMap around the official image, per
 </tbody>
 </table>
 <h3 id="network-policy">Network policy<a class="headerlink" href="#network-policy" title="Permanent link">&para;</a></h3>
-<p>Every rule in <code>home-assistant/networkpolicy.yaml</code>, and why it is there. The
+<p>The rules in <code>home-assistant/networkpolicy.yaml</code>, and why each is there. The
 shape is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → Ship a <code>CiliumNetworkPolicy</code></a>;
 rollout and debugging are in
 <a href="https://homelab.wlkr.ch/platform/security-policies/#network-policies">Security Policies</a>.</p>
@@ -1272,6 +1275,10 @@ rollout and debugging are in
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>Ingress from the namespace, from <code>host</code> and <code>remote-node</code>; egress to the namespace</td>
+<td>The rules every policy carries: <a href="https://homelab.wlkr.ch/platform/security-policies/#what-every-policy-contains">What every policy contains</a></td>
+</tr>
 <tr>
 <td>Ingress on 8123 from the Authentik server pods only</td>
 <td>The outpost is the only path to the UI. No <code>fromEntities: ingress</code>, so a request straight from the Gateway cannot skip it. Nothing else in the cluster has a reason to connect: this namespace holds a long-lived token for every device in the house. With the rule missing, the hostname answers with a gateway error after a successful Authentik login</td>
@@ -1294,7 +1301,7 @@ rollout and debugging are in
 </tr>
 <tr>
 <td>Egress from the database pod to <code>kube-apiserver</code></td>
-<td>The instance manager reports its status there; its liveness check fails otherwise</td>
+<td>The instance manager reports its status there; its liveness check fails otherwise. The object store for WAL and base backups is the platform's <code>cnpg-backups</code> policy, see <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#backups">CloudNativePG → Backups</a></td>
 </tr>
 </tbody>
 </table>
@@ -1316,7 +1323,7 @@ CloudNativePG has produced the Secret.</p>
 <h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
 <div class="admonition warning">
 <p class="admonition-title">The API is not behind Authentik</p>
-<p>The companion apps and every webhook authenticate with a long-lived token and cannot complete an interactive login, so <code>skip_path_regex</code> on the provider lets <code>/api/</code>, <code>/auth/token</code> and the external-auth callback through. Home Assistant's own accounts are the only thing guarding those paths. Revoking an Authentik account does not revoke a Home Assistant token; do that under Settings → People.</p>
+<p><code>/api/</code>, <code>/auth/token</code> and the external-auth callback are exempt on the provider, so Home Assistant's own accounts guard them and revoking an Authentik account does not revoke a Home Assistant token: do that under Settings → People. See <a href="https://homelab.wlkr.ch/platform/authentik/#pitfalls">Authentik → Pitfalls</a>.</p>
 </div>
 <ul>
 <li><strong>No local device discovery.</strong> mDNS and SSDP need host networking, which

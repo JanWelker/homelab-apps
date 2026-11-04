@@ -1,13 +1,13 @@
 # Wollbi-Fescht
 
-[fest.wollbi.ch](<https://fest.wollbi.ch>) is the invitation to the street's summer party, and the archive of every invitation since 1987. It was a Pelican site until the pages became rows in a database: the content is now edited at `/admin` and the repository holds the application, not the text. The image is built in [JanWelker/fest.wollbi.ch](<https://github.com/JanWelker/fest.wollbi.ch>), which makes this the second application here whose upstream is our own — per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
+[fest.wollbi.ch](<https://fest.wollbi.ch>) is the invitation to the street's summer party, and the archive of every invitation since 1987. It was a Pelican site until the pages became rows in a database: the content is now edited at `/admin` and the repository holds the application, not the text. The image is built in [JanWelker/fest.wollbi.ch](<https://github.com/JanWelker/fest.wollbi.ch>), so its upstream is our own — per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
 
 ## At a glance
 
 |  |  |
 | --- | --- |
 | URL | [fest.wollbi.ch](<https://fest.wollbi.ch>) — public, no login |
-| Authentication | Authentik proxy outpost on `/admin` and `/api`, in front of Payload's own login; uploaded files under `/api/media/file` stay public; `/seed` is not routed |
+| Authentication | Authentik proxy outpost on `/admin` and `/api`, in front of Payload's own login; uploaded files under `/api/media/file` stay public; `/seed` redirects to `/` |
 | Storage | A PVC for what editors upload after the seed |
 | Database | CloudNativePG `Cluster` `fest-wollbi-db` |
 | Secrets | `kv/fest-wollbi/config` in OpenBao |
@@ -22,7 +22,7 @@
 | Plain manifests around our own image | One Next.js process with one port and one database; the site repository's README is the whole deployment contract |
 | The namespace enforces `restricted` | The image is distroless and runs as uid 65532, its `nonroot` user, with a read-only root filesystem; the two things it writes, the uploads and Next.js' render cache, are volumes. There is no shell in it, so `kubectl exec` is for `node -e`, not for poking around |
 | `DATABASE_URL` from `fest-wollbi-db-app`, key `uri` | Payload wants one connection string and CloudNativePG assembles it; see [the contract](<https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract>) |
-| `PAYLOAD_SECRET` from OpenBao | It signs every editor session and encrypts what Payload keeps encrypted. Generated in the cluster it would change on every rebuild and log everyone out |
+| `PAYLOAD_SECRET` from OpenBao | It signs every editor session and encrypts what Payload keeps encrypted. The `PushSecret` in `secrets.yaml` writes it once, `IfNotExists`, so a rebuilt cluster reads the same value back and nobody is logged out; see [Conventions → Real secrets come from OpenBao](<https://homelab-apps.wlkr.ch/conventions/#7-real-secrets-come-from-openbao>) |
 | `NEXT_PUBLIC_SERVER_URL` | The origin Payload trusts for CSRF and builds absolute URLs from. TLS ends at the Gateway, so the pod's own address is the wrong answer — see [Behind the Gateway](<https://homelab-apps.wlkr.ch/conventions/#behind-the-gateway>) |
 | An `emptyDir` on `/app/.next/cache` | Next.js writes its render cache at runtime and the root filesystem is read-only. It is a cache: losing it on a restart costs one slow first request |
 | Four rules on one `HTTPRoute` | The site is an invitation to the neighbours, so `/` reaches the app directly. `/admin` goes through the outpost, and so do Payload's `/api`, which the admin UI is only a client of, and `/outpost.goauthentik.io`, where the outpost finishes the login on this hostname; without it the login ends on a 404 from the site. The pages read Payload in-process, so the browser needs only `/api/media/file`, the uploads they link to, which goes straight to the app. `/seed` redirects to `/`: the seed hook calls the Service, so nothing outside the namespace has a reason to reach it, and Gateway API has no rule that refuses a request. A longer path prefix wins in Gateway API, so the order of the rules does not matter. The cross-namespace `backendRef` works only because the platform's `referencegrant.yaml` names this namespace |
@@ -42,22 +42,17 @@ Afterwards the database is the source of truth and the seed is a no-op. The Job'
 
 ### Network policy
 
-Every rule in [`fest-wollbi/networkpolicy.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/fest-wollbi/networkpolicy.yaml>), and why it is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
+The rules in [`fest-wollbi/networkpolicy.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/fest-wollbi/networkpolicy.yaml>), and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
 
 | Rule | Why |
 | --- | --- |
-| Ingress on 3000 from `ingress` | The public site. This is the one application here that is meant to be read by people Authentik has never heard of |
+| Ingress from the namespace, from `host` and `remote-node`; egress to the namespace | The rules every policy carries: [What every policy contains](<https://homelab.wlkr.ch/platform/security-policies/#what-every-policy-contains>) |
+| Ingress on 3000 from `ingress` | The public site; it is meant to be read by people Authentik has never heard of |
 | Ingress on 3000 from the Authentik server pods, with an L7 `http` rule | `/admin` and `/api` through the outpost |
 | Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics. Payload exposes none |
 | Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/#sync-stuck-on-the-database>) |
 | Egress to the namespace, and nothing else at all | The site renders from its own database and serves its own uploads. There is no `toFQDNs` block, which is the shortest way to say a public site never calls out |
-| Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise |
-
-## Usage
-
-### Editing
-
-`https://fest.wollbi.ch/admin` — Authentik first, then Payload's own login. Pages are made of three blocks, which are the three shapes the Pelican pages had: prose, a run of images under a heading, and a download.
+| Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise. The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](<https://homelab.wlkr.ch/platform/cloudnative-pg/#backups>) |
 
 ### Secrets
 
@@ -69,6 +64,12 @@ Every rule in [`fest-wollbi/networkpolicy.yaml`](<https://github.com/JanWelker/h
 | `seed-token` | `SEED_TOKEN`: what the seed hook authenticates with, so the hook never holds the key that signs sessions |
 | `admin-password` | The first editor's password, read only while the database is empty |
 
+## Usage
+
+### Editing
+
+`https://fest.wollbi.ch/admin` — Authentik first, then Payload's own login. Pages are made of three blocks, which are the three shapes the Pelican pages had: prose, a run of images under a heading, and a download.
+
 ## Health check
 
 ```bash
@@ -78,7 +79,7 @@ kubectl -n fest-wollbi logs job/fest-wollbi-seed
 curl -sI https://fest.wollbi.ch/ | head -1
 ```
 
-The seed Job's log is the whole migration report: `{"seeded":true,...}` on the first run and `{"seeded":false,"reason":"pages already exist"}` on every one after it.
+The seed Job's log is the whole migration report: `{"seeded":true,...}` on the first run and `{"seeded":false,"reason":"pages already exist"}` on every one after it. The Job lives for `ttlSecondsAfterFinished` in `seed-job.yaml`; after that the report is in [Loki](<https://homelab.wlkr.ch/platform/logging/#usage>) as `{namespace="fest-wollbi", container="seed"}`.
 
 ## Pitfalls
 
@@ -86,8 +87,8 @@ The seed Job's log is the whole migration report: `{"seeded":true,...}` on the f
 >
 > **The hostname is not `k8s.wlkr.ch`**
 >
-> This is the first application on a second domain. It needs the `wollbi.ch` listener and certificate on the apps Gateway and `wollbi.ch` in external-dns' `domainFilters`, all in the platform repository. Without them the route exists, resolves to nothing and serves no certificate.
+> This site is on a second domain. It needs the `wollbi.ch` listener and certificate on the apps Gateway and `wollbi.ch` in external-dns' `domainFilters`, all in the platform repository. Without them the route exists, resolves to nothing and serves no certificate.
 
 - **A new field needs a migration.** The Postgres adapter ignores schema push in production, so a collection change that works on a laptop does nothing here until `payload migrate:create` has been run and committed in the site repository.
-- **The uploads volume and the database restore together.** The uploads come back from a Velero night, the database from its WAL archive; restore the database to that night's backup time, or records point at files that are gone.
+- **The uploads volume and the database restore together.** The uploads come back from a Velero night, the database from its WAL archive; restore the database to that night's backup time ([Point-in-time restore](<https://homelab.wlkr.ch/platform/cloudnative-pg/#point-in-time-restore>)), or records point at files that are gone.
 - **Deleting `kv/fest-wollbi/config` logs the editors out** and does not change the first editor's password, which is read only while the database is empty.

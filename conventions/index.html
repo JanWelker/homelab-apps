@@ -1311,6 +1311,9 @@ why every Application excludes it from its own source:</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="w">    </span><span class="nt">directory</span><span class="p">:</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">      </span><span class="nt">exclude</span><span class="p">:</span><span class="w"> </span><span class="s">"application.yaml"</span>
 </span></code></pre></div>
+<p>Exception: the <code>claude-*</code> sessions have no <code>exclude</code>, because an OCI chart
+source has no directory for it to act on; see
+<a href="../claude-agents/#configuration">Claude agents</a>.</p>
 <h2 id="the-rules">The rules<a class="headerlink" href="#the-rules" title="Permanent link">&para;</a></h2>
 <h3 id="1-project-apps">1. <code>project: apps</code><a class="headerlink" href="#1-project-apps" title="Permanent link">&para;</a></h3>
 <p>The ApplicationSet fails the whole set rather than generate a workload in the
@@ -1322,8 +1325,10 @@ repackager's. Dependency-Track publishes its own chart; Home Assistant publishes
 none, so it is plain manifests around the official
 <code>ghcr.io/home-assistant/home-assistant</code> image.</p>
 <p>The user's own chart wrapping the user's own image is allowed, as with the Flowscape images and the <code>agent-mooring</code> chart.</p>
-<p>Pin every version. No <code>latest</code>, no floating tags. Renovate moves them, three
-days after a release, and the <code>image-scan.yaml</code> workflow fails a pull request
+<p>Pin every version. No <code>latest</code>, no floating tags. Renovate moves them; the
+release age and schedule are set per package in <code>renovate.json</code>, and the
+user's own images move at once, since the wait guards against an upstream
+tag being pulled. The <code>image-scan.yaml</code> workflow fails a pull request
 whose new image carries a fixable CRITICAL the old one did not — the
 <a href="https://homelab.wlkr.ch/development/maintenance/#ci-workflows">same gate as the platform</a>.</p>
 <div class="admonition warning">
@@ -1365,11 +1370,15 @@ that runs at <code>privileged</code>. Set <code>enforce</code> to what the appli
 <code>audit</code>/<code>warn</code> stricter, so the violations a tighter level would catch stay
 visible.</p>
 <p>Annotate it <code>Prune=false</code>: pruning a <code>Namespace</code> deletes every PVC inside it.</p>
+<p>Exception: the <code>claude-*</code> sessions ship no namespace and share the one
+<code>claude-agents/</code> owns, so removing a session cannot prune the others' volumes;
+see <a href="../claude-agents/#configuration">Claude agents</a>.</p>
 <h3 id="5-ship-a-ciliumnetworkpolicy">5. Ship a <code>CiliumNetworkPolicy</code><a class="headerlink" href="#5-ship-a-ciliumnetworkpolicy" title="Permanent link">&para;</a></h3>
 <p>Not a plain <code>NetworkPolicy</code>, which blocks the kubelet's health probes. Every
 policy needs <code>fromEntities: [host, remote-node]</code> for those probes, one rule
-for the way users arrive, and an egress half: the namespace and every
-outside name as <code>toFQDNs</code>. No DNS rule: the platform grants every pod its
+for the way users arrive, the namespace itself on both halves
+(<code>fromEndpoints: [{}]</code>, <code>toEndpoints: [{}]</code>), and every outside name as
+<code>toFQDNs</code>. No DNS rule: the platform grants every pod its
 lookups through the proxy in one cluster-wide policy, so a copy here only
 hides what the namespace adds — see
 <a href="https://homelab.wlkr.ch/platform/security-policies/#cluster-wide-rules">Security Policies → Cluster-wide rules</a>.
@@ -1386,6 +1395,10 @@ platform's
 <p>At the default wave it lands after the <code>Cluster</code> from rule 3, and a rule the
 <code>Cluster</code> needs in order to go Healthy can never unblock the wave it is stuck
 behind — see <a href="#sync-stuck-on-the-database">Sync stuck on the database</a>.</p>
+<p>Exception: the <code>homelab</code> session's policy allows every public address as a
+<code>toCIDRSet</code> instead of names, because a diagnosis fetches whatever it needs
+and a name list would be a firewall change per lookup; see
+<a href="../claude-agents/#network-policy">Claude agents → Network policy</a>.</p>
 <h3 id="6-authentication-is-authentiks-not-the-applications">6. Authentication is Authentik's, not the application's<a class="headerlink" href="#6-authentication-is-authentiks-not-the-applications" title="Permanent link">&para;</a></h3>
 <p>Which shape applies is decided by what the application supports:</p>
 <ul>
@@ -1396,15 +1409,23 @@ behind — see <a href="#sync-stuck-on-the-database">Sync stuck on the database<
   <code>authentik</code> namespace, so the outpost authenticates in front of it. Home
   Assistant is the worked example; where the application has its own login this
   is defence in depth, not single sign-on.</li>
+<li><strong>It has no browser session.</strong> An API carries its own credential, since an
+  outpost would answer its caller with a login page:
+  <a href="../kneadtime/">Knead Time</a> has none and CORS admits one origin, the
+  <a href="../shot-bridge/">Shot Timer bridge</a> checks its own bearer key, and the
+  <a href="../claude-agents/">Claude agents</a> admit SSH keys on a TLS passthrough.</li>
 </ul>
 <p>The OIDC provider's blueprint lives here, in the application's directory, as a
 ConfigMap targeted at the <code>authentik</code> namespace with a key ending in <code>.yaml</code>
 (see <code>dependency-track/authentik-blueprint.yaml</code>). The platform mounts it as
 an optional projected volume, because a fresh cluster has Authentik before it
 has any workload, and discovers it on the worker's startup, hourly, and
-through a file watcher. The client credentials, the outpost's provider list
-and any <code>referencegrant.yaml</code> entry stay in the platform repository, so going
-behind SSO is deliberately two pull requests.</p>
+through a file watcher. The client credentials are generated here, by the
+generator and <code>PushSecret</code> in the application's <code>secrets.yaml</code> (rule 7), and
+read on Authentik's side by an <code>ExternalSecret</code> in the platform repository
+(<code>payload/platform/authentik/secrets-&lt;app&gt;.yaml</code>), where the outpost's
+provider list and any <code>referencegrant.yaml</code> entry also live, so going behind
+SSO is deliberately two pull requests.</p>
 <p>Because blueprint discovery is asynchronous, anything that configures itself
 against the provider must tolerate it not existing yet: fail soft and log.
 Watch for SSRF guards, too: <code>auth.k8s.wlkr.ch</code> resolves to a private address,
@@ -1440,12 +1461,20 @@ it. Database passwords are neither, because CloudNativePG generates them
 <p>OIDC client credentials go in the application's own <code>kv/&lt;app&gt;/config</code>, never
 under <code>kv/authentik/config</code>: a <code>bao kv put</code> replaces a path wholesale, so
 sharing it would make adding an application an Authentik outage.</p>
+<p>Exception: the <code>claude-*</code> sessions read <code>kv/claude-&lt;session&gt;/</code> through the
+<code>openbao-claude-agents</code> store, whose login identity is in
+<code>claude-agents/serviceaccounts.yaml</code>, because the sessions share a namespace
+and the paths sit outside its prefix; see
+<a href="../claude-agents/#secrets">Claude agents → Secrets</a>.</p>
 <h3 id="8-the-shared-syncpolicy">8. The shared <code>syncPolicy</code><a class="headerlink" href="#8-the-shared-syncpolicy" title="Permanent link">&para;</a></h3>
 <p><code>automated</code> with <code>prune</code> and <code>selfHeal</code>, plus <code>retry</code> with a limit of 10 and
-a 30s backoff up to 5m, copied from any sibling. ArgoCD never re-attempts a
-failed sync of the same revision without <code>retry</code>, and a workload that lands a
-minute before the platform resource it names would otherwise stay failed
-until someone ran <code>argocd app sync</code>.</p>
+a 30s backoff up to 5m, and <code>syncOptions</code> with <code>ServerSideApply=true</code>, copied
+from any sibling but the four <code>claude-*</code> Applications, which leave the option
+out. ArgoCD never re-attempts a failed sync of the same revision without
+<code>retry</code>, and a workload that lands a minute before the platform resource it
+names would otherwise stay failed until someone ran <code>argocd app sync</code>.
+Server-side apply is what every platform Application uses, so the two
+repositories diff and apply the same way.</p>
 <h2 id="what-you-do-not-have-to-write">What you do not have to write<a class="headerlink" href="#what-you-do-not-have-to-write" title="Permanent link">&para;</a></h2>
 <p>The platform handles all of this; adding your own is the usual mistake:</p>
 <table>
@@ -1517,9 +1546,12 @@ away. It looks away for less than you might expect:</p>
 </tbody>
 </table>
 <p>A route that leaves either out reports <code>OutOfSync</code> forever while working
-fine.</p>
+fine. <code>sectionName</code> on the <code>parentRefs</code> entry picks the listener, and a
+listener pins one hostname pattern, so the wollbi sites name their own; the
+table is <a href="https://homelab.wlkr.ch/platform/gateway-api/#configuration">Gateway API → Configuration</a>.</p>
 <h2 id="behind-the-gateway">Behind the Gateway<a class="headerlink" href="#behind-the-gateway" title="Permanent link">&para;</a></h2>
-<p>Traffic arrives from Cilium's Envoy inside the pod CIDR (<code>10.244.0.0/16</code>), not
+<p>Traffic arrives from Cilium's Envoy inside the
+<a href="https://homelab.wlkr.ch/architecture/#cluster-layout">pod subnet</a>, not
 from the client, and TLS is terminated at the Gateway. An application that
 trusts <code>REMOTE_ADDR</code> sees the proxy, and one that builds absolute URLs from the
 request scheme produces <code>http://</code> links on an <code>https://</code> site. Look for a
@@ -1544,8 +1576,9 @@ finishes never applies the rule that would unblock it.</p>
 </li>
 <li>
 <p><strong>Confirm the drop</strong> from the node running the database:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-n<span class="w"> </span>kube-system<span class="w"> </span>&lt;cilium-pod-on-that-node&gt;<span class="w"> </span>-c<span class="w"> </span>cilium-agent<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>hubble<span class="w"> </span>observe<span class="w"> </span>--verdict<span class="w"> </span>DROPPED<span class="w"> </span>--from-namespace<span class="w"> </span>cnpg-system<span class="w"> </span>--last<span class="w"> </span><span class="m">20</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nv">pod</span><span class="o">=</span><span class="s2">"</span><span class="k">$(</span>kubectl<span class="w"> </span>-n<span class="w"> </span>kube-system<span class="w"> </span>get<span class="w"> </span>pod<span class="w"> </span>-l<span class="w"> </span>k8s-app<span class="o">=</span>cilium<span class="w"> </span>--field-selector<span class="w"> </span>spec.nodeName<span class="o">=</span>&lt;node&gt;<span class="w"> </span>-o<span class="w"> </span>name<span class="k">)</span><span class="s2">"</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>kube-system<span class="w"> </span><span class="nb">exec</span><span class="w"> </span><span class="s2">"</span><span class="nv">$pod</span><span class="s2">"</span><span class="w"> </span>-c<span class="w"> </span>cilium-agent<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>hubble<span class="w"> </span>observe<span class="w"> </span>--verdict<span class="w"> </span>DROPPED<span class="w"> </span>--from-namespace<span class="w"> </span>cnpg-system<span class="w"> </span>--last<span class="w"> </span><span class="m">20</span>
 </span></code></pre></div>
 </li>
 <li>
@@ -1556,8 +1589,12 @@ finishes never applies the rule that would unblock it.</p>
 </span></code></pre></div>
 </li>
 <li>
-<p><strong>Fix.</strong> Put the policy at wave <code>-2</code>, then terminate the stuck operation.
-   The next sync applies the policy first and the <code>Cluster</code> goes Healthy.</p>
+<p><strong>Fix.</strong> Put the policy at wave <code>-2</code>, then terminate the stuck operation,
+   which never picks up the new revision on its own:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>argocd<span class="w"> </span>app<span class="w"> </span>terminate-op<span class="w"> </span>&lt;app&gt;
+</span></code></pre></div>
+<p>The CLI login is <a href="https://homelab.wlkr.ch/platform/argocd/#cli-access">Argo CD → CLI access</a>.
+The next sync applies the policy first and the <code>Cluster</code> goes Healthy.</p>
 </li>
 </ol>
 

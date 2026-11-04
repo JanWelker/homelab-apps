@@ -26,7 +26,7 @@ The chart values in `application.yaml` that are not defaults:
 | `fileStorage.local.existingClaim` | The chart's own PVC carries only `helm.sh/resource-policy: keep`, which a prune ignores; `pvc.yaml` carries `Prune=false` like every other volume here |
 | `DT_TELEMETRY_SUBMISSION_DEFAULT_ENABLED: "false"` | No phone-home. The property seeds the setting once, so it has to be off before the first start; the egress policy would drop the request anyway |
 | `DT_OIDC_*` and the frontend's `OIDC_*` | Both halves must name the same issuer and client ID; the API server validates the ID token the browser obtained. `preferred_username` is Authentik's username claim, which is safe only while users cannot change it (see [Conventions → Authentication](<https://homelab-apps.wlkr.ch/conventions/#6-authentication-is-authentiks-not-the-applications>)); Dependency-Track also stores each account's first `sub` and refuses a later login under another, so a rename could only claim an account that has never logged in. `groups` arrives with the `profile` scope, so team membership follows Authentik's groups. See [OIDC](<#oidc>) |
-| `apiServer.web.resources`, 1Gi requested, 3Gi limit | The JVM sizes its heap from the limit. Upstream recommends 8Gi for production; the portfolio here is a few hundred small images |
+| `apiServer.web.resources`, below upstream's advice | The JVM sizes its heap from the limit. Upstream recommends 8Gi for production; the portfolio here is a few hundred small images |
 | `serviceMonitor.namespace: dependency-track` | The chart defaults to the `monitoring` namespace, which the `apps` project may not write to. Prometheus reads it from here like every other application's |
 | `httpRoute` on `apps-gateway` | The chart's route sends `/api` to the API server and everything else to the frontend on one hostname, so the frontend's `API_BASE_URL` stays empty and the browser uses relative URLs |
 | `apiServer.image.tag` and `frontend.image.tag` pinned by digest, though the chart derives both from its `appVersion` | A tag re-pushed upstream would otherwise change what runs without a commit, and Renovate sees a rebuild only through a digest. The chart and the two pins are one Renovate group, so a chart bump cannot leave a pod on the previous release. |
@@ -49,7 +49,7 @@ Every rule in `dependency-track/networkpolicy.yaml`, and why it is there. The sh
 
 ### SBOM upload
 
-`sbom-upload.yaml` is a CronJob, a ConfigMap holding the script, and a ServiceAccount. At 05:00 it lists every `SbomReport` in the cluster and sends each distinct image that is running, once, to `PUT /api/v1/bom` with `autoCreate`.
+`sbom-upload.yaml` is a CronJob, a ConfigMap holding the script, and a ServiceAccount. Nightly, on the CronJob's `schedule`, it lists every `SbomReport` in the cluster and sends each distinct image that is running, once, to `PUT /api/v1/bom` with `autoCreate`.
 
 | Detail | Why |
 | --- | --- |
@@ -61,8 +61,8 @@ Every rule in `dependency-track/networkpolicy.yaml`, and why it is there. The sh
 | Reads `report.components` from the report, unchanged | Trivy Operator already writes CycloneDX; Dependency-Track accepts the same document, `specVersion` 1.7 included |
 | The `ClusterRole` that lets it list reports and ReplicaSets is the platform's | The `apps` project may not create cluster-scoped RBAC, and who may read Trivy's findings is the platform's call. It is `sbom-readers.yaml` next to the operator in the homelab repository |
 | The API key is `optional` on the container, and its `ExternalSecret` is at sync wave 1 | A missing Secret would leave the pod in `CreateContainerConfigError`, and a `Forbid` CronJob never runs again behind a Job that never finishes; the script exits 1 with the reason instead. The wave is the same argument one level up: this is the one secret only a running Dependency-Track can issue, so it is fetched after the application, never in a wave that gates it. `make bao-secrets` writes the path empty rather than leaving it absent, for the same reason |
-| Runs before the platform's `findings-history` job at 06:30 | Both read the same reports; neither depends on the other |
-| `activeDeadlineSeconds` ends the Job before 06:30 | `concurrencyPolicy: Forbid` never starts tonight's run behind one still hanging on a request, and the 06:30 run reads the same reports; a run that overran is killed in time for both |
+| Runs before the platform's [`findings-history`](<https://homelab.wlkr.ch/platform/trivy-operator/#history>) job | Both read the same reports; neither depends on the other |
+| `activeDeadlineSeconds` ends the Job before `findings-history` starts | `concurrencyPolicy: Forbid` never starts tonight's run behind one still hanging on a request, and the later job reads the same reports; a run that overran is killed in time for both |
 
 ### False positives
 
@@ -141,9 +141,11 @@ The first start seeds `admin` with the password `admin` and asks for a new one. 
 
 ### Reading it
 
-The portfolio is one project per image; the `namespace:` tags say where it runs. A vulnerability's Affected Projects view is the cross-image question Trivy's per-container reports cannot answer directly. The same objects are in the API:
+The portfolio is one project per image; the `namespace:` tags say where it runs. A vulnerability's Affected Projects view is the cross-image question Trivy's per-container reports cannot answer directly. The same objects are in the API, with `$KEY` an API key of a team created under Administration → Access Management → Teams, or the upload job's:
 
 ```bash
+KEY="$(kubectl -n dependency-track get secret sbom-upload -o jsonpath='{.data.api-key}' | base64 -d)"
+
 # Every project and its version, newest upload first
 curl -s -H "X-Api-Key: $KEY" "https://sbom.k8s.wlkr.ch/api/v1/project?sortName=lastBomImport&sortOrder=desc" \
   | jq -r '.[] | [.name, .version, .lastBomImport] | @tsv'
@@ -161,7 +163,7 @@ kubectl -n dependency-track get cluster dependency-track-db
 curl -s https://sbom.k8s.wlkr.ch/api/version | jq .version
 ```
 
-The database should report `Cluster in healthy state`, the version endpoint answers without a login, and the last `sbom-upload` job should have succeeded with a line like `66 images, 0 failed, 0 reports skipped, 110 from superseded revisions`. In the UI, the Dashboard's portfolio count should match that number.
+The database should report `Cluster in healthy state`, the version endpoint answers without a login, and the last `sbom-upload` job should have succeeded with its closing line of images uploaded, failed, reports skipped and superseded revisions, the first three of which should read `0`. In the UI, the Dashboard's portfolio count should match the images number.
 
 ## Pitfalls
 
@@ -171,8 +173,8 @@ The database should report `Cluster in healthy state`, the version endpoint answ
 >
 > Every secret Dependency-Track stores, feed tokens and notification credentials among them, is encrypted with the key in `kv/dependency-track/config`. Deleting that path makes the `PushSecret` write a new key and leaves the database unreadable in those places. A restore of the database is only a restore together with the key.
 
-- **A login that fails on `iss`** is a mismatch between the issuer in `application.yaml` and Authentik's, usually the trailing slash. Both Deployments carry the value; change it in one place.
+- **A login that fails on `iss`** is a mismatch between the issuer in `application.yaml` and Authentik's, usually the trailing slash. The value is written twice there, as `DT_OIDC_ISSUER` and the frontend's `OIDC_ISSUER`; change both.
 - **A first login that lands nowhere** is a user with no team. Provisioning creates the account; the group mapping in [First login](<#first-login>) is what grants it anything.
 - **A job that reports `no API key yet`** is the [first-login](<#first-login>) step not done, or the `ExternalSecret` not refreshed since it was; the Secret carries a `data-hash` annotation that moves when the value does.
-- **A sync that stops at the database** with `could not get secret data from   provider` is `kv/dependency-track/sbom-upload` missing entirely. Run `make bao-secrets` in the platform repository, which writes the path empty when there is no key yet; an absent path fails the `ExternalSecret`, and a failed resource stops the wave it is in.
+- **A sync that fails at the `sbom-upload` `ExternalSecret`** with `could   not get secret data from provider` is `kv/dependency-track/sbom-upload` missing entirely. Run `make bao-secrets` in the platform repository, which writes the path empty when there is no key yet; an absent path fails the `ExternalSecret`. It sits at wave 1, so Dependency-Track itself is up, only the job's key is not.
 - **Old image versions pile up as projects** when inactive project deletion is off under Maintenance, or the team lacks the permission to [retire](<#retired-projects>) them. The job never deletes.

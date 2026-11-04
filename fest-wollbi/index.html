@@ -932,6 +932,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Secrets
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -954,17 +965,6 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         Editing
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#secrets" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Secrets
       </span>
     </span>
   </a>
@@ -1091,6 +1091,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Secrets
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1113,17 +1124,6 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         Editing
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#secrets" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Secrets
       </span>
     </span>
   </a>
@@ -1202,8 +1202,8 @@ Pelican site until the pages became rows in a database: the content is now
 edited at <code>/admin</code> and the repository holds the application, not the text.
 The image is built in
 <a href="https://github.com/JanWelker/fest.wollbi.ch">JanWelker/fest.wollbi.ch</a>,
-which makes this the second application here whose upstream is our own —
-per <a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>.</p>
+so its upstream is our own — per
+<a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>.</p>
 <h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1219,7 +1219,7 @@ per <a href="../conventions/#2-official-upstream-sources-only">Conventions → O
 </tr>
 <tr>
 <td>Authentication</td>
-<td>Authentik proxy outpost on <code>/admin</code> and <code>/api</code>, in front of Payload's own login; uploaded files under <code>/api/media/file</code> stay public; <code>/seed</code> is not routed</td>
+<td>Authentik proxy outpost on <code>/admin</code> and <code>/api</code>, in front of Payload's own login; uploaded files under <code>/api/media/file</code> stay public; <code>/seed</code> redirects to <code>/</code></td>
 </tr>
 <tr>
 <td>Storage</td>
@@ -1270,7 +1270,7 @@ per <a href="../conventions/#2-official-upstream-sources-only">Conventions → O
 </tr>
 <tr>
 <td><code>PAYLOAD_SECRET</code> from OpenBao</td>
-<td>It signs every editor session and encrypts what Payload keeps encrypted. Generated in the cluster it would change on every rebuild and log everyone out</td>
+<td>It signs every editor session and encrypts what Payload keeps encrypted. The <code>PushSecret</code> in <code>secrets.yaml</code> writes it once, <code>IfNotExists</code>, so a rebuilt cluster reads the same value back and nobody is logged out; see <a href="../conventions/#7-real-secrets-come-from-openbao">Conventions → Real secrets come from OpenBao</a></td>
 </tr>
 <tr>
 <td><code>NEXT_PUBLIC_SERVER_URL</code></td>
@@ -1310,9 +1310,9 @@ The Job's <code>activeDeadlineSeconds</code> is the backstop: a site that never 
 fails the sync instead of holding the Application in Syncing, and the
 curl's own retries fit inside it.</p>
 <h3 id="network-policy">Network policy<a class="headerlink" href="#network-policy" title="Permanent link">&para;</a></h3>
-<p>Every rule in
+<p>The rules in
 <a href="https://github.com/JanWelker/homelab-apps/blob/main/fest-wollbi/networkpolicy.yaml"><code>fest-wollbi/networkpolicy.yaml</code></a>,
-and why it is there. The shape is
+and why each is there. The shape is
 <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → Ship a <code>CiliumNetworkPolicy</code></a>;
 rollout and debugging are in
 <a href="https://homelab.wlkr.ch/platform/security-policies/#network-policies">Security Policies</a>.</p>
@@ -1325,8 +1325,12 @@ rollout and debugging are in
 </thead>
 <tbody>
 <tr>
+<td>Ingress from the namespace, from <code>host</code> and <code>remote-node</code>; egress to the namespace</td>
+<td>The rules every policy carries: <a href="https://homelab.wlkr.ch/platform/security-policies/#what-every-policy-contains">What every policy contains</a></td>
+</tr>
+<tr>
 <td>Ingress on 3000 from <code>ingress</code></td>
-<td>The public site. This is the one application here that is meant to be read by people Authentik has never heard of</td>
+<td>The public site; it is meant to be read by people Authentik has never heard of</td>
 </tr>
 <tr>
 <td>Ingress on 3000 from the Authentik server pods, with an L7 <code>http</code> rule</td>
@@ -1346,15 +1350,10 @@ rollout and debugging are in
 </tr>
 <tr>
 <td>Egress from the database pod to <code>kube-apiserver</code></td>
-<td>The instance manager reports its status there; its liveness check fails otherwise</td>
+<td>The instance manager reports its status there; its liveness check fails otherwise. The object store for WAL and base backups is the platform's <code>cnpg-backups</code> policy, see <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#backups">CloudNativePG → Backups</a></td>
 </tr>
 </tbody>
 </table>
-<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<h3 id="editing">Editing<a class="headerlink" href="#editing" title="Permanent link">&para;</a></h3>
-<p><code>https://fest.wollbi.ch/admin</code> — Authentik first, then Payload's own login.
-Pages are made of three blocks, which are the three shapes the Pelican pages
-had: prose, a run of images under a heading, and a download.</p>
 <h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
 <p><code>kv/fest-wollbi/config</code> holds two values and <code>kv/fest-wollbi/seed</code> the third, each written once
 by a <code>PushSecret</code> in <code>secrets.yaml</code> and never overwritten — see <a href="https://homelab.wlkr.ch/platform/openbao/#generated-secrets">Generated secrets</a>.</p>
@@ -1380,6 +1379,11 @@ by a <code>PushSecret</code> in <code>secrets.yaml</code> and never overwritten 
 </tr>
 </tbody>
 </table>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
+<h3 id="editing">Editing<a class="headerlink" href="#editing" title="Permanent link">&para;</a></h3>
+<p><code>https://fest.wollbi.ch/admin</code> — Authentik first, then Payload's own login.
+Pages are made of three blocks, which are the three shapes the Pelican pages
+had: prose, a run of images under a heading, and a download.</p>
 <h2 id="health-check">Health check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>fest-wollbi<span class="w"> </span>get<span class="w"> </span>pods
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>fest-wollbi<span class="w"> </span>get<span class="w"> </span>cluster<span class="w"> </span>fest-wollbi-db
@@ -1388,11 +1392,13 @@ by a <code>PushSecret</code> in <code>secrets.yaml</code> and never overwritten 
 </span></code></pre></div>
 <p>The seed Job's log is the whole migration report: <code>{"seeded":true,...}</code> on the
 first run and <code>{"seeded":false,"reason":"pages already exist"}</code> on every one
-after it.</p>
+after it. The Job lives for <code>ttlSecondsAfterFinished</code> in <code>seed-job.yaml</code>;
+after that the report is in <a href="https://homelab.wlkr.ch/platform/logging/#usage">Loki</a>
+as <code>{namespace="fest-wollbi", container="seed"}</code>.</p>
 <h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
 <div class="admonition warning">
 <p class="admonition-title">The hostname is not <code>k8s.wlkr.ch</code></p>
-<p>This is the first application on a second domain. It needs the <code>wollbi.ch</code> listener and certificate on the apps Gateway and <code>wollbi.ch</code> in external-dns' <code>domainFilters</code>, all in the platform repository. Without them the route exists, resolves to nothing and serves no certificate.</p>
+<p>This site is on a second domain. It needs the <code>wollbi.ch</code> listener and certificate on the apps Gateway and <code>wollbi.ch</code> in external-dns' <code>domainFilters</code>, all in the platform repository. Without them the route exists, resolves to nothing and serves no certificate.</p>
 </div>
 <ul>
 <li><strong>A new field needs a migration.</strong> The Postgres adapter ignores schema push
@@ -1401,8 +1407,9 @@ after it.</p>
   repository.</li>
 <li><strong>The uploads volume and the database restore together.</strong> The uploads
   come back from a Velero night, the database from its WAL archive; restore
-  the database to that night's backup time, or records point at files that
-  are gone.</li>
+  the database to that night's backup time
+  (<a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#point-in-time-restore">Point-in-time restore</a>),
+  or records point at files that are gone.</li>
 <li><strong>Deleting <code>kv/fest-wollbi/config</code> logs the editors out</strong> and does not
   change the first editor's password, which is read only while the database is
   empty.</li>

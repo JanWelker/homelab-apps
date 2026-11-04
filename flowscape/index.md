@@ -1,6 +1,6 @@
 # Flowscape
 
-[Flowscape](<https://github.com/JanWelker/flowscape>) draws the whole cluster's network traffic as one 3D scene: namespaces as platforms, workloads as lights, every conversation an arc with sparks coloured by verdict. Hubble UI shows one namespace at a time; this answers "who talks to whom across namespaces, and what would a policy have dropped" in one picture. It is the one application here whose upstream is our own repository, and it deploys as plain manifests around that image, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
+[Flowscape](<https://github.com/JanWelker/flowscape>) draws the whole cluster's network traffic as one 3D scene: namespaces as platforms, workloads as lights, every conversation an arc with sparks coloured by verdict. Hubble UI shows one namespace at a time; this answers "who talks to whom across namespaces, and what would a policy have dropped" in one picture. Its upstream is the user's own repository, and it deploys as plain manifests around that image, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -50,7 +50,7 @@ Every rule in `flowscape/networkpolicy.yaml`, and why it is there. The shape is 
 | Window slider | 10 s to 5 min; rates and the sparkline follow |
 | `space`, `f` | Pause, fit the ring into the view |
 
-`world` is split by the name the Hubble DNS proxy resolved, so an arc to `github.com` and one to `smtp.mailbox.org` are distinct. `kube-apiserver` and `ingress` sit on the outer ring; the Gateway's Envoy is `ingress`, which is why user traffic arrives from there. The six machines sit at the back of that ring under their own names: a flow's reporting agent places the pod on its node, and the `host` and `remote-node` identities resolve to the machine once one flow there has shown its address as `host`. Nothing is read from the API server for this.
+`world` is split by the name the Hubble DNS proxy resolved, so an arc to `github.com` and one to `smtp.mailbox.org` are distinct. `kube-apiserver` and `ingress` sit on the outer ring; the Gateway's Envoy is `ingress`, which is why user traffic arrives from there. The cluster's nodes sit at the back of that ring under their own names: a flow's reporting agent places the pod on its node, and the `host` and `remote-node` identities resolve to the machine once one flow there has shown its address as `host`. Nothing is read from the API server for this.
 
 Without the cluster, the same binary runs on a laptop with `--demo` or replays a capture; the [README](<https://github.com/JanWelker/flowscape#run-it>) has both.
 
@@ -58,8 +58,11 @@ Without the cluster, the same binary runs on a laptop with `--demo` or replays a
 
 ```bash
 kubectl -n flowscape get pods
-kubectl -n flowscape exec deploy/flowscape -- wget -qO- localhost:8080/api/status
+kubectl -n flowscape port-forward deploy/flowscape 8080:8080 &
+curl -s localhost:8080/api/status
 ```
+
+The image is distroless, so there is no shell to `exec` into, and the route answers with Authentik's login, so the status endpoint is read through a port-forward.
 
 `status.relay` should read `connected` with an empty `unavailable` list. In Grafana, `flowscape_relay_connected` and `flowscape_relay_unavailable_nodes` say the same over time, and `rate(flowscape_flows_received_total[5m])` should sit in the hundreds per second.
 

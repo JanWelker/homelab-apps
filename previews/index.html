@@ -1170,9 +1170,10 @@ the hostname; the base holds placeholders for all three.</p>
 <li>Add the <code>preview</code> label to the pull request.</li>
 <li>Wait for the <code>Push image</code> check, then up to a minute for the Application.</li>
 <li>
-<p>Open <code>https://&lt;site&gt;-pr-&lt;n&gt;.k8s.wlkr.ch</code>. To log in at <code>/admin</code> as the
-   seeded editor:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>advent-wollbi-pr-&lt;n&gt;<span class="w"> </span>get<span class="w"> </span>secret<span class="w"> </span>advent-wollbi-config<span class="w"> </span><span class="se">\</span>
+<p>Open <code>https://&lt;site&gt;-pr-&lt;n&gt;.k8s.wlkr.ch</code>. The login at <code>/admin</code> is the
+   seeded editor: the name is <code>SEED_ADMIN_EMAIL</code> in
+   <code>&lt;site&gt;/preview/deployment.yaml</code>, the password is generated per preview:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>&lt;site&gt;-pr-&lt;n&gt;<span class="w"> </span>get<span class="w"> </span>secret<span class="w"> </span>&lt;site&gt;-config<span class="w"> </span><span class="se">\</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.data.admin-password}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>base64<span class="w"> </span>-d
 </span></code></pre></div>
 </li>

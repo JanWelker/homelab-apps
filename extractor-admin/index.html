@@ -1212,7 +1212,7 @@ the chart is published to <code>ghcr.io/somuch-cloud/charts</code>, per
 </tr>
 <tr>
 <td>Policy admits the Authentik server pods only</td>
-<td>No request can skip the outpost; egress is DNS and the bridge's pods</td>
+<td>No request can skip the outpost. Egress is the bridge's pods on <code>bridge.port</code>, plus a DNS rule the chart renders itself, which repeats the platform's cluster-wide one (<a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → rule 5</a>) and cannot be switched off</td>
 </tr>
 <tr>
 <td>The bridge's <code>admin.enabled: true</code></td>
@@ -1247,33 +1247,34 @@ bridge route answers 403.</p>
 rotated. Run from the platform repository's checkout.</p>
 <ol>
 <li>
-<p>Log in inside the pod with the root token:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>openbao<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>openbao-0<span class="w"> </span>--<span class="w"> </span>bao<span class="w"> </span>login
-</span></code></pre></div>
+<p>Log in as the <code>operator</code> user, whose policy covers <code>kv/</code>; the root token
+   no longer exists after <code>make bao-init</code>. The port-forward and the login are
+   <a href="https://homelab.wlkr.ch/platform/openbao/#authenticating-locally">Authenticating locally</a>.</p>
 </li>
 <li>
 <p>Copy the property; it is alphanumeric, so it needs no JSON escaping:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">key</span><span class="o">=</span><span class="s2">"</span><span class="k">$(</span>kubectl<span class="w"> </span>-n<span class="w"> </span>openbao<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>openbao-0<span class="w"> </span>--<span class="w"> </span>bao<span class="w"> </span>kv<span class="w"> </span>get<span class="w"> </span>-mount<span class="o">=</span>kv<span class="w"> </span>-field<span class="o">=</span>admin-read-key<span class="w"> </span>shot-bridge/config<span class="k">)</span><span class="s2">"</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">printf</span><span class="w"> </span><span class="s1">'{"admin-read-key":"%s"}'</span><span class="w"> </span><span class="s2">"</span><span class="nv">$key</span><span class="s2">"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>kubectl<span class="w"> </span>-n<span class="w"> </span>openbao<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>openbao-0<span class="w"> </span>--<span class="w"> </span>bao<span class="w"> </span>kv<span class="w"> </span>put<span class="w"> </span>-mount<span class="o">=</span>kv<span class="w"> </span>extractor-admin/config<span class="w"> </span>-
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nb">unset</span><span class="w"> </span>key
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">key</span><span class="o">=</span><span class="s2">"</span><span class="k">$(</span>bao<span class="w"> </span>kv<span class="w"> </span>get<span class="w"> </span>-mount<span class="o">=</span>kv<span class="w"> </span>-field<span class="o">=</span>admin-read-key<span class="w"> </span>shot-bridge/config<span class="k">)</span><span class="s2">"</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">printf</span><span class="w"> </span><span class="s1">'{"admin-read-key":"%s"}'</span><span class="w"> </span><span class="s2">"</span><span class="nv">$key</span><span class="s2">"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>bao<span class="w"> </span>kv<span class="w"> </span>put<span class="w"> </span>-mount<span class="o">=</span>kv<span class="w"> </span>extractor-admin/config<span class="w"> </span>-
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nb">unset</span><span class="w"> </span>key
 </span></code></pre></div>
 </li>
 <li>
-<p>Drop the token the login cached in the pod:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>openbao<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>openbao-0<span class="w"> </span>--<span class="w"> </span>sh<span class="w"> </span>-c<span class="w"> </span><span class="s1">'rm -f "$HOME/.bao-token"'</span>
+<p>Drop the login's token, which the short TTL would otherwise leave in
+   <code>~/.bao-token</code> until it expires:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>bao<span class="w"> </span>token<span class="w"> </span>revoke<span class="w"> </span>-self<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>rm<span class="w"> </span>-f<span class="w"> </span>~/.bao-token
 </span></code></pre></div>
 </li>
 <li>
 <p>After a rotation, push the value through and restart the UI, which reads
    it into an environment variable:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>extractor-admin<span class="w"> </span>annotate<span class="w"> </span>externalsecret<span class="w"> </span>extractor-admin<span class="w"> </span>force-sync<span class="o">=</span><span class="s2">"</span><span class="k">$(</span>date<span class="w"> </span>+%s<span class="k">)</span><span class="s2">"</span><span class="w"> </span>--overwrite
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>extractor-admin<span class="w"> </span>rollout<span class="w"> </span>restart<span class="w"> </span>deploy/extractor-admin
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>extractor-admin<span class="w"> </span>annotate<span class="w"> </span>externalsecret<span class="w"> </span>extractor-admin<span class="w"> </span>force-sync<span class="o">=</span><span class="s2">"</span><span class="k">$(</span>date<span class="w"> </span>+%s<span class="k">)</span><span class="s2">"</span><span class="w"> </span>--overwrite
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>extractor-admin<span class="w"> </span>rollout<span class="w"> </span>restart<span class="w"> </span>deploy/extractor-admin
 </span></code></pre></div>
 </li>
 </ol>
 <h2 id="health-check">Health check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>extractor-admin<span class="w"> </span>get<span class="w"> </span>pods,externalsecret,httproute
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>extractor-admin<span class="w"> </span>logs<span class="w"> </span>deploy/extractor-admin<span class="w">    </span><span class="c1"># view GET /shots user=&lt;you&gt; status=200</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>extractor-admin<span class="w"> </span>get<span class="w"> </span>pods,externalsecret,httproute
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>extractor-admin<span class="w"> </span>logs<span class="w"> </span>deploy/extractor-admin<span class="w">    </span><span class="c1"># view GET /shots user=&lt;you&gt; status=200</span>
 </span></code></pre></div>
 <p>The hostname answers with Authentik's login first, then the shot list.</p>
 <h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>

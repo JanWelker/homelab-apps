@@ -871,6 +871,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Secrets
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -904,17 +915,6 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         Adding a site
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#secrets" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Secrets
       </span>
     </span>
   </a>
@@ -1082,6 +1082,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#secrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Secrets
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1115,17 +1126,6 @@
     <span class="md-ellipsis">
       <span class="md-typeset">
         Adding a site
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#secrets" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Secrets
       </span>
     </span>
   </a>
@@ -1201,8 +1201,10 @@
 <p><a href="https://umami.is/">Umami</a> counts the visits to every site: the two
 documentation sites, the GitHub Pages projects and Home Assistant.
 It sets no cookie and stores no address, so the sites need no consent banner.
-Upstream publishes an image and no chart, so this is a Deployment, a Service
-and an HTTPRoute around the official image, per
+Upstream publishes an image and no chart, so <code>umami/</code> is plain manifests
+around the official image: <code>deployment.yaml</code>, <code>service.yaml</code>, <code>pdb.yaml</code>,
+<code>httproute.yaml</code>, <code>database.yaml</code> with <code>backup.yaml</code>, <code>secrets.yaml</code>,
+<code>networkpolicy.yaml</code> and <code>namespace.yaml</code>, per
 <a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>.</p>
 <h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
 <table>
@@ -1266,7 +1268,7 @@ and an HTTPRoute around the official image, per
 </tr>
 <tr>
 <td><code>APP_SECRET</code> and <code>TWO_FACTOR_ENCRYPTION_KEY</code> from OpenBao</td>
-<td>The first signs every dashboard session and the second encrypts TOTP secrets; both must survive a rebuild, so neither is generated in the cluster. See <a href="#secrets">Secrets</a></td>
+<td>The first signs every dashboard session and the second encrypts TOTP secrets; both must survive a rebuild, so the <code>PushSecret</code> writes each to OpenBao once and a rebuilt cluster reads the same value back. See <a href="#secrets">Secrets</a></td>
 </tr>
 <tr>
 <td><code>DISABLE_UPDATES</code>, <code>DISABLE_TELEMETRY</code>, <code>PRIVATE_MODE</code></td>
@@ -1295,7 +1297,7 @@ and an HTTPRoute around the official image, per
 </tbody>
 </table>
 <h3 id="network-policy">Network policy<a class="headerlink" href="#network-policy" title="Permanent link">&para;</a></h3>
-<p>Every rule in <code>umami/networkpolicy.yaml</code>, and why it is there. The shape is
+<p>The rules in <code>umami/networkpolicy.yaml</code>, and why each is there. The shape is
 <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → Ship a <code>CiliumNetworkPolicy</code></a>;
 rollout and debugging are in
 <a href="https://homelab.wlkr.ch/platform/security-policies/#network-policies">Security Policies</a>.</p>
@@ -1307,6 +1309,10 @@ rollout and debugging are in
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>Ingress from the namespace, from <code>host</code> and <code>remote-node</code>; egress to the namespace</td>
+<td>The rules every policy carries: <a href="https://homelab.wlkr.ch/platform/security-policies/#what-every-policy-contains">What every policy contains</a></td>
+</tr>
 <tr>
 <td>Ingress on 3000 from the Authentik server pods only</td>
 <td>The outpost proxies the tracker paths as well as the dashboard, so the Gateway never talks to the pod. No <code>fromEntities: ingress</code>, so a request straight from the Gateway cannot skip the login</td>
@@ -1325,10 +1331,36 @@ rollout and debugging are in
 </tr>
 <tr>
 <td>Egress from the database pod to <code>kube-apiserver</code></td>
-<td>The instance manager reports its status there; its liveness check fails otherwise</td>
+<td>The instance manager reports its status there; its liveness check fails otherwise. The object store for WAL and base backups is the platform's <code>cnpg-backups</code> policy, see <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#backups">CloudNativePG → Backups</a></td>
 </tr>
 </tbody>
 </table>
+<h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
+<p><code>kv/umami/config</code> holds two values, 64 hex characters each as Umami documents
+them, written once by the <code>PushSecret</code> in <code>secrets.yaml</code> and never
+overwritten — see <a href="https://homelab.wlkr.ch/platform/openbao/#generated-secrets">Generated secrets</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Read as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>app-secret</code></td>
+<td><code>APP_SECRET</code>: signs the dashboard sessions</td>
+</tr>
+<tr>
+<td><code>two-factor-encryption-key</code></td>
+<td><code>TWO_FACTOR_ENCRYPTION_KEY</code>: encrypts TOTP secrets at rest</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>ExternalSecret</code> sits at sync wave <code>-1</code>, with the database and ahead of
+the Deployment that reads it, and keeps its Secret when deleted
+(<code>deletionPolicy: Retain</code>). The database password is not here; CloudNativePG
+generates it and nothing outside the cluster needs it.</p>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
 <h3 id="first-login">First login<a class="headerlink" href="#first-login" title="Permanent link">&para;</a></h3>
 <p>Umami creates <code>admin</code> with the password <code>umami</code> on its first start. Change it
@@ -1373,32 +1405,6 @@ page there.</p>
 </tr>
 </tbody>
 </table>
-<h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
-<p><code>kv/umami/config</code> holds two values, 64 hex characters each as Umami documents
-them, written once by the <code>PushSecret</code> in <code>secrets.yaml</code> and never
-overwritten — see <a href="https://homelab.wlkr.ch/platform/openbao/#generated-secrets">Generated secrets</a>.</p>
-<table>
-<thead>
-<tr>
-<th>Key</th>
-<th>Read as</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>app-secret</code></td>
-<td><code>APP_SECRET</code>: signs the dashboard sessions</td>
-</tr>
-<tr>
-<td><code>two-factor-encryption-key</code></td>
-<td><code>TWO_FACTOR_ENCRYPTION_KEY</code>: encrypts TOTP secrets at rest</td>
-</tr>
-</tbody>
-</table>
-<p>The <code>ExternalSecret</code> sits at sync wave <code>-1</code>, with the database and ahead of
-the Deployment that reads it, and keeps its Secret when deleted
-(<code>deletionPolicy: Retain</code>). The database password is not here; CloudNativePG
-generates it and nothing outside the cluster needs it.</p>
 <h2 id="health-check">Health check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>umami<span class="w"> </span>get<span class="w"> </span>pods
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>umami<span class="w"> </span>get<span class="w"> </span>cluster<span class="w"> </span>umami-db
@@ -1411,7 +1417,7 @@ appears within seconds.</p>
 <h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
 <div class="admonition warning">
 <p class="admonition-title">Two logins, and the tracker paths behind neither</p>
-<p>Umami has a login of its own and no OIDC support, so, like Home Assistant, the outpost sits in front of it and browser users authenticate twice. <code>/script.js</code> and <code>/api/send</code> are exempt on the provider, which is what lets a visitor's browser post a page view; the collect endpoint accepts nothing but page views and events for a known website ID.</p>
+<p>Browser users authenticate twice, and <code>/script.js</code> and <code>/api/send</code> are behind neither login; the collect endpoint accepts nothing but page views and events for a known website ID. See <a href="https://homelab.wlkr.ch/platform/authentik/#pitfalls">Authentik → Pitfalls</a>.</p>
 </div>
 <ul>
 <li><strong>A visit shows the cluster's country, or none.</strong> Umami takes the visitor

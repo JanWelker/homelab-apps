@@ -11,11 +11,11 @@ platform underneath is documented at https://homelab.wlkr.ch/.
 - [Home](<https://homelab-apps.wlkr.ch/index.md>)
 - [Conventions](<https://homelab-apps.wlkr.ch/conventions/index.md>)
 - [Pull request previews](<https://homelab-apps.wlkr.ch/previews/index.md>)
-- [Claude agents](<https://homelab-apps.wlkr.ch/claude-agents/index.md>)
 
 ## Applications
 
 - [Wollbi Adventsfenster](<https://homelab-apps.wlkr.ch/advent-wollbi/index.md>)
+- [Claude agents](<https://homelab-apps.wlkr.ch/claude-agents/index.md>)
 - [Dependency-Track](<https://homelab-apps.wlkr.ch/dependency-track/index.md>)
 - [Extractor admin UI](<https://homelab-apps.wlkr.ch/extractor-admin/index.md>)
 - [Wollbi-Fescht](<https://homelab-apps.wlkr.ch/fest-wollbi/index.md>)
