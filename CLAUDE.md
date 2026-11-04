@@ -52,3 +52,8 @@ application, registered in `zensical.toml` twice: in `nav` and in the
   search for, not essay titles.
 - The build validates links and anchors. Grep for `#anchor` before renaming a
   heading, in this repository and in `homelab`.
+- **A gap found is a gap closed now.** Whenever a question is answered from
+  the manifests, a chart's values or the live cluster because the docs did not
+  have it, write it into the page where a reader would look for it, in the
+  same PR. The docs are the reference; a fact that only lives in a config file
+  is the next lookup.
