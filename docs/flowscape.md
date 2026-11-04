@@ -8,9 +8,9 @@ description: "Flowscape on the cluster: a self-built 3D map of Hubble flows acro
 network traffic as one 3D scene: namespaces as platforms, workloads as
 lights, every conversation an arc with sparks coloured by verdict. Hubble UI
 shows one namespace at a time; this answers "who talks to whom across
-namespaces, and what would a policy have dropped" in one picture. It is the
-one application here whose upstream is our own repository, and it deploys as
-plain manifests around that image, per
+namespaces, and what would a policy have dropped" in one picture. Its
+upstream is the user's own repository, and it deploys as plain manifests
+around that image, per
 [Conventions → Official upstream sources only](conventions.md#2-official-upstream-sources-only).
 
 ![Flowscape showing the demo cluster](https://raw.githubusercontent.com/JanWelker/flowscape/main/docs/screenshot.png)
@@ -69,7 +69,7 @@ rollout and debugging are in
 `world` is split by the name the Hubble DNS proxy resolved, so an arc to
 `github.com` and one to `smtp.mailbox.org` are distinct. `kube-apiserver` and
 `ingress` sit on the outer ring; the Gateway's Envoy is `ingress`, which is
-why user traffic arrives from there. The six machines sit at the back of
+why user traffic arrives from there. The cluster's nodes sit at the back of
 that ring under their own names: a flow's reporting agent places the pod on
 its node, and the `host` and `remote-node` identities resolve to the machine
 once one flow there has shown its address as `host`. Nothing is read from
@@ -83,8 +83,13 @@ both.
 
 ```bash
 kubectl -n flowscape get pods
-kubectl -n flowscape exec deploy/flowscape -- wget -qO- localhost:8080/api/status
+kubectl -n flowscape port-forward deploy/flowscape 8080:8080 &
+curl -s localhost:8080/api/status
 ```
+
+The image is distroless, so there is no shell to `exec` into, and the route
+answers with Authentik's login, so the status endpoint is read through a
+port-forward.
 
 `status.relay` should read `connected` with an empty `unavailable` list. In
 Grafana, `flowscape_relay_connected` and `flowscape_relay_unavailable_nodes`

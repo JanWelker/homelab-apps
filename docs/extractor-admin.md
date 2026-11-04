@@ -29,7 +29,7 @@ the chart is published to `ghcr.io/somuch-cloud/charts`, per
 | --- | --- |
 | Own chart, values in `application.yaml` | The chart ships the Deployment, Service, `HTTPRoute` and `CiliumNetworkPolicy`; this directory adds the namespace and the secret |
 | `HTTPRoute` targets `authentik-server` | The admin UI has no login; the chart refuses a route to its own Service. The platform repository's provider forwards to `extractor-admin.extractor-admin.svc` after the login |
-| Policy admits the Authentik server pods only | No request can skip the outpost; egress is DNS and the bridge's pods |
+| Policy admits the Authentik server pods only | No request can skip the outpost. Egress is the bridge's pods on `bridge.port`, plus a DNS rule the chart renders itself, which repeats the platform's cluster-wide one ([Conventions → rule 5](conventions.md#5-ship-a-ciliumnetworkpolicy)) and cannot be switched off |
 | The bridge's `admin.enabled: true` | Passes `BRIDGE_ADMIN_READ_KEY` to the bridge and lets this namespace's pods in on 8080 |
 
 ### Secrets
@@ -50,24 +50,23 @@ bridge route answers 403.
 Once before the first sync, and again whenever `kv/shot-bridge/config` is
 rotated. Run from the platform repository's checkout.
 
-1. Log in inside the pod with the root token:
-
-    ```bash
-    kubectl -n openbao exec -it openbao-0 -- bao login
-    ```
+1. Log in as the `operator` user, whose policy covers `kv/`; the root token
+   no longer exists after `make bao-init`. The port-forward and the login are
+   [Authenticating locally](https://homelab.wlkr.ch/platform/openbao/#authenticating-locally).
 
 2. Copy the property; it is alphanumeric, so it needs no JSON escaping:
 
     ```bash
-    key="$(kubectl -n openbao exec openbao-0 -- bao kv get -mount=kv -field=admin-read-key shot-bridge/config)"
-    printf '{"admin-read-key":"%s"}' "$key" | kubectl -n openbao exec -i openbao-0 -- bao kv put -mount=kv extractor-admin/config -
+    key="$(bao kv get -mount=kv -field=admin-read-key shot-bridge/config)"
+    printf '{"admin-read-key":"%s"}' "$key" | bao kv put -mount=kv extractor-admin/config -
     unset key
     ```
 
-3. Drop the token the login cached in the pod:
+3. Drop the login's token, which the short TTL would otherwise leave in
+   `~/.bao-token` until it expires:
 
     ```bash
-    kubectl -n openbao exec openbao-0 -- sh -c 'rm -f "$HOME/.bao-token"'
+    bao token revoke -self && rm -f ~/.bao-token
     ```
 
 4. After a rotation, push the value through and restart the UI, which reads

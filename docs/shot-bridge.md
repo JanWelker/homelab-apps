@@ -30,7 +30,6 @@ chart is published to `ghcr.io/somuch-cloud/charts`, per
 | State | Where | Rebuildable? |
 | --- | --- | --- |
 | Shot history, registered phones, default dose, coffees, reference shots | PostgreSQL, the CloudNativePG `Cluster` `shot-bridge-db` (`database.yaml`) | History from its WAL archive, to any point inside its retention window; phones re-register on their next launch |
-| The SQLite file from before 2026-10-19 | `bridge.db` on the PVC, read once by `migrate-sqlite` | Kept as a fallback; delete it once the PostgreSQL history has been checked |
 | La Marzocco installation key | `installation_key.json` on the PVC | Yes, the bridge registers a new one on start |
 | Account credentials and the APNs key | OpenBao `kv/shot-bridge/accounts` | Re-typed from the accounts |
 | API key | OpenBao `kv/shot-bridge/config`, generated | Yes, then entered again in the iPhone app |
@@ -47,9 +46,9 @@ chart is published to `ghcr.io/somuch-cloud/charts`, per
 | Probes are TCP | `/healthz` returns 503 whenever the machine is off, and the apps still need the history then |
 | `apns.env: sandbox` | The iPhone app is installed from Xcode with development signing; TestFlight builds need `production` |
 | `apns.bundleId` and `apns.teamId` | Must match the app's bundle ID and team, or APNs rejects every push |
-| `lm.serial` | The machine to watch; required since chart 0.1.4 |
+| `lm.serial` | The machine to watch; the chart requires it |
 | `admin.enabled: true` | The [admin UI](extractor-admin.md)'s read-only token, and its pods let in on 8080 |
-| `timeZone: Europe/Zurich` | The bridge dates a bag's opening by the day of its first shot (chart 0.1.15); the image runs in UTC otherwise, so a shot before 01:00 or 02:00 would land on the day before |
+| `timeZone: Europe/Zurich` | The bridge dates a bag's opening by the day of its first shot; the image runs in UTC otherwise, so a shot before 01:00 or 02:00 would land on the day before |
 
 ### Network policy
 
@@ -59,16 +58,19 @@ The chart's `CiliumNetworkPolicy` selects the bridge's pod; the
 default-deny too. All at sync wave `-2`. The shape is
 [Conventions → Ship a `CiliumNetworkPolicy`](conventions.md#5-ship-a-ciliumnetworkpolicy).
 
-| Rule | Why |
-| --- | --- |
-| Ingress on 8080 from `ingress`, `host` and `remote-node` | The Gateway, and the kubelet's probes |
-| Egress to `lion.lamarzocco.io` on 443 | The La Marzocco REST API and websocket |
-| Egress to the four APNs names on 443, 2195 and 2196 | Pushes and broadcasts on 443; channel management on 2195 (sandbox) and 2196 (production) |
-| Egress to the namespace on 5432 | The database's `-rw` Service |
-| Ingress and egress within the namespace | The bridge reaches the database, the replica streams from the primary |
-| Ingress from Prometheus on 9187, `GET /metrics` only | The database's exporter, through its `PodMonitor`; the bridge exposes no metrics |
-| Ingress from `cnpg-system` on 8000 | The operator reads the instance manager's status; without it the `Cluster` never goes Healthy |
-| The instance pods reach `kube-apiserver` | The CloudNativePG instance manager reports its status there; the object store is the platform's `cnpg-backups` rule |
+| File | Rule | Why |
+| --- | --- | --- |
+| Chart | Ingress on 8080 from `ingress` and `host` | The Gateway, and the kubelet's probes; the chart admits `host` alone where the namespace policies below admit `remote-node` too |
+| Chart | Ingress on 8080 from the admin UI's pods | `admin.enabled`; the [admin UI](extractor-admin.md) reads with its token |
+| Chart | Egress to `lion.lamarzocco.io` on 443 | The La Marzocco REST API and websocket |
+| Chart | Egress to the Kaffeemacher shop and `cdn.shopify.com` on 443 | The coffee catalog and the bag photos |
+| Chart | Egress to the four APNs names on 443, 2195 and 2196 | Pushes and broadcasts on 443; channel management on 2195 (sandbox) and 2196 (production) |
+| Chart | Egress to the namespace on `database.port` | The database's `-rw` Service, rendered because `database.existingSecret` is set |
+| Chart | Egress to `kube-dns` on 53 | The chart's own DNS rule; the platform's cluster-wide rule grants the same, so it adds nothing here |
+| `networkpolicy.yaml` | Ingress from the namespace, from `host` and `remote-node`; egress to the namespace | The rules every policy carries, here for the database pods too: [What every policy contains](https://homelab.wlkr.ch/platform/security-policies/#what-every-policy-contains); the replica streams from the primary through them |
+| `networkpolicy.yaml` | Ingress from Prometheus on 9187, `GET /metrics` only | The database's exporter, through its `PodMonitor`; the bridge exposes no metrics |
+| `networkpolicy.yaml` | Ingress from `cnpg-system` on 8000 | The operator reads the instance manager's status; without it the `Cluster` never goes Healthy |
+| `networkpolicy.yaml` | The instance pods reach `kube-apiserver` | The CloudNativePG instance manager reports its status there; the object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](https://homelab.wlkr.ch/platform/cloudnative-pg/#backups) |
 
 ### Secrets
 
@@ -109,8 +111,10 @@ kubectl -n shot-bridge logs deploy/shot-bridge
   created; run `make bao-secrets`.
 - **The pod crash-loops while the APNs keys are empty.** The bridge exits on a
   missing variable rather than starting half-configured.
-- **Rotating `kv/shot-bridge/config` changes both keys.** The phone is
-  logged out: enter the new API key in the app's setup screen, the watch
+- **Rotating `kv/shot-bridge/config` changes both keys.** The `PushSecret`
+  writes `IfNotExists`, so rotating is
+  [deleting the path](https://homelab.wlkr.ch/platform/openbao/#rotating-a-credential).
+  The phone is logged out: enter the new API key in the app's setup screen, the watch
   receives it from the phone. The [admin UI](extractor-admin.md) reads a
   hand copy of `admin-read-key` and answers 403 until it is
   [copied again](extractor-admin.md#copying-the-read-key).

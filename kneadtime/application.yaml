@@ -6,7 +6,7 @@ metadata:
   namespace: argocd
   annotations:
     argocd.argoproj.io/manifest-generate-paths: .
-    link.argocd.argoproj.io/external-link: https://kneadtime.k8s.wlkr.ch/healthz
+    link.argocd.argoproj.io/external-link: https://kneadtime.k8s.wlkr.ch/v1/vapid
 spec:
   project: apps
   source:

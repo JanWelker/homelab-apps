@@ -17,9 +17,12 @@ runs on top.
 | --- | --- | --- | --- | --- |
 | [Claude agents](claude-agents.md) | `<session>.ssh.wlkr.ch` | One PVC per session: `$HOME`, clone and login | None | SSH public keys |
 | [Dependency-Track](dependency-track.md) | [sbom.k8s.wlkr.ch](https://sbom.k8s.wlkr.ch) | A PVC for uploaded BOMs and mirrored feeds | CloudNativePG | Authentik OIDC |
+| [Extractor admin UI](extractor-admin.md) | [extractor-admin.k8s.wlkr.ch](https://extractor-admin.k8s.wlkr.ch) | None | None | Authentik proxy |
 | [Flowscape](flowscape.md) | [flowscape.k8s.wlkr.ch](https://flowscape.k8s.wlkr.ch) | None | None | Authentik proxy |
 | [Home Assistant](home-assistant.md) | [home.k8s.wlkr.ch](https://home.k8s.wlkr.ch) | A PVC for `/config` | CloudNativePG, for the recorder | Authentik proxy, in front of its own login |
+| [Knead Time](kneadtime.md) | [kneadtime.k8s.wlkr.ch](https://kneadtime.k8s.wlkr.ch/v1/vapid) | None | CloudNativePG | None; CORS admits kneadtime.pizza only |
 | [OpenCloud](opencloud.md) | [cloud.infra.k8s.wlkr.ch](https://cloud.infra.k8s.wlkr.ch) | A PVC for the files, metadata and index | None | Authentik OIDC, web and native clients |
+| [Shot Timer bridge](shot-bridge.md) | [shot.k8s.wlkr.ch](https://shot.k8s.wlkr.ch/healthz) | A PVC for SQLite and the installation key | CloudNativePG | The bridge's own bearer key |
 | [Umami](umami.md) | [analytics.k8s.wlkr.ch](https://analytics.k8s.wlkr.ch) | None | CloudNativePG | Authentik proxy, in front of its own login; the tracker paths are public |
 | [Wollbi Adventsfenster](advent-wollbi.md) | [advent.wollbi.ch](https://advent.wollbi.ch) | A PVC for uploads | CloudNativePG | Public; Authentik proxy on `/admin` only |
 | [Wollbi-Fescht](fest-wollbi.md) | [fest.wollbi.ch](https://fest.wollbi.ch) | A PVC for uploads | CloudNativePG | Public; Authentik proxy on `/admin` only |
@@ -35,11 +38,14 @@ homelab (platform)                    homelab-apps (this repository)
   Application argocd
     └── ApplicationSet platform
           └── Application workloads     ──▶  ApplicationSet apps
-                                                └── one Application per directory
+                                           │      └── one Application per directory
+                                           └──▶  ApplicationSet previews
+                                                  └── one Application per labelled pull request
 ```
 
-The platform references this repository exactly once, as a `repoURL`, and
-never reads what is in it. Nothing orders a workload after the platform it
+The platform names this repository in three places, the two ApplicationSets'
+`repoURL` and the `apps` project's `sourceRepos`, and never reads what is in
+it. Nothing orders a workload after the platform it
 uses: each Application syncs as soon as it exists and retries until the
 Gateway, StorageClass or `ClusterSecretStore` it names is there — the
 [sync policy](conventions.md#8-the-shared-syncpolicy) is the same one every
@@ -53,16 +59,18 @@ Every directory follows the same eight rules, each with one sentence of why:
 
 ## Authentication
 
-Every application goes through
+Every application with a browser login goes through
 [Authentik](https://homelab.wlkr.ch/platform/authentik/), in the shape each one
 supports. [Dependency-Track](dependency-track.md) and [OpenCloud](opencloud.md) speak
 OIDC, so they are real single sign-on. [Home Assistant](home-assistant.md) and
 [Umami](umami.md) ship no OIDC provider, so the Authentik outpost sits in
 front of their own logins and browser users authenticate twice;
-[Flowscape](flowscape.md) has no login, so the outpost is the only one. All
-use `auth.k8s.wlkr.ch`, never the `auth.infra` name, which resolves only on
-the local network — see
-[Two hostnames](https://homelab.wlkr.ch/platform/authentik/#two-hostnames).
+[Flowscape](flowscape.md) and the [Extractor admin UI](extractor-admin.md)
+have no login, so the outpost is the only one. All use `auth.k8s.wlkr.ch`,
+Authentik's only hostname; see
+[One hostname](https://homelab.wlkr.ch/platform/authentik/#one-hostname).
+The three APIs without a browser session carry their own credential, the
+exception in [Conventions → rule 6](conventions.md#6-authentication-is-authentiks-not-the-applications).
 
 ## Adding one
 

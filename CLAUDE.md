@@ -8,8 +8,9 @@ the separate `homelab` repository; this one holds only what runs on top.
 A directory with one `application.yaml` is an application; the `apps`
 ApplicationSet in `homelab` generates the ArgoCD Application and nothing else
 registers it. Everything an application must do is in `docs/conventions.md`,
-numbered; read it before adding or changing one. Rules 1, 4 and 5 break the
-whole set or the login when missed, and rule 6 means going behind SSO is two
+numbered; read it before adding or changing one. Rule 1 fails the whole set
+when missed, rule 4 leaves a privileged namespace or deletes the PVCs, rule 5
+blocks the probes or sticks a sync, and rule 6 means going behind SSO is two
 PRs across two repositories. How the platform syncs and retries is in the
 platform docs ([GitOps Strategy](https://homelab.wlkr.ch/architecture/gitops/)).
 

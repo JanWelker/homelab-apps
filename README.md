@@ -21,8 +21,11 @@ publishes the same two files.
 | Application | URL | Auth | Manifests | Page |
 | --- | --- | --- | --- | --- |
 | Claude agents | `<session>.ssh.wlkr.ch` | SSH keys | [`claude-agents/`](claude-agents/) | [docs](https://homelab-apps.wlkr.ch/claude-agents/) |
+| Dependency-Track | `sbom.k8s.wlkr.ch` | Authentik OIDC | [`dependency-track/`](dependency-track/) | [docs](https://homelab-apps.wlkr.ch/dependency-track/) |
+| Extractor admin UI | `extractor-admin.k8s.wlkr.ch` | Authentik proxy | [`extractor-admin/`](extractor-admin/) | [docs](https://homelab-apps.wlkr.ch/extractor-admin/) |
 | Flowscape | `flowscape.k8s.wlkr.ch` ([live demo](https://janwelker.github.io/flowscape/)) | Authentik proxy | [`flowscape/`](flowscape/) | [docs](https://homelab-apps.wlkr.ch/flowscape/) |
 | Home Assistant | `home.k8s.wlkr.ch` | Authentik proxy | [`home-assistant/`](home-assistant/) | [docs](https://homelab-apps.wlkr.ch/home-assistant/) |
+| Knead Time | `kneadtime.k8s.wlkr.ch` | None; CORS | [`kneadtime/`](kneadtime/) | [docs](https://homelab-apps.wlkr.ch/kneadtime/) |
 | OpenCloud | `cloud.infra.k8s.wlkr.ch` | Authentik OIDC | [`opencloud/`](opencloud/) | [docs](https://homelab-apps.wlkr.ch/opencloud/) |
 | Shot Timer bridge | `shot.k8s.wlkr.ch` | Bridge API key | [`shot-bridge/`](shot-bridge/) | [docs](https://homelab-apps.wlkr.ch/shot-bridge/) |
 | Umami | `analytics.k8s.wlkr.ch` | Authentik proxy | [`umami/`](umami/) | [docs](https://homelab-apps.wlkr.ch/umami/) |
