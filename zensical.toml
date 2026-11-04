@@ -116,9 +116,10 @@ Flatcar homelab cluster, plus the conventions every one of them follows. The
 platform underneath is documented at https://homelab.wlkr.ch/."""
 
 [project.plugins.llmstxt.sections]
-"Conventions" = ["index.md", "conventions.md", "previews.md", "claude-agents.md"]
+"Conventions" = ["index.md", "conventions.md", "previews.md"]
 "Applications" = [
   "advent-wollbi.md",
+  "claude-agents.md",
   "dependency-track.md",
   "extractor-admin.md",
   "fest-wollbi.md",

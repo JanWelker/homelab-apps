@@ -6,8 +6,11 @@ description: "OpenCloud on the cluster: plain manifests around the official imag
 
 [OpenCloud](https://opencloud.eu/) is the household's file sync and share:
 one Go binary, no database, with desktop, iOS and Android clients. Upstream
-publishes no open Helm chart, so this is a Deployment, a Service and a PVC
-around the official image, per
+publishes no open Helm chart, so `opencloud/` is plain manifests around the
+official image: `deployment.yaml`, `service.yaml`, `pvc.yaml`,
+`httproute.yaml`, `servicemonitor.yaml`, `secrets.yaml`, `networkpolicy.yaml`,
+`namespace.yaml` and two ConfigMaps, `csp.yaml` and
+`authentik-blueprint.yaml`, per
 [Conventions → Official upstream sources only](conventions.md#2-official-upstream-sources-only).
 
 ## At a glance
@@ -37,7 +40,7 @@ buckets here, and upstream documents no migration into or out of it.
 
 Upstream's backup guidance is to stop the instance first. The RBD snapshot
 is crash-consistent instead: metadata is written per operation on the same
-filesystem, and the run at 02:00 sees no sync traffic. The search index
+filesystem, and the nightly [Velero](https://homelab.wlkr.ch/platform/velero/) run sees no sync traffic. The search index
 is rebuilt if it disagrees after a restore; nothing is lost.
 
 ## Configuration
@@ -101,20 +104,27 @@ OpenBao path and regenerating is a new instance: the JWT secret signs the
 internal tokens and the IDs name the storage mount and the system user, so
 the data on the volume would no longer match.
 
+`idm-admin-password` is the built-in IDM's `admin` account, which the first
+start creates. With the IdP excluded nothing presents a login form for it, so
+there is no local break-glass account here, not even the one
+[rule 6](conventions.md#6-authentication-is-authentiks-not-the-applications)
+allows: Authentik is the only way in.
+
 ### Network policy
 
-Every rule in `opencloud/networkpolicy.yaml`, and why it is there. The
+The rules in `opencloud/networkpolicy.yaml`, and why each is there. The
 shape is [Conventions → Ship a `CiliumNetworkPolicy`](conventions.md#5-ship-a-ciliumnetworkpolicy).
 
 | Rule | Why |
 | --- | --- |
+| Ingress from the namespace, from `host` and `remote-node`; egress to the namespace | The rules every policy carries: [What every policy contains](https://homelab.wlkr.ch/platform/security-policies/#what-every-policy-contains) |
 | Ingress from `ingress` on 9200 | The Gateway reaches the server directly; OpenCloud handles its own login, and the desktop and mobile clients arrive the same way |
 | Ingress from Prometheus on 9205, `GET /metrics` only | The proxy's metrics; the health endpoints on the same port are the kubelet's, covered by `host` and `remote-node` |
-| Egress from the server to the Authentik server pods on 9000 | Discovery, the signing keys and the token endpoint go to `auth.k8s.wlkr.ch`, which resolves to the public address and is `world` to Cilium. The Gateway's Envoy then checks this policy against the Authentik pod it picks and answers 403 itself when that pod is not listed, so both the name and the pod are allowed |
+| Egress from the server to the Authentik server pods on 9000 | Discovery, the signing keys and the token endpoint go to `auth.k8s.wlkr.ch`, which resolves to the Gateway's own address, private but `world` to Cilium. The Gateway's Envoy then checks this policy against the Authentik pod it picks and answers 403 itself when that pod is not listed, so both the name and the pod are allowed |
 | Egress from the server to `auth.k8s.wlkr.ch` on 443 | The other half of the same path. Hubble records one dropped SYN to this name at each pod start: the first packet after a fresh DNS answer races the FQDN policy update and the retransmit passes, the [known artefact](https://homelab.wlkr.ch/platform/security-policies/#network-policies), not a missing rule |
 
-That is the complete list. No app store, no update check, no mail, no
-object store: the search index and NATS run inside the process.
+No app store, no update check, no mail, no object store: the search index
+and NATS run inside the process.
 
 ## Usage
 
@@ -146,6 +156,10 @@ The pod is `Running`, every `PushSecret` and the `ExternalSecret` are
 first start, the `idm.boltdb` on the volume is larger than the 32 KiB of an
 empty Bolt file; see [Pitfalls](#pitfalls).
 
+```bash
+kubectl -n opencloud exec deploy/opencloud -- ls -l /var/lib/opencloud/idm/
+```
+
 ## Pitfalls
 
 | Symptom | Cause |
@@ -155,5 +169,67 @@ empty Bolt file; see [Pitfalls](#pitfalls).
 | Login succeeds in Authentik, OpenCloud answers 403 | The user is in neither group, or the issuer in the token differs from `OC_OIDC_ISSUER`: a provider without `issuer_mode: global` |
 | The desktop client's login tab never returns | The loopback redirect did not match the regular expression; the port is random and the path may be empty |
 | Prometheus shows the target down | The policy allows `GET /metrics` only; any other path on 9205 from Prometheus is refused |
-| Login ends on "Not logged in"; the log shows `failed to add user` with `LDAP Result Code 49` from `graph` and `not found` from `idm` | The IDM database under `idm/` on the volume is a bare Bolt file: a first pod that died during the bootstrap, as in the row below, left it created but without the service users, and every later start sees the file and skips the bootstrap. Remove the `idm` directory the same way as `search` below and restart; the next start bootstraps it. Only safe while no account exists yet, which is the case when this symptom appears |
-| The pod exits with `error parsing mapping JSON: unexpected end of JSON input` from the `search` service | The Bleve index under `search/` on the volume was created by a pod that died before writing the mapping, which happens when another service fails on the same first start. Remove the `search` directory from the volume, from a pod on the same node that mounts the PVC while the container is in its back-off, and the index is rebuilt from the files on the next start. Scaling the Deployment to zero first does not hold: self-heal restores the replica within a minute |
+| Login ends on "Not logged in"; the log shows `failed to add user` with `LDAP Result Code 49` from `graph` and `not found` from `idm` | The IDM database under `idm/` on the volume is a bare Bolt file: a first pod that died during the bootstrap, as in the row below, left it created but without the service users, and every later start sees the file and skips the bootstrap. Remove the `idm` directory ([Recovery](#recovery)); the next start bootstraps it. Only safe while no account exists yet, which is the case when this symptom appears |
+| The pod exits with `error parsing mapping JSON: unexpected end of JSON input` from the `search` service | The Bleve index under `search/` on the volume was created by a pod that died before writing the mapping, which happens when another service fails on the same first start. Remove the `search` directory ([Recovery](#recovery)); the index is rebuilt from the files on the next start |
+
+## Recovery
+
+### Removing a directory from the volume
+
+For the two first-start failures above. The volume is `ReadWriteOnce` and
+stays attached to the node of the crashing pod, so the debug pod goes on that
+node; scaling the Deployment to zero first does not hold, self-heal restores
+the replica within a minute.
+
+1. Start a debug pod beside the crashing one, on its node and from its image,
+   with the `restricted` context the namespace enforces:
+
+    ```bash
+    NODE=$(kubectl -n opencloud get pod -l app.kubernetes.io/name=opencloud -o jsonpath='{.items[0].spec.nodeName}')
+    IMAGE=$(kubectl -n opencloud get deploy opencloud -o jsonpath='{.spec.template.spec.containers[0].image}')
+    kubectl -n opencloud apply -f - <<EOF
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: opencloud-debug
+    spec:
+      nodeName: $NODE
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: shell
+          image: $IMAGE
+          command: ["sleep", "3600"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/opencloud
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: opencloud-data
+    EOF
+    ```
+
+2. Remove the directory, `idm` or `search`:
+
+    ```bash
+    kubectl -n opencloud exec opencloud-debug -- rm -r /var/lib/opencloud/search
+    ```
+
+3. Delete the debug pod; the container's next restart recreates what was
+   removed:
+
+    ```bash
+    kubectl -n opencloud delete pod opencloud-debug
+    ```

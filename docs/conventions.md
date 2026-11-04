@@ -25,6 +25,10 @@ why every Application excludes it from its own source:
       exclude: "application.yaml"
 ```
 
+Exception: the `claude-*` sessions have no `exclude`, because an OCI chart
+source has no directory for it to act on; see
+[Claude agents](claude-agents.md#configuration).
+
 ## The rules
 
 ### 1. `project: apps`
@@ -42,8 +46,10 @@ none, so it is plain manifests around the official
 
 The user's own chart wrapping the user's own image is allowed, as with the Flowscape images and the `agent-mooring` chart.
 
-Pin every version. No `latest`, no floating tags. Renovate moves them, three
-days after a release, and the `image-scan.yaml` workflow fails a pull request
+Pin every version. No `latest`, no floating tags. Renovate moves them; the
+release age and schedule are set per package in `renovate.json`, and the
+user's own images move at once, since the wait guards against an upstream
+tag being pulled. The `image-scan.yaml` workflow fails a pull request
 whose new image carries a fixable CRITICAL the old one did not — the
 [same gate as the platform](https://homelab.wlkr.ch/development/maintenance/#ci-workflows).
 
@@ -98,12 +104,17 @@ visible.
 
 Annotate it `Prune=false`: pruning a `Namespace` deletes every PVC inside it.
 
+Exception: the `claude-*` sessions ship no namespace and share the one
+`claude-agents/` owns, so removing a session cannot prune the others' volumes;
+see [Claude agents](claude-agents.md#configuration).
+
 ### 5. Ship a `CiliumNetworkPolicy`
 
 Not a plain `NetworkPolicy`, which blocks the kubelet's health probes. Every
 policy needs `fromEntities: [host, remote-node]` for those probes, one rule
-for the way users arrive, and an egress half: the namespace and every
-outside name as `toFQDNs`. No DNS rule: the platform grants every pod its
+for the way users arrive, the namespace itself on both halves
+(`fromEndpoints: [{}]`, `toEndpoints: [{}]`), and every outside name as
+`toFQDNs`. No DNS rule: the platform grants every pod its
 lookups through the proxy in one cluster-wide policy, so a copy here only
 hides what the namespace adds — see
 [Security Policies → Cluster-wide rules](https://homelab.wlkr.ch/platform/security-policies/#cluster-wide-rules).
@@ -125,6 +136,11 @@ At the default wave it lands after the `Cluster` from rule 3, and a rule the
 `Cluster` needs in order to go Healthy can never unblock the wave it is stuck
 behind — see [Sync stuck on the database](#sync-stuck-on-the-database).
 
+Exception: the `homelab` session's policy allows every public address as a
+`toCIDRSet` instead of names, because a diagnosis fetches whatever it needs
+and a name list would be a firewall change per lookup; see
+[Claude agents → Network policy](claude-agents.md#network-policy).
+
 ### 6. Authentication is Authentik's, not the application's
 
 Which shape applies is decided by what the application supports:
@@ -136,15 +152,23 @@ Which shape applies is decided by what the application supports:
   `authentik` namespace, so the outpost authenticates in front of it. Home
   Assistant is the worked example; where the application has its own login this
   is defence in depth, not single sign-on.
+- **It has no browser session.** An API carries its own credential, since an
+  outpost would answer its caller with a login page:
+  [Knead Time](kneadtime.md) has none and CORS admits one origin, the
+  [Shot Timer bridge](shot-bridge.md) checks its own bearer key, and the
+  [Claude agents](claude-agents.md) admit SSH keys on a TLS passthrough.
 
 The OIDC provider's blueprint lives here, in the application's directory, as a
 ConfigMap targeted at the `authentik` namespace with a key ending in `.yaml`
 (see `dependency-track/authentik-blueprint.yaml`). The platform mounts it as
 an optional projected volume, because a fresh cluster has Authentik before it
 has any workload, and discovers it on the worker's startup, hourly, and
-through a file watcher. The client credentials, the outpost's provider list
-and any `referencegrant.yaml` entry stay in the platform repository, so going
-behind SSO is deliberately two pull requests.
+through a file watcher. The client credentials are generated here, by the
+generator and `PushSecret` in the application's `secrets.yaml` (rule 7), and
+read on Authentik's side by an `ExternalSecret` in the platform repository
+(`payload/platform/authentik/secrets-<app>.yaml`), where the outpost's
+provider list and any `referencegrant.yaml` entry also live, so going behind
+SSO is deliberately two pull requests.
 
 Because blueprint discovery is asynchronous, anything that configures itself
 against the provider must tolerate it not existing yet: fail soft and log.
@@ -187,13 +211,22 @@ OIDC client credentials go in the application's own `kv/<app>/config`, never
 under `kv/authentik/config`: a `bao kv put` replaces a path wholesale, so
 sharing it would make adding an application an Authentik outage.
 
+Exception: the `claude-*` sessions read `kv/claude-<session>/` through the
+`openbao-claude-agents` store, whose login identity is in
+`claude-agents/serviceaccounts.yaml`, because the sessions share a namespace
+and the paths sit outside its prefix; see
+[Claude agents → Secrets](claude-agents.md#secrets).
+
 ### 8. The shared `syncPolicy`
 
 `automated` with `prune` and `selfHeal`, plus `retry` with a limit of 10 and
-a 30s backoff up to 5m, copied from any sibling. ArgoCD never re-attempts a
-failed sync of the same revision without `retry`, and a workload that lands a
-minute before the platform resource it names would otherwise stay failed
-until someone ran `argocd app sync`.
+a 30s backoff up to 5m, and `syncOptions` with `ServerSideApply=true`, copied
+from any sibling but the four `claude-*` Applications, which leave the option
+out. ArgoCD never re-attempts a failed sync of the same revision without
+`retry`, and a workload that lands a minute before the platform resource it
+names would otherwise stay failed until someone ran `argocd app sync`.
+Server-side apply is what every platform Application uses, so the two
+repositories diff and apply the same way.
 
 ## What you do not have to write
 
@@ -221,11 +254,14 @@ away. It looks away for less than you might expect:
 | Every rule's `matches`, the catch-all's `PathPrefix /` included, once a route has more than one rule | forgives a missing `matches` only on the first rule |
 
 A route that leaves either out reports `OutOfSync` forever while working
-fine.
+fine. `sectionName` on the `parentRefs` entry picks the listener, and a
+listener pins one hostname pattern, so the wollbi sites name their own; the
+table is [Gateway API → Configuration](https://homelab.wlkr.ch/platform/gateway-api/#configuration).
 
 ## Behind the Gateway
 
-Traffic arrives from Cilium's Envoy inside the pod CIDR (`10.244.0.0/16`), not
+Traffic arrives from Cilium's Envoy inside the
+[pod subnet](https://homelab.wlkr.ch/architecture/#cluster-layout), not
 from the client, and TLS is terminated at the Gateway. An application that
 trusts `REMOTE_ADDR` sees the proxy, and one that builds absolute URLs from the
 request scheme produces `http://` links on an `https://` site. Look for a
@@ -254,7 +290,8 @@ finishes never applies the rule that would unblock it.
 2. **Confirm the drop** from the node running the database:
 
     ```bash
-    kubectl exec -n kube-system <cilium-pod-on-that-node> -c cilium-agent -- \
+    pod="$(kubectl -n kube-system get pod -l k8s-app=cilium --field-selector spec.nodeName=<node> -o name)"
+    kubectl -n kube-system exec "$pod" -c cilium-agent -- \
       hubble observe --verdict DROPPED --from-namespace cnpg-system --last 20
     ```
 
@@ -266,5 +303,12 @@ finishes never applies the rule that would unblock it.
       -o jsonpath='{range .status.operationState.syncResult.resources[*]}{.kind}{"\t"}{.hookPhase}{"\n"}{end}'
     ```
 
-4. **Fix.** Put the policy at wave `-2`, then terminate the stuck operation.
-   The next sync applies the policy first and the `Cluster` goes Healthy.
+4. **Fix.** Put the policy at wave `-2`, then terminate the stuck operation,
+   which never picks up the new revision on its own:
+
+    ```bash
+    argocd app terminate-op <app>
+    ```
+
+    The CLI login is [Argo CD → CLI access](https://homelab.wlkr.ch/platform/argocd/#cli-access).
+    The next sync applies the policy first and the `Cluster` goes Healthy.

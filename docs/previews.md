@@ -41,11 +41,12 @@ the hostname; the base holds placeholders for all three.
 
 1. Add the `preview` label to the pull request.
 2. Wait for the `Push image` check, then up to a minute for the Application.
-3. Open `https://<site>-pr-<n>.k8s.wlkr.ch`. To log in at `/admin` as the
-   seeded editor:
+3. Open `https://<site>-pr-<n>.k8s.wlkr.ch`. The login at `/admin` is the
+   seeded editor: the name is `SEED_ADMIN_EMAIL` in
+   `<site>/preview/deployment.yaml`, the password is generated per preview:
 
     ```bash
-    kubectl -n advent-wollbi-pr-<n> get secret advent-wollbi-config \
+    kubectl -n <site>-pr-<n> get secret <site>-config \
       -o jsonpath='{.data.admin-password}' | base64 -d
     ```
 

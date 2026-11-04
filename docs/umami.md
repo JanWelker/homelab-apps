@@ -7,8 +7,10 @@ description: "Umami on the cluster: cookieless web analytics for every site, pla
 [Umami](https://umami.is/) counts the visits to every site: the two
 documentation sites, the GitHub Pages projects and Home Assistant.
 It sets no cookie and stores no address, so the sites need no consent banner.
-Upstream publishes an image and no chart, so this is a Deployment, a Service
-and an HTTPRoute around the official image, per
+Upstream publishes an image and no chart, so `umami/` is plain manifests
+around the official image: `deployment.yaml`, `service.yaml`, `pdb.yaml`,
+`httproute.yaml`, `database.yaml` with `backup.yaml`, `secrets.yaml`,
+`networkpolicy.yaml` and `namespace.yaml`, per
 [Conventions → Official upstream sources only](conventions.md#2-official-upstream-sources-only).
 
 ## At a glance
@@ -30,7 +32,7 @@ and an HTTPRoute around the official image, per
 | The namespace enforces `restricted` | The image runs as uid 1001, needs no capability, and writes only Next.js' cache, which is an `emptyDir` next to `/tmp` |
 | `automountServiceAccountToken: false` | Umami never talks to the API server |
 | `DATABASE_URL` from `umami-db-app`, key `uri` | Umami wants one connection string, and CloudNativePG assembles it; see [the contract](https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract) |
-| `APP_SECRET` and `TWO_FACTOR_ENCRYPTION_KEY` from OpenBao | The first signs every dashboard session and the second encrypts TOTP secrets; both must survive a rebuild, so neither is generated in the cluster. See [Secrets](#secrets) |
+| `APP_SECRET` and `TWO_FACTOR_ENCRYPTION_KEY` from OpenBao | The first signs every dashboard session and the second encrypts TOTP secrets; both must survive a rebuild, so the `PushSecret` writes each to OpenBao once and a rebuilt cluster reads the same value back. See [Secrets](#secrets) |
 | `DISABLE_UPDATES`, `DISABLE_TELEMETRY`, `PRIVATE_MODE` | No phone-home: no version check, no usage report, no favicon fetch for each tracked site. The egress policy allows nothing outside the cluster, so these are what keep the log free of drops |
 | Two replicas, a hard spread across nodes, a `PodDisruptionBudget` | Nothing lives on the pod and the sessions are JWTs signed by the shared `APP_SECRET`, so a second instance keeps the tracker up through a Kured drain and an image bump; the migrations at start take a Postgres advisory lock, so two pods starting together do not race |
 | Probes on `/api/heartbeat`, a long `startupProbe` | The first start runs the Prisma migrations before the server answers |
@@ -40,18 +42,35 @@ and an HTTPRoute around the official image, per
 
 ### Network policy
 
-Every rule in `umami/networkpolicy.yaml`, and why it is there. The shape is
+The rules in `umami/networkpolicy.yaml`, and why each is there. The shape is
 [Conventions → Ship a `CiliumNetworkPolicy`](conventions.md#5-ship-a-ciliumnetworkpolicy);
 rollout and debugging are in
 [Security Policies](https://homelab.wlkr.ch/platform/security-policies/#network-policies).
 
 | Rule | Why |
 | --- | --- |
+| Ingress from the namespace, from `host` and `remote-node`; egress to the namespace | The rules every policy carries: [What every policy contains](https://homelab.wlkr.ch/platform/security-policies/#what-every-policy-contains) |
 | Ingress on 3000 from the Authentik server pods only | The outpost proxies the tracker paths as well as the dashboard, so the Gateway never talks to the pod. No `fromEntities: ingress`, so a request straight from the Gateway cannot skip the login |
 | Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics. Umami itself exposes none |
 | Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](conventions.md#sync-stuck-on-the-database) |
 | Egress to the namespace only | The database. With the three phone-home switches off, nothing else is dialled |
-| Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise |
+| Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise. The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](https://homelab.wlkr.ch/platform/cloudnative-pg/#backups) |
+
+### Secrets
+
+`kv/umami/config` holds two values, 64 hex characters each as Umami documents
+them, written once by the `PushSecret` in `secrets.yaml` and never
+overwritten — see [Generated secrets](https://homelab.wlkr.ch/platform/openbao/#generated-secrets).
+
+| Key | Read as |
+| --- | --- |
+| `app-secret` | `APP_SECRET`: signs the dashboard sessions |
+| `two-factor-encryption-key` | `TWO_FACTOR_ENCRYPTION_KEY`: encrypts TOTP secrets at rest |
+
+The `ExternalSecret` sits at sync wave `-1`, with the database and ahead of
+the Deployment that reads it, and keeps its Secret when deleted
+(`deletionPolicy: Retain`). The database password is not here; CloudNativePG
+generates it and nothing outside the cluster needs it.
 
 ## Usage
 
@@ -86,22 +105,6 @@ Where the snippet lives per site:
 | A SvelteKit or Vite site on GitHub Pages | `src/app.html` or `index.html` |
 | [Home Assistant](home-assistant.md) | `frontend.extra_module_url` in `configuration.yaml`, pointing at a module in the ConfigMap that appends the `<script>` tag; a module is loaded through `import()`, which is not how the tracker expects to be run |
 
-### Secrets
-
-`kv/umami/config` holds two values, 64 hex characters each as Umami documents
-them, written once by the `PushSecret` in `secrets.yaml` and never
-overwritten — see [Generated secrets](https://homelab.wlkr.ch/platform/openbao/#generated-secrets).
-
-| Key | Read as |
-| --- | --- |
-| `app-secret` | `APP_SECRET`: signs the dashboard sessions |
-| `two-factor-encryption-key` | `TWO_FACTOR_ENCRYPTION_KEY`: encrypts TOTP secrets at rest |
-
-The `ExternalSecret` sits at sync wave `-1`, with the database and ahead of
-the Deployment that reads it, and keeps its Secret when deleted
-(`deletionPolicy: Retain`). The database password is not here; CloudNativePG
-generates it and nothing outside the cluster needs it.
-
 ## Health check
 
 ```bash
@@ -118,7 +121,7 @@ appears within seconds.
 ## Pitfalls
 
 !!! warning "Two logins, and the tracker paths behind neither"
-    Umami has a login of its own and no OIDC support, so, like Home Assistant, the outpost sits in front of it and browser users authenticate twice. `/script.js` and `/api/send` are exempt on the provider, which is what lets a visitor's browser post a page view; the collect endpoint accepts nothing but page views and events for a known website ID.
+    Browser users authenticate twice, and `/script.js` and `/api/send` are behind neither login; the collect endpoint accepts nothing but page views and events for a known website ID. See [Authentik → Pitfalls](https://homelab.wlkr.ch/platform/authentik/#pitfalls).
 
 - **A visit shows the cluster's country, or none.** Umami takes the visitor
   from `X-Forwarded-For`. If every visit resolves to the same place, the
