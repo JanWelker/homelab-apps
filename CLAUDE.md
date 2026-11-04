@@ -52,7 +52,8 @@ npx --package renovate@latest renovate-config-validator
 ## Writing docs
 
 `docs/` is reference material, not an essay collection. One page per
-application, registered in `zensical.toml`, plus `conventions.md`.
+application, registered in `zensical.toml` twice: in `nav` and in the
+`plugins.llmstxt.sections` list that builds `llms.txt`, plus `conventions.md`.
 
 - **Application pages share one skeleton:** intro, At a glance, Configuration,
   Usage, Health check, Pitfalls, and Recovery only where a real runbook exists.

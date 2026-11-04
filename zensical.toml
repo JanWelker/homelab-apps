@@ -52,6 +52,7 @@ custom_dir = "overrides"
 logo = "assets/images/logo.png"
 favicon = "assets/images/logo.png"
 features = [
+  "content.action.copy",
   "content.action.edit",
   "content.action.view",
   "content.code.copy",
@@ -102,6 +103,32 @@ primary = "custom"
 accent = "custom"
 toggle.icon = "lucide/moon"
 toggle.name = "Pinned to dark -- follow your system theme"
+
+# Machine-readable index of the site for LLM clients (llmstxt.org), the same
+# shape as the platform site: /llms.txt lists every page, /llms-full.txt
+# carries the whole site as one Markdown file, and every page gets a .md twin
+# plus a "Copy as Markdown" button (content.action.copy).
+[project.plugins.llmstxt]
+full_output = "llms-full.txt"
+markdown_description = """
+One page per application deployed by Argo CD from this repository onto the
+Flatcar homelab cluster, plus the conventions every one of them follows. The
+platform underneath is documented at https://homelab.wlkr.ch/."""
+
+[project.plugins.llmstxt.sections]
+"Conventions" = ["index.md", "conventions.md", "previews.md", "claude-agents.md"]
+"Applications" = [
+  "advent-wollbi.md",
+  "dependency-track.md",
+  "extractor-admin.md",
+  "fest-wollbi.md",
+  "flowscape.md",
+  "home-assistant.md",
+  "kneadtime.md",
+  "opencloud.md",
+  "shot-bridge.md",
+  "umami.md",
+]
 
 [project.validation]
 invalid_links = true
