@@ -40,8 +40,9 @@ Read [the conventions](docs/conventions.md) first. The step-by-step version is
 [Adding a Workload](https://homelab.wlkr.ch/development/add-workload/) in the
 platform documentation.
 
-A new application needs a page in `docs/`, registered in `zensical.toml`. The
-site builds with `--strict`, so an unregistered page fails CI.
+A new application needs a page in `docs/`, registered in `zensical.toml` under
+`nav` and under `plugins.llmstxt.sections` (which builds `llms.txt` for LLM
+clients). The site builds with `--strict`, so an unregistered page fails CI.
 
 ## Local checks
 
