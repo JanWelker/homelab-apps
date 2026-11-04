@@ -59,6 +59,11 @@ application, registered in `zensical.toml`, plus `conventions.md`.
 - **Say each fact once.** The rules live in `conventions.md`; an application
   page states how it applies them in one clause and links. Platform facts live
   in the platform docs at `https://homelab.wlkr.ch/`; link, do not restate.
+  To read them, fetch <https://homelab.wlkr.ch/llms.txt> for the page index or
+  <https://homelab.wlkr.ch/llms-full.txt> for every page in one file; this
+  site publishes the same two at <https://homelab-apps.wlkr.ch/llms.txt> and
+  <https://homelab-apps.wlkr.ch/llms-full.txt>, and every page has a `.md`
+  twin at its URL plus `index.md`.
 - **One sentence of why per rule.** No history, postmortems, measurements of
   the day, or "this page previously claimed".
 - **Never restate values from the manifests.** Link the file and explain why the

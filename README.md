@@ -11,7 +11,10 @@ and built from `docs/` in this repository.
 This repository holds only the applications. The cluster they run on — Flatcar,
 Kubeadm, Cilium, Rook-Ceph, ArgoCD and everything under them — is in
 [JanWelker/homelab](https://github.com/JanWelker/homelab), documented at
-[homelab.wlkr.ch](https://homelab.wlkr.ch/).
+[homelab.wlkr.ch](https://homelab.wlkr.ch/). LLM clients can read this site as
+[llms.txt](https://homelab-apps.wlkr.ch/llms.txt) or in full as
+[llms-full.txt](https://homelab-apps.wlkr.ch/llms-full.txt); the platform site
+publishes the same two files.
 
 ## Applications
 
