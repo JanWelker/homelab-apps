@@ -38,12 +38,10 @@ homelab (platform)                    homelab-apps (this repository)
   Application argocd
     └── ApplicationSet platform
           └── Application workloads     ──▶  ApplicationSet apps
-                                           │      └── one Application per directory
-                                           └──▶  ApplicationSet previews
-                                                  └── one Application per labelled pull request
+                                                └── one Application per directory
 ```
 
-The platform names this repository in three places, the two ApplicationSets'
+The platform names this repository in two places, the ApplicationSet's
 `repoURL` and the `apps` project's `sourceRepos`, and never reads what is in
 it. Nothing orders a workload after the platform it
 uses: each Application syncs as soon as it exists and retries until the

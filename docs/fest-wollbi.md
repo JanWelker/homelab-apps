@@ -23,7 +23,6 @@ so its upstream is our own — per
 | Database | CloudNativePG `Cluster` `fest-wollbi-db` |
 | Secrets | `kv/fest-wollbi/config` in OpenBao |
 | Files | [`fest-wollbi/`](https://github.com/JanWelker/homelab-apps/tree/main/fest-wollbi) |
-| Previews | One per pull request labelled `preview` — [Pull request previews](previews.md) |
 | Source | [JanWelker/fest.wollbi.ch](https://github.com/JanWelker/fest.wollbi.ch) |
 
 ## Configuration

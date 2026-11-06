@@ -29,7 +29,6 @@ nav = [
   { "Home Assistant" = "home-assistant.md" },
   { "Knead Time" = "kneadtime.md" },
   { "OpenCloud" = "opencloud.md" },
-  { "Pull request previews" = "previews.md" },
   { "Shot Timer bridge" = "shot-bridge.md" },
   { "Umami" = "umami.md" },
   { "Wollbi Adventsfenster" = "advent-wollbi.md" },
@@ -116,7 +115,7 @@ Flatcar homelab cluster, plus the conventions every one of them follows. The
 platform underneath is documented at https://homelab.wlkr.ch/."""
 
 [project.plugins.llmstxt.sections]
-"Conventions" = ["index.md", "conventions.md", "previews.md"]
+"Conventions" = ["index.md", "conventions.md"]
 "Applications" = [
   "advent-wollbi.md",
   "claude-agents.md",
