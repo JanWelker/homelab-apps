@@ -10,7 +10,6 @@ platform underneath is documented at https://homelab.wlkr.ch/.
 
 - [Home](<https://homelab-apps.wlkr.ch/index.md>)
 - [Conventions](<https://homelab-apps.wlkr.ch/conventions/index.md>)
-- [Pull request previews](<https://homelab-apps.wlkr.ch/previews/index.md>)
 
 ## Applications
 

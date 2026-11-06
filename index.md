@@ -27,12 +27,10 @@ homelab (platform)                    homelab-apps (this repository)
   Application argocd
     └── ApplicationSet platform
           └── Application workloads     ──▶  ApplicationSet apps
-                                           │      └── one Application per directory
-                                           └──▶  ApplicationSet previews
-                                                  └── one Application per labelled pull request
+                                                └── one Application per directory
 ```
 
-The platform names this repository in three places, the two ApplicationSets' `repoURL` and the `apps` project's `sourceRepos`, and never reads what is in it. Nothing orders a workload after the platform it uses: each Application syncs as soon as it exists and retries until the Gateway, StorageClass or `ClusterSecretStore` it names is there — the [sync policy](<https://homelab-apps.wlkr.ch/conventions/#8-the-shared-syncpolicy>) is the same one every platform Application carries. Why the split exists is in [GitOps Strategy](<https://homelab.wlkr.ch/architecture/gitops/#workloads-live-in-a-second-repository>).
+The platform names this repository in two places, the ApplicationSet's `repoURL` and the `apps` project's `sourceRepos`, and never reads what is in it. Nothing orders a workload after the platform it uses: each Application syncs as soon as it exists and retries until the Gateway, StorageClass or `ClusterSecretStore` it names is there — the [sync policy](<https://homelab-apps.wlkr.ch/conventions/#8-the-shared-syncpolicy>) is the same one every platform Application carries. Why the split exists is in [GitOps Strategy](<https://homelab.wlkr.ch/architecture/gitops/#workloads-live-in-a-second-repository>).
 
 ## What they have in common
 

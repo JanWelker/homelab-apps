@@ -362,22 +362,6 @@
   
   
     <li class="md-tabs__item">
-      <a href="../previews/" class="md-tabs__link">
-        
-  
-  Pull request previews
-
-      </a>
-    </li>
-  
-
-      
-        
-  
-  
-  
-  
-    <li class="md-tabs__item">
       <a href="../shot-bridge/" class="md-tabs__link">
         
   
@@ -934,32 +918,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../previews/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-  Pull request previews
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../shot-bridge/" class="md-nav__link">
         
   
@@ -1343,7 +1301,7 @@ same namespace through its external-database settings.</p>
 <code>&lt;cluster&gt;-primary</code> PodDisruptionBudget otherwise never allows an eviction,
 so a drain of that node hangs until Kured's timeout and the node is never
 rebooted. The pod moves and the database is down for the move either way.</p>
-<p>Every <code>Cluster</code> outside a preview gets a <code>backup.yaml</code> beside it, the
+<p>Every <code>Cluster</code> gets a <code>backup.yaml</code> beside it, the
 <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#backing-up-a-database">stanza from the platform</a>
 with the <code>Cluster</code>'s name and namespace filled in, and the <code>plugins</code> entry in
 the <code>Cluster</code>. Velero's nightly PVC snapshot alone restores only to the night
