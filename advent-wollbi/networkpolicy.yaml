@@ -9,10 +9,9 @@ metadata:
     argocd.argoproj.io/sync-wave: "-2"
 spec:
   description: >-
-    Default-deny ingress. The Gateway reaches the public site directly and
-    the Authentik outpost reaches it for /admin; Prometheus, the
-    CloudNativePG operator, the namespace itself and the node's health
-    probes.
+    Default-deny ingress. The Gateway, for the public site and /admin;
+    Prometheus, the CloudNativePG operator, the namespace itself and the
+    node's health probes.
   endpointSelector: {}
   ingress:
     - fromEndpoints:
@@ -26,18 +25,6 @@ spec:
         - ports:
             - port: "3000"
               protocol: TCP
-    - fromEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: authentik
-            k8s:app.kubernetes.io/name: authentik
-            k8s:app.kubernetes.io/component: server
-      toPorts:
-        - ports:
-            - port: "3000"
-              protocol: TCP
-          rules:
-            http:
-              - {}
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: monitoring
@@ -67,9 +54,9 @@ metadata:
     argocd.argoproj.io/sync-wave: "-2"
 spec:
   description: >-
-    Default-deny egress. The namespace only, and that is the whole list:
-    the site renders from its own database and serves its own uploads, so
-    nothing here dials anything outside the cluster.
+    Default-deny egress. The namespace only: the site renders from its own
+    database and serves its own uploads. The app's sign-in is the one
+    exception, in the policy below.
   endpointSelector: {}
   egress:
     - toEndpoints:
@@ -92,3 +79,34 @@ spec:
   egress:
     - toEntities:
         - kube-apiserver
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: advent-wollbi
+  namespace: advent-wollbi
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    The app: Authentik's token and userinfo endpoints when an editor signs
+    in, by name and by pod, because the Gateway checks the pod it picks.
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: advent-wollbi
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: authentik
+            k8s:app.kubernetes.io/name: authentik
+            k8s:app.kubernetes.io/component: server
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP
+    - toFQDNs:
+        - matchName: auth.k8s.wlkr.ch
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

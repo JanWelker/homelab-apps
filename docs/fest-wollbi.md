@@ -1,5 +1,5 @@
 ---
-description: "fest.wollbi.ch on the cluster: the Wollbi-Fescht site as Payload CMS on Next.js, public at the root and behind the Authentik outpost at /admin and Payload's API."
+description: "fest.wollbi.ch on the cluster: the Wollbi-Fescht site as Payload CMS on Next.js, public at the root, with editors signing in to /admin through Authentik."
 ---
 
 # Wollbi-Fescht
@@ -18,10 +18,10 @@ so its upstream is our own — per
 | | |
 | --- | --- |
 | URL | [fest.wollbi.ch](https://fest.wollbi.ch) — public, no login |
-| Authentication | Authentik proxy outpost on `/admin` and `/api`, in front of Payload's own login; uploaded files under `/api/media/file` stay public; `/seed` redirects to `/` |
+| Authentication | Payload signs editors in through Authentik over OIDC, members of `wollbi-editors` only; no local accounts; `/seed` redirects to `/` |
 | Storage | A PVC for what editors upload after the seed |
 | Database | CloudNativePG `Cluster` `fest-wollbi-db` |
-| Secrets | `kv/fest-wollbi/config` in OpenBao |
+| Secrets | `kv/fest-wollbi/config`, `kv/fest-wollbi/seed` and `kv/fest-wollbi/oidc` in OpenBao |
 | Files | [`fest-wollbi/`](https://github.com/JanWelker/homelab-apps/tree/main/fest-wollbi) |
 | Source | [JanWelker/fest.wollbi.ch](https://github.com/JanWelker/fest.wollbi.ch) |
 
@@ -35,7 +35,7 @@ so its upstream is our own — per
 | `PAYLOAD_SECRET` from OpenBao | It signs every editor session and encrypts what Payload keeps encrypted. The `PushSecret` in `secrets.yaml` writes it once, `IfNotExists`, so a rebuilt cluster reads the same value back and nobody is logged out; see [Conventions → Real secrets come from OpenBao](conventions.md#7-real-secrets-come-from-openbao) |
 | `NEXT_PUBLIC_SERVER_URL` | The origin Payload trusts for CSRF and builds absolute URLs from. TLS ends at the Gateway, so the pod's own address is the wrong answer — see [Behind the Gateway](conventions.md#behind-the-gateway) |
 | An `emptyDir` on `/app/.next/cache` | Next.js writes its render cache at runtime and the root filesystem is read-only. It is a cache: losing it on a restart costs one slow first request |
-| Four rules on one `HTTPRoute` | The site is an invitation to the neighbours, so `/` reaches the app directly. `/admin` goes through the outpost, and so do Payload's `/api`, which the admin UI is only a client of, and `/outpost.goauthentik.io`, where the outpost finishes the login on this hostname; without it the login ends on a 404 from the site. The pages read Payload in-process, so the browser needs only `/api/media/file`, the uploads they link to, which goes straight to the app. `/seed` redirects to `/`: the seed hook calls the Service, so nothing outside the namespace has a reason to reach it, and Gateway API has no rule that refuses a request. A longer path prefix wins in Gateway API, so the order of the rules does not matter. The cross-namespace `backendRef` works only because the platform's `referencegrant.yaml` names this namespace |
+| Two rules on one `HTTPRoute` | Every path reaches the app, `/admin` and `/api` included: Payload checks the editor's session itself, so the Gateway has nothing to gate. `/seed` redirects to `/`: the seed hook calls the Service, so nothing outside the namespace has a reason to reach it, and Gateway API has no rule that refuses a request |
 | `/healthz` answers without the database | A database outage should show as an empty page, not as a pod the kubelet restarts in a loop |
 
 ### Seeding
@@ -48,19 +48,29 @@ every sync rather than once by hand.
 
 What it does, in order, and only on an empty database:
 
-1. Creates the first editor from `SEED_ADMIN_EMAIL` and the password in
-   OpenBao.
-2. Imports every file in the site repository's `public/seed/images/` as
+1. Imports every file in the site repository's `public/seed/images/` as
    media — including the ones no page references, because the archive is the
    reason the site exists.
-3. Writes the three pages: Willkommen, Info and the Einladungsarchiv.
+2. Writes the three pages: Willkommen, Info and the Einladungsarchiv.
 
 Afterwards the database is the source of truth and the seed is a no-op.
 The Job's `activeDeadlineSeconds` is the backstop: a site that never answers
 fails the sync instead of holding the Application in Syncing, and the
 curl's own retries fit inside it.
 
-### Network policy
+### OIDC
+
+The provider, the `wollbi-editors` group and the binding are in
+[`fest-wollbi/authentik-blueprint.yaml`](https://github.com/JanWelker/homelab-apps/blob/main/fest-wollbi/authentik-blueprint.yaml);
+the platform mounts it, and reads the client secret, as in
+[Authentik → Adding an application](https://homelab.wlkr.ch/platform/authentik/#adding-an-application).
+
+| Setting | Why |
+| --- | --- |
+| A confidential client, `client_id` `fest-wollbi` in clear | Payload exchanges the code on the server, where a secret can live; the ID is not a secret |
+| The `payload-oauth2` plugin, local strategy off | Payload has no built-in OIDC; with the local strategy off there are no passwords to leak or reset |
+| The group checked twice | Authentik's binding refuses everyone else; the app also refuses a `groups` claim without `wollbi-editors`, so an unbound application does not open the site to every Authentik account |
+| Users matched by email | An editor created before the switch keeps their pages when they first sign in with the same email |
 
 The rules in
 [`fest-wollbi/networkpolicy.yaml`](https://github.com/JanWelker/homelab-apps/blob/main/fest-wollbi/networkpolicy.yaml),
@@ -72,29 +82,29 @@ rollout and debugging are in
 | Rule | Why |
 | --- | --- |
 | Ingress from the namespace, from `host` and `remote-node`; egress to the namespace | The rules every policy carries: [What every policy contains](https://homelab.wlkr.ch/platform/security-policies/#what-every-policy-contains) |
-| Ingress on 3000 from `ingress` | The public site; it is meant to be read by people Authentik has never heard of |
-| Ingress on 3000 from the Authentik server pods, with an L7 `http` rule | `/admin` and `/api` through the outpost |
+| Ingress on 3000 from `ingress` | The public site and `/admin`; the site is meant to be read by people Authentik has never heard of |
 | Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics. Payload exposes none |
 | Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](conventions.md#sync-stuck-on-the-database) |
-| Egress to the namespace, and nothing else at all | The site renders from its own database and serves its own uploads. There is no `toFQDNs` block, which is the shortest way to say a public site never calls out |
+| Egress to the namespace | The site renders from its own database and serves its own uploads |
+| Egress from the app to `auth.k8s.wlkr.ch` on 443 and to the Authentik server pods on 9000 | The token and userinfo calls of a sign-in. The name resolves to the Gateway, `world` to Cilium, and the Gateway's Envoy then checks the pod it picks, so both halves are needed, as for [OpenCloud](opencloud.md#network-policy) |
 | Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise. The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](https://homelab.wlkr.ch/platform/cloudnative-pg/#backups) |
 
 ### Secrets
 
-`kv/fest-wollbi/config` holds two values and `kv/fest-wollbi/seed` the third, each written once
+`kv/fest-wollbi/config`, `kv/fest-wollbi/seed` and `kv/fest-wollbi/oidc` hold one value each, each written once
 by a `PushSecret` in `secrets.yaml` and never overwritten — see [Generated secrets](https://homelab.wlkr.ch/platform/openbao/#generated-secrets).
 
 | Key | Read as |
 | --- | --- |
 | `payload-secret` | `PAYLOAD_SECRET`: signs the editor sessions |
 | `seed-token` | `SEED_TOKEN`: what the seed hook authenticates with, so the hook never holds the key that signs sessions |
-| `admin-password` | The first editor's password, read only while the database is empty |
+| `client-secret` in `kv/fest-wollbi/oidc` | `OIDC_CLIENT_SECRET`, and Authentik's copy for the provider through the platform store |
 
 ## Usage
 
 ### Editing
 
-`https://fest.wollbi.ch/admin` — Authentik first, then Payload's own login.
+`https://fest.wollbi.ch/admin`, then **Mit Authentik anmelden**. Members of `wollbi-editors` get a Payload editor on their first sign-in, matched by email; add someone to the group in Authentik to make them an editor.
 Pages are made of three blocks, which are the three shapes the Pelican pages
 had: prose, a run of images under a heading, and a download.
 
@@ -127,6 +137,4 @@ as `{namespace="fest-wollbi", container="seed"}`.
   the database to that night's backup time
   ([Point-in-time restore](https://homelab.wlkr.ch/platform/cloudnative-pg/#point-in-time-restore)),
   or records point at files that are gone.
-- **Deleting `kv/fest-wollbi/config` logs the editors out** and does not
-  change the first editor's password, which is read only while the database is
-  empty.
+- **Deleting `kv/fest-wollbi/config` logs the editors out.**

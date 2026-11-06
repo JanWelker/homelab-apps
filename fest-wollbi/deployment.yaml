@@ -64,14 +64,17 @@ spec:
                 secretKeyRef:
                   name: fest-wollbi-config
                   key: seed-token
-            # Read by the seed route, and only on an empty database.
-            - name: SEED_ADMIN_EMAIL
-              value: fest@wollbi.ch
-            - name: SEED_ADMIN_PASSWORD
+            # Editors sign in through Authentik; Payload has no passwords.
+            # docs/fest-wollbi.md#oidc
+            - name: AUTHENTIK_URL
+              value: https://auth.k8s.wlkr.ch
+            - name: OIDC_CLIENT_ID
+              value: fest-wollbi
+            - name: OIDC_CLIENT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: fest-wollbi-config
-                  key: admin-password
+                  key: oidc-client-secret
           volumeMounts:
             - name: media
               mountPath: /app/media

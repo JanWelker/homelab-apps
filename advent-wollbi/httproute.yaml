@@ -1,11 +1,8 @@
 ---
-# The site is public -- it is an invitation to the neighbours -- so / reaches
-# the app directly. /admin and Payload's API behind it go through the
-# Authentik outpost, in front of Payload's own login; only the uploaded files
-# the pages link to stay public. The outpost completes the login on this
-# hostname under /outpost.goauthentik.io, so that prefix must reach it too.
-# /seed never reaches the app through the Gateway: the seed hook calls the
-# Service. A longer path prefix wins in Gateway API, so the order of these
+# The site is public -- it is an invitation to the neighbours -- so every path
+# reaches the app, /admin included: Payload signs editors in through Authentik
+# itself. /seed never reaches the app through the Gateway: the seed hook calls
+# the Service. A longer path prefix wins in Gateway API, so the order of these
 # rules does not matter.
 # The backendRefs spell out the CRD defaults: beside the redirect-only /seed
 # rule, Argo CD otherwise reports the route OutOfSync forever.
@@ -28,23 +25,6 @@ spec:
     - matches:
         - path:
             type: PathPrefix
-            value: /admin
-        - path:
-            type: PathPrefix
-            value: /api
-        - path:
-            type: PathPrefix
-            value: /outpost.goauthentik.io
-      backendRefs:
-        - group: ""
-          kind: Service
-          name: authentik-server
-          namespace: authentik
-          port: 80
-          weight: 1
-    - matches:
-        - path:
-            type: PathPrefix
             value: /seed
       filters:
         - type: RequestRedirect
@@ -53,16 +33,6 @@ spec:
               type: ReplaceFullPath
               replaceFullPath: /
             statusCode: 302
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /api/media/file
-      backendRefs:
-        - group: ""
-          kind: Service
-          name: advent-wollbi
-          port: 3000
-          weight: 1
     - matches:
         - path:
             type: PathPrefix
