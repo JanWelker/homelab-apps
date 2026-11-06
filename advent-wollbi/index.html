@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="advent.wollbi.ch on the cluster: the Adventsfenster site as Payload CMS on Next.js, public at the root and behind the Authentik outpost at /admin and Payload's API.">
+        <meta name="description" content="advent.wollbi.ch on the cluster: the Adventsfenster site as Payload CMS on Next.js, public at the root, with editors signing in to /admin through Authentik.">
       
       
       
@@ -856,10 +856,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#network-policy" class="md-nav__link">
+  <a href="#oidc" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Network policy
+        OIDC
       </span>
     </span>
   </a>
@@ -1041,10 +1041,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#network-policy" class="md-nav__link">
+  <a href="#oidc" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
-        Network policy
+        OIDC
       </span>
     </span>
   </a>
@@ -1179,7 +1179,7 @@ so its upstream is our own — per
 </tr>
 <tr>
 <td>Authentication</td>
-<td>Authentik proxy outpost on <code>/admin</code> and <code>/api</code>, in front of Payload's own login; uploaded files under <code>/api/media/file</code> stay public; <code>/seed</code> redirects to <code>/</code></td>
+<td>Payload signs editors in through Authentik over OIDC, members of <code>wollbi-editors</code> only; no local accounts; <code>/seed</code> redirects to <code>/</code></td>
 </tr>
 <tr>
 <td>Storage</td>
@@ -1191,7 +1191,7 @@ so its upstream is our own — per
 </tr>
 <tr>
 <td>Secrets</td>
-<td><code>kv/advent-wollbi/config</code> in OpenBao</td>
+<td><code>kv/advent-wollbi/config</code>, <code>kv/advent-wollbi/seed</code> and <code>kv/advent-wollbi/oidc</code> in OpenBao</td>
 </tr>
 <tr>
 <td>Files</td>
@@ -1237,8 +1237,8 @@ so its upstream is our own — per
 <td>Next.js writes its render cache at runtime and the root filesystem is read-only. It is a cache: losing it on a restart costs one slow first request</td>
 </tr>
 <tr>
-<td>Four rules on one <code>HTTPRoute</code></td>
-<td>The site is an invitation to the neighbours, so <code>/</code> reaches the app directly. <code>/admin</code> goes through the outpost, and so do Payload's <code>/api</code>, which the admin UI is only a client of, and <code>/outpost.goauthentik.io</code>, where the outpost finishes the login on this hostname. The pages read Payload in-process, so the browser needs only <code>/api/media/file</code>, the uploads they link to, which goes straight to the app. <code>/seed</code> redirects to <code>/</code>: the seed hook calls the Service, so nothing outside the namespace has a reason to reach it, and Gateway API has no rule that refuses a request. A longer path prefix wins in Gateway API, so the order of the rules does not matter. The cross-namespace <code>backendRef</code> works only because the platform's <code>referencegrant.yaml</code> names this namespace</td>
+<td>Two rules on one <code>HTTPRoute</code></td>
+<td>Every path reaches the app, <code>/admin</code> and <code>/api</code> included: Payload checks the editor's session itself, so the Gateway has nothing to gate. <code>/seed</code> redirects to <code>/</code>: the seed hook calls the Service, so nothing outside the namespace has a reason to reach it, and Gateway API has no rule that refuses a request</td>
 </tr>
 <tr>
 <td>The media collection accepts PDFs and <code>text/calendar</code></td>
@@ -1258,8 +1258,6 @@ and does nothing once a page exists. That is what makes it safe to run after
 every sync rather than once by hand.</p>
 <p>What it does, in order, and only on an empty database:</p>
 <ol>
-<li>Creates the first editor from <code>SEED_ADMIN_EMAIL</code> and the password in
-   OpenBao.</li>
 <li>Imports every file in the site repository's <code>public/seed/images/</code> as
    media — ten of them, including the flyers of 2023 and 2024 and the 2024
    calendar, which the current site no longer links but which are the record
@@ -1270,7 +1268,37 @@ every sync rather than once by hand.</p>
 The Job's <code>activeDeadlineSeconds</code> is the backstop: a site that never answers
 fails the sync instead of holding the Application in Syncing, and the
 curl's own retries fit inside it.</p>
-<h3 id="network-policy">Network policy<a class="headerlink" href="#network-policy" title="Permanent link">&para;</a></h3>
+<h3 id="oidc">OIDC<a class="headerlink" href="#oidc" title="Permanent link">&para;</a></h3>
+<p>The provider, the <code>wollbi-editors</code> group and the binding are in
+<a href="https://github.com/JanWelker/homelab-apps/blob/main/advent-wollbi/authentik-blueprint.yaml"><code>advent-wollbi/authentik-blueprint.yaml</code></a>;
+the platform mounts it, and reads the client secret, as in
+<a href="https://homelab.wlkr.ch/platform/authentik/#adding-an-application">Authentik → Adding an application</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A confidential client, <code>client_id</code> <code>advent-wollbi</code> in clear</td>
+<td>Payload exchanges the code on the server, where a secret can live; the ID is not a secret</td>
+</tr>
+<tr>
+<td>The <code>payload-oauth2</code> plugin, local strategy off</td>
+<td>Payload has no built-in OIDC; with the local strategy off there are no passwords to leak or reset</td>
+</tr>
+<tr>
+<td>The group checked twice</td>
+<td>Authentik's binding refuses everyone else; the app also refuses a <code>groups</code> claim without <code>wollbi-editors</code>, so an unbound application does not open the site to every Authentik account</td>
+</tr>
+<tr>
+<td>Users matched by email</td>
+<td>An editor created before the switch keeps their pages when they first sign in with the same email</td>
+</tr>
+</tbody>
+</table>
 <p>The rules in
 <a href="https://github.com/JanWelker/homelab-apps/blob/main/advent-wollbi/networkpolicy.yaml"><code>advent-wollbi/networkpolicy.yaml</code></a>,
 and why each is there. The shape is
@@ -1291,11 +1319,7 @@ rollout and debugging are in
 </tr>
 <tr>
 <td>Ingress on 3000 from <code>ingress</code></td>
-<td>The public site; it is meant to be read by people Authentik has never heard of</td>
-</tr>
-<tr>
-<td>Ingress on 3000 from the Authentik server pods, with an L7 <code>http</code> rule</td>
-<td><code>/admin</code> and <code>/api</code> through the outpost</td>
+<td>The public site and <code>/admin</code>; the site is meant to be read by people Authentik has never heard of</td>
 </tr>
 <tr>
 <td>Ingress from Prometheus on 9187, <code>GET /metrics</code> only</td>
@@ -1306,8 +1330,12 @@ rollout and debugging are in
 <td>The operator polls the instance manager there; without the rule the <code>Cluster</code> never goes Healthy and the sync deadlocks. See <a href="../conventions/#sync-stuck-on-the-database">Sync stuck on the database</a></td>
 </tr>
 <tr>
-<td>Egress to the namespace, and nothing else at all</td>
-<td>The site renders from its own database and serves its own uploads. There is no <code>toFQDNs</code> block, which is the shortest way to say a public site never calls out</td>
+<td>Egress to the namespace</td>
+<td>The site renders from its own database and serves its own uploads</td>
+</tr>
+<tr>
+<td>Egress from the app to <code>auth.k8s.wlkr.ch</code> on 443 and to the Authentik server pods on 9000</td>
+<td>The token and userinfo calls of a sign-in. The name resolves to the Gateway, <code>world</code> to Cilium, and the Gateway's Envoy then checks the pod it picks, so both halves are needed, as for <a href="../opencloud/#network-policy">OpenCloud</a></td>
 </tr>
 <tr>
 <td>Egress from the database pod to <code>kube-apiserver</code></td>
@@ -1316,7 +1344,7 @@ rollout and debugging are in
 </tbody>
 </table>
 <h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
-<p><code>kv/advent-wollbi/config</code> holds two values and <code>kv/advent-wollbi/seed</code> the third, each written once
+<p><code>kv/advent-wollbi/config</code>, <code>kv/advent-wollbi/seed</code> and <code>kv/advent-wollbi/oidc</code> hold one value each, each written once
 by a <code>PushSecret</code> in <code>secrets.yaml</code> and never overwritten — see <a href="https://homelab.wlkr.ch/platform/openbao/#generated-secrets">Generated secrets</a>.</p>
 <table>
 <thead>
@@ -1335,14 +1363,14 @@ by a <code>PushSecret</code> in <code>secrets.yaml</code> and never overwritten 
 <td><code>SEED_TOKEN</code>: what the seed hook authenticates with, so the hook never holds the key that signs sessions</td>
 </tr>
 <tr>
-<td><code>admin-password</code></td>
-<td>The first editor's password, read only while the database is empty</td>
+<td><code>client-secret</code> in <code>kv/advent-wollbi/oidc</code></td>
+<td><code>OIDC_CLIENT_SECRET</code>, and Authentik's copy for the provider through the platform store</td>
 </tr>
 </tbody>
 </table>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
 <h3 id="editing">Editing<a class="headerlink" href="#editing" title="Permanent link">&para;</a></h3>
-<p><code>https://advent.wollbi.ch/admin</code> — Authentik first, then Payload's own login.
+<p><code>https://advent.wollbi.ch/admin</code>, then <strong>Mit Authentik anmelden</strong>. Members of <code>wollbi-editors</code> get a Payload editor on their first sign-in, matched by email; add someone to the group in Authentik to make them an editor.
 Pages are made of three blocks, which are the three shapes the Pelican pages
 had: prose, a run of images under a heading, and a download.</p>
 <h2 id="health-check">Health check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
