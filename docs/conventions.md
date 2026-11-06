@@ -67,7 +67,7 @@ A single-instance `Cluster` sets `enablePDB: false`: the operator's
 so a drain of that node hangs until Kured's timeout and the node is never
 rebooted. The pod moves and the database is down for the move either way.
 
-Every `Cluster` outside a preview gets a `backup.yaml` beside it, the
+Every `Cluster` gets a `backup.yaml` beside it, the
 [stanza from the platform](https://homelab.wlkr.ch/platform/cloudnative-pg/#backing-up-a-database)
 with the `Cluster`'s name and namespace filled in, and the `plugins` entry in
 the `Cluster`. Velero's nightly PVC snapshot alone restores only to the night
