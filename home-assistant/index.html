@@ -1250,8 +1250,8 @@ rollout and debugging are in
 <td>The operator polls the instance manager there; without the rule the <code>Cluster</code> never goes Healthy and the sync deadlocks. See <a href="../conventions/#sync-stuck-on-the-database">Sync stuck on the database</a></td>
 </tr>
 <tr>
-<td>Egress to <code>*.home-assistant.io</code></td>
-<td>The alerts feed and version data. An integration that talks to a device or a cloud is a line here first</td>
+<td>Egress to <code>*.home-assistant.io</code> and <code>data-v2.hacs.xyz</code></td>
+<td>The alerts feed and version data; the HACS store index, which HACS polls for its repository list. An integration that talks to a device or a cloud is a line here first</td>
 </tr>
 <tr>
 <td>Egress to the multicast and limited-broadcast ranges on 5353 and 1900</td>
