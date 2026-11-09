@@ -24,7 +24,7 @@ spec:
       initContainers:
         # Seeds /config on every start: docs/home-assistant.md#configuration
         - name: seed-config
-          image: ghcr.io/home-assistant/home-assistant:2026.11.0@sha256:c6c1ca9931036bf3a2c4cc088d8db25dfea3b33935a5ecc83c40349462e2f69e
+          image: ghcr.io/home-assistant/home-assistant:2026.11.1@sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82
           command:
             - /bin/sh
             - -c
@@ -59,7 +59,7 @@ spec:
               mountPath: /config
       containers:
         - name: home-assistant
-          image: ghcr.io/home-assistant/home-assistant:2026.11.0@sha256:c6c1ca9931036bf3a2c4cc088d8db25dfea3b33935a5ecc83c40349462e2f69e
+          image: ghcr.io/home-assistant/home-assistant:2026.11.1@sha256:6785d1eca68747a524c156faae1b139ed415c07357386ae6fe17291986e59e82
           # Root under s6; NET_BIND_SERVICE is kept although no port needs it: docs/home-assistant.md#configuration
           securityContext:
             allowPrivilegeEscalation: false
