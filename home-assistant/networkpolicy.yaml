@@ -61,13 +61,14 @@ metadata:
 spec:
   description: >-
     Default-deny egress. The namespace, the Home Assistant project's hosts,
-    and the discovery multicast so it does not fill the drop log.
+    the HACS store index, and the discovery multicast so it does not fill the drop log.
   endpointSelector: {}
   egress:
     - toEndpoints:
         - {}
     - toFQDNs:
         - matchPattern: "*.home-assistant.io"
+        - matchName: data-v2.hacs.xyz
       toPorts:
         - ports:
             - port: "443"
