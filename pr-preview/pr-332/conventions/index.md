@@ -1,0 +1,168 @@
+# Conventions
+
+Rules every directory in this repository follows. They are short because the platform does most of the work; [Adding a Workload](<https://homelab.wlkr.ch/development/add-workload/>) in the platform documentation is the long version.
+
+## Structure
+
+One directory per application, named after it, containing exactly one `application.yaml` — a complete ArgoCD `Application`, not a fragment. The `apps` ApplicationSet in the [homelab](<https://github.com/JanWelker/homelab>) repository generates one Application per `*/application.yaml` it finds here, so adding a directory adds an application.
+
+Everything beside `application.yaml` is what that Application deploys, which is why every Application excludes it from its own source:
+
+```yaml
+    directory:
+      exclude: "application.yaml"
+```
+
+Exception: the `claude-*` sessions have no `exclude`, because an OCI chart source has no directory for it to act on; see [Claude agents](<https://homelab-apps.wlkr.ch/claude-agents/#configuration>).
+
+## The rules
+
+### 1\. `project: apps`
+
+The ApplicationSet fails the whole set rather than generate a workload in the `infra` or `system` project, which are authorised against destinations a workload has no business reaching.
+
+### 2\. Official upstream sources only
+
+The vendor's own Helm chart, or the vendor's own container image, never a repackager's. Dependency-Track publishes its own chart; Home Assistant publishes none, so it is plain manifests around the official `ghcr.io/home-assistant/home-assistant` image.
+
+The user's own chart wrapping the user's own image is allowed, as with the Flowscape images and the `agent-mooring` chart.
+
+Pin every version. No `latest`, no floating tags. Renovate moves them; the release age and schedule are set per package in `renovate.json`, and the user's own images move at once, since the wait guards against an upstream tag being pulled. The `image-scan.yaml` workflow fails a pull request whose new image carries a fixable CRITICAL the old one did not — the [same gate as the platform](<https://homelab.wlkr.ch/development/maintenance/#ci-workflows>).
+
+> [!WARNING]
+>
+> **Renovate and image fields**
+>
+> A custom regex manager for an image field needs `autoReplaceStringTemplate`, or digest pinning fails with `update failure` and takes the shared `renovate/pin-dependencies` branch down with it. A field holding a bare tag has no room for a digest and needs `pinDigests: false` instead. See [Manager rules](<https://homelab.wlkr.ch/development/maintenance/#manager-rules>) and [renovate\#24942](<https://github.com/renovatebot/renovate/issues/24942>).
+
+### 3\. PostgreSQL is always a CloudNativePG `Cluster`
+
+Never the database a chart bundles. Disable it (`internalDatabase.enabled: false`, `postgresql.enabled: false`) and point the chart at a `Cluster` in the same namespace through its external-database settings.
+
+A single-instance `Cluster` sets `enablePDB: false`: the operator's `<cluster>-primary` PodDisruptionBudget otherwise never allows an eviction, so a drain of that node hangs until Kured's timeout and the node is never rebooted. The pod moves and the database is down for the move either way.
+
+Every `Cluster` gets a `backup.yaml` beside it, the [stanza from the platform](<https://homelab.wlkr.ch/platform/cloudnative-pg/#backing-up-a-database>) with the `Cluster`'s name and namespace filled in, and the `plugins` entry in the `Cluster`. Velero's nightly PVC snapshot alone restores only to the night it was taken; the WAL archive restores to any second.
+
+The operator writes a `<cluster-name>-app` Secret with `username`, `password`, `host`, `port`, `dbname` and a ready-assembled `uri`. Consume those keys; never copy the value into Git or OpenBao.
+
+Give the `Cluster` an earlier sync wave than the application. ArgoCD has a health check for `postgresql.cnpg.io/Cluster`, so the wave waits for a working database, not merely a created one:
+
+```yaml
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+```
+
+Annotate it `Prune=false`, as the PVC and the namespace are: deleting a `Cluster` deletes the volumes it owns. A chart-rendered PVC needs the same annotation through the chart's values; `helm.sh/resource-policy: keep` only survives deleting the Application, not a prune.
+
+The reasoning is in [CloudNativePG → The contract](<https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract>).
+
+### 4\. Own your namespace
+
+Ship a `namespace.yaml` at sync wave `-2` carrying the three Pod Security Admission labels; `CreateNamespace=true` alone leaves an unlabelled namespace that runs at `privileged`. Set `enforce` to what the application needs and `audit`/`warn` stricter, so the violations a tighter level would catch stay visible.
+
+Annotate it `Prune=false`: pruning a `Namespace` deletes every PVC inside it.
+
+Exception: the `claude-*` sessions ship no namespace and share the one `claude-agents/` owns, so removing a session cannot prune the others' volumes; see [Claude agents](<https://homelab-apps.wlkr.ch/claude-agents/#configuration>).
+
+### 5\. Ship a `CiliumNetworkPolicy`
+
+Not a plain `NetworkPolicy`, which blocks the kubelet's health probes. Every policy needs `fromEntities: [host, remote-node]` for those probes, one rule for the way users arrive, the namespace itself on both halves (`fromEndpoints: [{}]`, `toEndpoints: [{}]`), and every outside name as `toFQDNs`. No DNS rule: the platform grants every pod its lookups through the proxy in one cluster-wide policy, so a copy here only hides what the namespace adds — see [Security Policies → Cluster-wide rules](<https://homelab.wlkr.ch/platform/security-policies/#cluster-wide-rules>). The arrival rule depends on rule 6: `fromEntities: [ingress]` where the Gateway reaches the pod directly, or the Authentik server pods and nothing else where the outpost sits in front, so a request cannot skip it. The template and the reasons are in the platform's [Adding a Workload](<https://homelab.wlkr.ch/development/add-workload/#the-network-policy>).
+
+Put it at sync wave `-2`, with the namespace:
+
+```yaml
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+```
+
+At the default wave it lands after the `Cluster` from rule 3, and a rule the `Cluster` needs in order to go Healthy can never unblock the wave it is stuck behind — see [Sync stuck on the database](<#sync-stuck-on-the-database>).
+
+Exception: the `homelab` session's policy allows every public address as a `toCIDRSet` instead of names, because a diagnosis fetches whatever it needs and a name list would be a firewall change per lookup; see [Claude agents → Network policy](<https://homelab-apps.wlkr.ch/claude-agents/#network-policy>).
+
+### 6\. Authentication is Authentik's, not the application's
+
+Which shape applies is decided by what the application supports:
+
+- **It speaks OIDC.** Configure it against Authentik, hide the local login form, and keep at most one local admin as break-glass. Dependency-Track is the worked example.
+- **It does not.** Point its `HTTPRoute` at `authentik-server` in the `authentik` namespace, so the outpost authenticates in front of it. Home Assistant is the worked example; where the application has its own login this is defence in depth, not single sign-on.
+- **It has no browser session.** An API carries its own credential, since an outpost would answer its caller with a login page: [Knead Time](<https://homelab-apps.wlkr.ch/kneadtime/index.md>) has none and CORS admits one origin, the [Shot Timer bridge](<https://homelab-apps.wlkr.ch/shot-bridge/index.md>) checks its own bearer key, and the [Claude agents](<https://homelab-apps.wlkr.ch/claude-agents/index.md>) admit SSH keys on a TLS passthrough.
+
+The OIDC provider's blueprint lives here, in the application's directory, as a ConfigMap targeted at the `authentik` namespace with a key ending in `.yaml` (see `dependency-track/authentik-blueprint.yaml`). The platform mounts it as an optional projected volume, because a fresh cluster has Authentik before it has any workload, and discovers it on the worker's startup, hourly, and through a file watcher. The client credentials are generated here, by the generator and `PushSecret` in the application's `secrets.yaml` (rule 7), and read on Authentik's side by an `ExternalSecret` in the platform repository (`payload/platform/authentik/secrets-<app>.yaml`), where the outpost's provider list and any `referencegrant.yaml` entry also live, so going behind SSO is deliberately two pull requests.
+
+Because blueprint discovery is asynchronous, anything that configures itself against the provider must tolerate it not existing yet: fail soft and log. Watch for SSRF guards, too: `auth.k8s.wlkr.ch` resolves to a private address, which an application that refuses local addresses rejects.
+
+**Account keys rest on usernames staying put.** Dependency-Track keys an account on `preferred_username`, which is the Authentik username, so a user who could rename themselves to someone else's name would log in as that account. The platform's Authentik brand therefore uses a user settings flow without a username field; see [User settings flow](<https://homelab.wlkr.ch/platform/authentik/#user-settings-flow>). A new application keys on `sub` instead. An existing one stays on `preferred_username`, because switching gives every account a new ID and orphans its data.
+
+**Use `auth.k8s.wlkr.ch`**, Authentik's only hostname, for the discovery URI and the redirect alike: the `iss` claim is the name the token was issued through, and a client that mixes names fails every login — see [One hostname](<https://homelab.wlkr.ch/platform/authentik/#one-hostname>).
+
+### 7\. Real secrets come from OpenBao
+
+An `ExternalSecret` reading `kv/<app>/config`, with a comment at the top of the file naming what writes it. It and any `PushSecret` name the `openbao-apps` store, and `secrets.yaml` starts with an `external-secrets-vault` ServiceAccount at sync wave `-2`: the store logs in as it and reaches `kv/<namespace>/` only, so `<app>` is the namespace — see [Kubernetes auth](<https://homelab.wlkr.ch/platform/openbao/#kubernetes-auth>). Random values — session keys, admin passwords, OIDC client pairs — come from a `Password` generator and a `PushSecret` at the end of the same `secrets.yaml`, at sync wave `-2` so they land before the `ExternalSecret` at `-1` — see [Generated secrets](<https://homelab.wlkr.ch/platform/openbao/#generated-secrets>). A value from an account outside the cluster, such as a model API key, is typed in with `make bao-secrets` in the platform repository, into a path of its own: a `bao kv put` replaces a path wholesale and would take the generated keys with it. Database passwords are neither, because CloudNativePG generates them (rule 3).
+
+OIDC client credentials go in the application's own `kv/<app>/config`, never under `kv/authentik/config`: a `bao kv put` replaces a path wholesale, so sharing it would make adding an application an Authentik outage.
+
+Exception: the `claude-*` sessions read `kv/claude-<session>/` through the `openbao-claude-agents` store, whose login identity is in `claude-agents/serviceaccounts.yaml`, because the sessions share a namespace and the paths sit outside its prefix; see [Claude agents → Secrets](<https://homelab-apps.wlkr.ch/claude-agents/#secrets>).
+
+### 8\. The shared `syncPolicy`
+
+`automated` with `prune` and `selfHeal`, plus `retry` with a limit of 10 and a 30s backoff up to 5m, and `syncOptions` with `ServerSideApply=true`, copied from any sibling but the four `claude-*` Applications, which leave the option out. ArgoCD never re-attempts a failed sync of the same revision without `retry`, and a workload that lands a minute before the platform resource it names would otherwise stay failed until someone ran `argocd app sync`. Server-side apply is what every platform Application uses, so the two repositories diff and apply the same way.
+
+## What you do not have to write
+
+The platform handles all of this; adding your own is the usual mistake:
+
+| You want | You write | The platform does |
+| --- | --- | --- |
+| A hostname | An `HTTPRoute` on `apps-gateway` | external-dns publishes the Route53 record |
+| HTTPS | Nothing | The Gateway holds a `*.k8s.wlkr.ch` wildcard |
+| Storage | `storageClassName: rook-ceph-block` | Rook-Ceph replicates it three ways |
+| Logs | Nothing | Alloy ships stdout to Loki |
+| Backups of a PVC | Nothing | Velero snapshots it nightly; restoring is in [Backups &amp; Recovery](<https://homelab.wlkr.ch/operations/backups/>) |
+| Backups of a database | `backup.yaml` and a `plugins` entry (rule 3) | WAL archived continuously, a base backup nightly, to the database's own bucket |
+| Metrics | A `ServiceMonitor` or `PodMonitor` | Prometheus scrapes it |
+
+## Writing an `HTTPRoute`
+
+The API server fills in defaults for what a route leaves out, and ArgoCD reports every filled-in field as drift unless the platform tells it to look away. It looks away for less than you might expect:
+
+| Write out | Because ArgoCD |
+| --- | --- |
+| `group: gateway.networking.k8s.io` and `kind: Gateway` on each `parentRefs` entry | ignores neither |
+| Every rule's `matches`, the catch-all's `PathPrefix /` included, once a route has more than one rule | forgives a missing `matches` only on the first rule |
+
+A route that leaves either out reports `OutOfSync` forever while working fine. `sectionName` on the `parentRefs` entry picks the listener, and a listener pins one hostname pattern, so the wollbi sites name their own; the table is [Gateway API → Configuration](<https://homelab.wlkr.ch/platform/gateway-api/#configuration>).
+
+## Behind the Gateway
+
+Traffic arrives from Cilium's Envoy inside the [pod subnet](<https://homelab.wlkr.ch/architecture/#cluster-layout>), not from the client, and TLS is terminated at the Gateway. An application that trusts `REMOTE_ADDR` sees the proxy, and one that builds absolute URLs from the request scheme produces `http://` links on an `https://` site. Look for a trusted-proxies setting and an overwrite-protocol setting; if the login redirect loops, this is why.
+
+## Sync stuck on the database
+
+The default-deny policy must allow the `cnpg-system` namespace to reach the database pod on port 8000, the instance manager's status endpoint the operator polls, and the policy must sit at sync wave `-2` with the namespace. At the default wave it lands after the `Cluster` at `-1`, and a wave that never finishes never applies the rule that would unblock it.
+
+1. **Symptom.** Postgres serves the application and `kubectl get cluster` reads `1/1`, but the phase is `Instance Status Extraction Error: HTTP    communication issue`. The Application is `Synced` with health `Unknown` and every entry in `status.resources` lacks a health field: a genuinely unhealthy workload names the failing resource.
+
+   ```text
+   $ kubectl get application -n argocd <app> -o jsonpath='{.status.operationState.message}'
+   waiting for healthy state of postgresql.cnpg.io/Cluster/<app>-db
+   ```
+2. **Confirm the drop** from the node running the database:
+
+   ```bash
+   pod="$(kubectl -n kube-system get pod -l k8s-app=cilium --field-selector spec.nodeName=<node> -o name)"
+   kubectl -n kube-system exec "$pod" -c cilium-agent -- \
+     hubble observe --verdict DROPPED --from-namespace cnpg-system --last 20
+   ```
+3. **Check which waves ran.** If `CiliumNetworkPolicy` is missing while `Cluster` reads `Running`, the policy is behind the thing it should unblock:
+
+   ```bash
+   kubectl get application -n argocd <app> \
+     -o jsonpath='{range .status.operationState.syncResult.resources[*]}{.kind}{"\t"}{.hookPhase}{"\n"}{end}'
+   ```
+4. **Fix.** Put the policy at wave `-2`, then terminate the stuck operation, which never picks up the new revision on its own:
+
+   ```bash
+   argocd app terminate-op <app>
+   ```
+
+   The CLI login is [Argo CD → CLI access](<https://homelab.wlkr.ch/platform/argocd/#cli-access>). The next sync applies the policy first and the `Cluster` goes Healthy.
