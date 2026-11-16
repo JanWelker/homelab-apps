@@ -1,13 +1,13 @@
 # Extractor admin UI
 
-Read-only pages over the [shot bridge](<https://homelab-apps.wlkr.ch/shot-bridge/index.md>)'s diagnostics: the shots recorded with the app's diagnostics switch on, their curves, merged timelines and stop legs, the uploaded logs, and the calibration runs. It has no login of its own and reads the bridge server side with the bridge's read-only token, which never reaches a browser. The source, the image and the chart live in [somuch-cloud/extractor.cafe](<https://github.com/somuch-cloud/extractor.cafe/tree/main/admin>); the chart is published to `ghcr.io/somuch-cloud/charts`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
+Read-only pages over the [shot bridge](<https://homelab-apps.wlkr.ch/shot-bridge/index.md>)'s diagnostics: the shots recorded with the app's diagnostics switch on, their curves, merged timelines and stop legs, the uploaded logs, and the calibration runs. It has no login of its own and reads the bridge server side with the bridge's read-only token, which never reaches a browser. The source, the image and the chart live in [somuch-cloud/extractor.cafe](<https://github.com/somuch-cloud/extractor.cafe/tree/main/admin>); the chart is published to `ghcr.io/somuch-cloud/charts`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
 |  |  |
 | --- | --- |
 | URL | [extractor-admin.k8s.wlkr.ch](<https://extractor-admin.k8s.wlkr.ch>) |
-| Authentication | The Authentik outpost in front, per [Conventions → Authentication is Authentik's](<https://homelab-apps.wlkr.ch/conventions/#6-authentication-is-authentiks-not-the-applications>) |
+| Authentication | The Authentik outpost in front, per [Conventions → Authentication is Authentik's](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>) |
 | Storage | None; everything is read from the bridge on each request |
 | Dials | The bridge's pods in `shot-bridge`, nothing outside the cluster |
 | Files | [`extractor-admin/`](<https://github.com/JanWelker/homelab-apps/tree/main/extractor-admin>) |
@@ -18,7 +18,7 @@ Read-only pages over the [shot bridge](<https://homelab-apps.wlkr.ch/shot-bridge
 | --- | --- |
 | Own chart, values in `application.yaml` | The chart ships the Deployment, Service, `HTTPRoute` and `CiliumNetworkPolicy`; this directory adds the namespace and the secret |
 | `HTTPRoute` targets `authentik-server` | The admin UI has no login; the chart refuses a route to its own Service. The platform repository's provider forwards to `extractor-admin.extractor-admin.svc` after the login |
-| Policy admits the Authentik server pods only | No request can skip the outpost. Egress is the bridge's pods on `bridge.port`, plus a DNS rule the chart renders itself, which repeats the platform's cluster-wide one ([Conventions → rule 5](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>)) and cannot be switched off |
+| Policy admits the Authentik server pods only | No request can skip the outpost. Egress is the bridge's pods on `bridge.port`, plus a DNS rule the chart renders itself, which repeats the platform's cluster-wide one ([Conventions → rule 5](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>)) and cannot be switched off |
 | The bridge's `admin.enabled: true` | Passes `BRIDGE_ADMIN_READ_KEY` to the bridge and lets this namespace's pods in on 8080 |
 
 ### Secrets
@@ -27,7 +27,7 @@ Read-only pages over the [shot bridge](<https://homelab-apps.wlkr.ch/shot-bridge
 | --- | --- | --- |
 | `kv/extractor-admin/config` | `admin-read-key` | By hand, as a copy of the bridge's property in `kv/shot-bridge/config`, which the `PushSecret` in [`shot-bridge/secrets.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/shot-bridge/secrets.yaml>) generates — see [Copying the read key](<#copying-the-read-key>) |
 
-A copy, because the `openbao-apps` store confines each namespace to its own `kv/<namespace>/` ([Conventions → Real secrets come from OpenBao](<https://homelab-apps.wlkr.ch/conventions/#7-real-secrets-come-from-openbao>)). The token may only read the bridge's debug routes and the logs; every other bridge route answers 403.
+A copy, because the `openbao-apps` store confines each namespace to its own `kv/<namespace>/` ([Conventions → Real secrets come from OpenBao](<https://homelab-apps.wlkr.ch/conventions/index.md#7-real-secrets-come-from-openbao>)). The token may only read the bridge's debug routes and the logs; every other bridge route answers 403.
 
 ## Usage
 

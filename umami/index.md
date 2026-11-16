@@ -1,6 +1,6 @@
 # Umami
 
-[Umami](<https://umami.is/>) counts the visits to every site: the two documentation sites, the GitHub Pages projects and Home Assistant. It sets no cookie and stores no address, so the sites need no consent banner. Upstream publishes an image and no chart, so `umami/` is plain manifests around the official image: `deployment.yaml`, `service.yaml`, `pdb.yaml`, `httproute.yaml`, `database.yaml` with `backup.yaml`, `secrets.yaml`, `networkpolicy.yaml` and `namespace.yaml`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
+[Umami](<https://umami.is/>) counts the visits to every site: the two documentation sites, the GitHub Pages projects and Home Assistant. It sets no cookie and stores no address, so the sites need no consent banner. Upstream publishes an image and no chart, so `umami/` is plain manifests around the official image: `deployment.yaml`, `service.yaml`, `pdb.yaml`, `httproute.yaml`, `database.yaml` with `backup.yaml`, `secrets.yaml`, `networkpolicy.yaml` and `namespace.yaml`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -31,14 +31,14 @@
 
 ### Network policy
 
-The rules in `umami/networkpolicy.yaml`, and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
+The rules in `umami/networkpolicy.yaml`, and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
 
 | Rule | Why |
 | --- | --- |
 | Ingress from the namespace, from `host` and `remote-node`; egress to the namespace | The rules every policy carries: [What every policy contains](<https://homelab.wlkr.ch/platform/security-policies/#what-every-policy-contains>) |
 | Ingress on 3000 from the Authentik server pods only | The outpost proxies the tracker paths as well as the dashboard, so the Gateway never talks to the pod. No `fromEntities: ingress`, so a request straight from the Gateway cannot skip the login |
 | Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics. Umami itself exposes none |
-| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/#sync-stuck-on-the-database>) |
+| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>) |
 | Egress to the namespace only | The database. With the three phone-home switches off, nothing else is dialled |
 | Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise. The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](<https://homelab.wlkr.ch/platform/cloudnative-pg/#backups>) |
 
@@ -97,6 +97,6 @@ The database should report `Cluster in healthy state` and the script should answ
 >
 > Browser users authenticate twice, and `/script.js` and `/api/send` are behind neither login; the collect endpoint accepts nothing but page views and events for a known website ID. See [Authentik → Pitfalls](<https://homelab.wlkr.ch/platform/authentik/#pitfalls>).
 
-- **A visit shows the cluster's country, or none.** Umami takes the visitor from `X-Forwarded-For`. If every visit resolves to the same place, the header is not reaching the pod: see [Behind the Gateway](<https://homelab-apps.wlkr.ch/conventions/#behind-the-gateway>).
+- **A visit shows the cluster's country, or none.** Umami takes the visitor from `X-Forwarded-For`. If every visit resolves to the same place, the header is not reaching the pod: see [Behind the Gateway](<https://homelab-apps.wlkr.ch/conventions/index.md#behind-the-gateway>).
 - **Deleting `kv/umami/config` logs everyone out.** The `PushSecret` writes both keys anew: a rotated `APP_SECRET` invalidates every session and a rotated 2FA key every second factor.
 - **`data-domains` is the only guard against noise.** A snippet without it reports from every copy of the site: a laptop, a preview, a fork.

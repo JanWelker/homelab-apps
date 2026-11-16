@@ -1,6 +1,6 @@
 # Claude agents
 
-Each session is a Claude Code instance that keeps running when the laptop is closed: a pod with `sshd`, a tmux session and a volume, reached at `<session>.ssh.wlkr.ch`. The same session is also driven from the Claude apps through Remote Control. The image and the Helm chart are the user's own, built in the [`agent-mooring`](<https://github.com/JanWelker/agent-mooring>) repository, which [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>) allows for the same reason as the Flowscape image. This repository holds the namespace, three ServiceAccounts (two the platform binds to its ClusterRoles, one the `openbao-claude-agents` store logs in as) and one directory per session.
+Each session is a Claude Code instance that keeps running when the laptop is closed: a pod with `sshd`, a tmux session and a volume, reached at `<session>.ssh.wlkr.ch`. The same session is also driven from the Claude apps through Remote Control. The image and the Helm chart are the user's own, built in the [`agent-mooring`](<https://github.com/JanWelker/agent-mooring>) repository, which [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>) allows for the same reason as the Flowscape image. This repository holds the namespace, three ServiceAccounts (two the platform binds to its ClusterRoles, one the `openbao-claude-agents` store logs in as) and one directory per session.
 
 ## At a glance
 
@@ -42,12 +42,12 @@ Each session is a Claude Code instance that keeps running when the laptop is clo
 
 ### Network policy
 
-Every rule in [`claude-agents/networkpolicy.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/claude-agents/networkpolicy.yaml>), and why it is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>). The names an agent may reach live in each session's own policy, rendered by the chart from its values (`extraEgressFQDNs` adds to them).
+Every rule in [`claude-agents/networkpolicy.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/claude-agents/networkpolicy.yaml>), and why it is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>). The names an agent may reach live in each session's own policy, rendered by the chart from its values (`extraEgressFQDNs` adds to them).
 
 | Rule | Why |
 | --- | --- |
 | Ingress on 2222 from the `ingress` entity | The Gateway passes the TLS stream through by SNI to the pod's TLS sidecar, so the Gateway is the only way in |
-| Ingress from `host` and `remote-node` | The kubelet's probes, the pair every policy names ([Conventions → rule 5](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>)) |
+| Ingress from `host` and `remote-node` | The kubelet's probes, the pair every policy names ([Conventions → rule 5](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>)) |
 | Ingress and egress within the namespace | Sessions share the namespace; the policy does not split them further |
 | Default egress to the namespace only | A session reaches nothing else unless its own policy says so. Those names (the Claude API, GitHub when `repos` or `skills.repo` is set, the Argo CD server) are the agent's reach, so adding one is reviewed like a firewall change |
 | `homelab-session`: every public address, minus the private, carrier-grade and link-local ranges and the router's public address | The cluster session installs tools, reads docs and fetches whatever a diagnosis needs; a name list would be a firewall change per lookup. Cutting the private ranges keeps the LAN, the nodes' LAN side and the Gateway addresses out; the public address is the `external-dns` target of `apps-gateway`, which hairpin NAT would otherwise hand back to the Gateway and every route on it |

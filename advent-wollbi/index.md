@@ -1,6 +1,6 @@
 # Wollbi Adventsfenster
 
-[advent.wollbi.ch](<https://advent.wollbi.ch>) is the invitation to the street's advent windows: the flyer, the dates and the calendar file to import. It was a Pelican site until the pages became rows in a database: the content is now edited at `/admin` and the repository holds the application, not the text. The image is built in [JanWelker/advent.wollbi.ch](<https://github.com/JanWelker/advent.wollbi.ch>), so its upstream is our own — per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
+[advent.wollbi.ch](<https://advent.wollbi.ch>) is the invitation to the street's advent windows: the flyer, the dates and the calendar file to import. It was a Pelican site until the pages became rows in a database: the content is now edited at `/admin` and the repository holds the application, not the text. The image is built in [JanWelker/advent.wollbi.ch](<https://github.com/JanWelker/advent.wollbi.ch>), so its upstream is our own — per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -21,8 +21,8 @@
 | Plain manifests around our own image | One Next.js process with one port and one database; the site repository's README is the whole deployment contract |
 | The namespace enforces `restricted` | The image is distroless and runs as uid 65532, its `nonroot` user, with a read-only root filesystem; the two things it writes, the uploads and Next.js' render cache, are volumes. There is no shell in it, so `kubectl exec` is for `node -e`, not for poking around |
 | `DATABASE_URL` from `advent-wollbi-db-app`, key `uri` | Payload wants one connection string and CloudNativePG assembles it; see [the contract](<https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract>) |
-| `PAYLOAD_SECRET` from OpenBao | It signs every editor session. The `PushSecret` in `secrets.yaml` writes it once, `IfNotExists`, so a rebuilt cluster reads the same value back and nobody is logged out; see [Conventions → Real secrets come from OpenBao](<https://homelab-apps.wlkr.ch/conventions/#7-real-secrets-come-from-openbao>) |
-| `NEXT_PUBLIC_SERVER_URL` | The origin Payload trusts for CSRF and builds absolute URLs from. TLS ends at the Gateway, so the pod's own address is the wrong answer — see [Behind the Gateway](<https://homelab-apps.wlkr.ch/conventions/#behind-the-gateway>) |
+| `PAYLOAD_SECRET` from OpenBao | It signs every editor session. The `PushSecret` in `secrets.yaml` writes it once, `IfNotExists`, so a rebuilt cluster reads the same value back and nobody is logged out; see [Conventions → Real secrets come from OpenBao](<https://homelab-apps.wlkr.ch/conventions/index.md#7-real-secrets-come-from-openbao>) |
+| `NEXT_PUBLIC_SERVER_URL` | The origin Payload trusts for CSRF and builds absolute URLs from. TLS ends at the Gateway, so the pod's own address is the wrong answer — see [Behind the Gateway](<https://homelab-apps.wlkr.ch/conventions/index.md#behind-the-gateway>) |
 | An `emptyDir` on `/app/.next/cache` | Next.js writes its render cache at runtime and the root filesystem is read-only. It is a cache: losing it on a restart costs one slow first request |
 | Two rules on one `HTTPRoute` | Every path reaches the app, `/admin` and `/api` included: Payload checks the editor's session itself, so the Gateway has nothing to gate. `/seed` redirects to `/`: the seed hook calls the Service, so nothing outside the namespace has a reason to reach it, and Gateway API has no rule that refuses a request |
 | The media collection accepts PDFs and `text/calendar` | The flyer and the `.ics` are content here, not attachments; as uploads the CMS knows about them, where the Pelican site had them as links in prose that outlive the file |
@@ -50,16 +50,16 @@ The provider, the `wollbi-editors` group and the binding are in [`advent-wollbi/
 | The group checked twice | Authentik's binding refuses everyone else; the app also refuses a `groups` claim without `wollbi-editors`, so an unbound application does not open the site to every Authentik account |
 | Users matched by email | An editor created before the switch keeps their pages when they first sign in with the same email |
 
-The rules in [`advent-wollbi/networkpolicy.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/advent-wollbi/networkpolicy.yaml>), and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
+The rules in [`advent-wollbi/networkpolicy.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/advent-wollbi/networkpolicy.yaml>), and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
 
 | Rule | Why |
 | --- | --- |
 | Ingress from the namespace, from `host` and `remote-node`; egress to the namespace | The rules every policy carries: [What every policy contains](<https://homelab.wlkr.ch/platform/security-policies/#what-every-policy-contains>) |
 | Ingress on 3000 from `ingress` | The public site and `/admin`; the site is meant to be read by people Authentik has never heard of |
 | Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics. Payload exposes none |
-| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/#sync-stuck-on-the-database>) |
+| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>) |
 | Egress to the namespace | The site renders from its own database and serves its own uploads |
-| Egress from the app to `auth.k8s.wlkr.ch` on 443 and to the Authentik server pods on 9000 | The token and userinfo calls of a sign-in. The name resolves to the Gateway, `world` to Cilium, and the Gateway's Envoy then checks the pod it picks, so both halves are needed, as for [OpenCloud](<https://homelab-apps.wlkr.ch/opencloud/#network-policy>) |
+| Egress from the app to `auth.k8s.wlkr.ch` on 443 and to the Authentik server pods on 9000 | The token and userinfo calls of a sign-in. The name resolves to the Gateway, `world` to Cilium, and the Gateway's Envoy then checks the pod it picks, so both halves are needed, as for [OpenCloud](<https://homelab-apps.wlkr.ch/opencloud/index.md#network-policy>) |
 | Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise. The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](<https://homelab.wlkr.ch/platform/cloudnative-pg/#backups>) |
 
 ### Secrets

@@ -13,7 +13,7 @@ Everything beside `application.yaml` is what that Application deploys, which is 
       exclude: "application.yaml"
 ```
 
-Exception: the `claude-*` sessions have no `exclude`, because an OCI chart source has no directory for it to act on; see [Claude agents](<https://homelab-apps.wlkr.ch/claude-agents/#configuration>).
+Exception: the `claude-*` sessions have no `exclude`, because an OCI chart source has no directory for it to act on; see [Claude agents](<https://homelab-apps.wlkr.ch/claude-agents/index.md#configuration>).
 
 ## The rules
 
@@ -62,7 +62,7 @@ Ship a `namespace.yaml` at sync wave `-2` carrying the three Pod Security Admiss
 
 Annotate it `Prune=false`: pruning a `Namespace` deletes every PVC inside it.
 
-Exception: the `claude-*` sessions ship no namespace and share the one `claude-agents/` owns, so removing a session cannot prune the others' volumes; see [Claude agents](<https://homelab-apps.wlkr.ch/claude-agents/#configuration>).
+Exception: the `claude-*` sessions ship no namespace and share the one `claude-agents/` owns, so removing a session cannot prune the others' volumes; see [Claude agents](<https://homelab-apps.wlkr.ch/claude-agents/index.md#configuration>).
 
 ### 5\. Ship a `CiliumNetworkPolicy`
 
@@ -77,7 +77,7 @@ Put it at sync wave `-2`, with the namespace:
 
 At the default wave it lands after the `Cluster` from rule 3, and a rule the `Cluster` needs in order to go Healthy can never unblock the wave it is stuck behind — see [Sync stuck on the database](<#sync-stuck-on-the-database>).
 
-Exception: the `homelab` session's policy allows every public address as a `toCIDRSet` instead of names, because a diagnosis fetches whatever it needs and a name list would be a firewall change per lookup; see [Claude agents → Network policy](<https://homelab-apps.wlkr.ch/claude-agents/#network-policy>).
+Exception: the `homelab` session's policy allows every public address as a `toCIDRSet` instead of names, because a diagnosis fetches whatever it needs and a name list would be a firewall change per lookup; see [Claude agents → Network policy](<https://homelab-apps.wlkr.ch/claude-agents/index.md#network-policy>).
 
 ### 6\. Authentication is Authentik's, not the application's
 
@@ -101,7 +101,7 @@ An `ExternalSecret` reading `kv/<app>/config`, with a comment at the top of the 
 
 OIDC client credentials go in the application's own `kv/<app>/config`, never under `kv/authentik/config`: a `bao kv put` replaces a path wholesale, so sharing it would make adding an application an Authentik outage.
 
-Exception: the `claude-*` sessions read `kv/claude-<session>/` through the `openbao-claude-agents` store, whose login identity is in `claude-agents/serviceaccounts.yaml`, because the sessions share a namespace and the paths sit outside its prefix; see [Claude agents → Secrets](<https://homelab-apps.wlkr.ch/claude-agents/#secrets>).
+Exception: the `claude-*` sessions read `kv/claude-<session>/` through the `openbao-claude-agents` store, whose login identity is in `claude-agents/serviceaccounts.yaml`, because the sessions share a namespace and the paths sit outside its prefix; see [Claude agents → Secrets](<https://homelab-apps.wlkr.ch/claude-agents/index.md#secrets>).
 
 ### 8\. The shared `syncPolicy`
 

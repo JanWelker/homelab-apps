@@ -40,7 +40,7 @@ homelab (platform)                    homelab-apps (this repository)
                                                 └── one Application per directory
 ```
 
-The platform names this repository in two places, the ApplicationSet's `repoURL` and the `apps` project's `sourceRepos`, and never reads what is in it. Nothing orders a workload after the platform it uses: each Application syncs as soon as it exists and retries until the Gateway, StorageClass or `ClusterSecretStore` it names is there — the [sync policy](<https://homelab-apps.wlkr.ch/conventions/#8-the-shared-syncpolicy>) is the same one every platform Application carries. Why the split exists is in [GitOps Strategy](<https://homelab.wlkr.ch/architecture/gitops/#workloads-live-in-a-second-repository>).
+The platform names this repository in two places, the ApplicationSet's `repoURL` and the `apps` project's `sourceRepos`, and never reads what is in it. Nothing orders a workload after the platform it uses: each Application syncs as soon as it exists and retries until the Gateway, StorageClass or `ClusterSecretStore` it names is there — the [sync policy](<https://homelab-apps.wlkr.ch/conventions/index.md#8-the-shared-syncpolicy>) is the same one every platform Application carries. Why the split exists is in [GitOps Strategy](<https://homelab.wlkr.ch/architecture/gitops/#workloads-live-in-a-second-repository>).
 
 ## What they have in common
 
@@ -48,7 +48,7 @@ Every directory follows the same eight rules, each with one sentence of why: [Co
 
 ## Authentication
 
-Every application with a browser login goes through [Authentik](<https://homelab.wlkr.ch/platform/authentik/>), in the shape each one supports. [Dependency-Track](<https://homelab-apps.wlkr.ch/dependency-track/index.md>) and [OpenCloud](<https://homelab-apps.wlkr.ch/opencloud/index.md>) speak OIDC, so they are real single sign-on. [Home Assistant](<https://homelab-apps.wlkr.ch/home-assistant/index.md>) and [Umami](<https://homelab-apps.wlkr.ch/umami/index.md>) ship no OIDC provider, so the Authentik outpost sits in front of their own logins and browser users authenticate twice; [Flowscape](<https://homelab-apps.wlkr.ch/flowscape/index.md>) and the [Extractor admin UI](<https://homelab-apps.wlkr.ch/extractor-admin/index.md>) have no login, so the outpost is the only one. All use `auth.k8s.wlkr.ch`, Authentik's only hostname; see [One hostname](<https://homelab.wlkr.ch/platform/authentik/#one-hostname>). The three APIs without a browser session carry their own credential, the exception in [Conventions → rule 6](<https://homelab-apps.wlkr.ch/conventions/#6-authentication-is-authentiks-not-the-applications>).
+Every application with a browser login goes through [Authentik](<https://homelab.wlkr.ch/platform/authentik/>), in the shape each one supports. [Dependency-Track](<https://homelab-apps.wlkr.ch/dependency-track/index.md>) and [OpenCloud](<https://homelab-apps.wlkr.ch/opencloud/index.md>) speak OIDC, so they are real single sign-on. [Home Assistant](<https://homelab-apps.wlkr.ch/home-assistant/index.md>) and [Umami](<https://homelab-apps.wlkr.ch/umami/index.md>) ship no OIDC provider, so the Authentik outpost sits in front of their own logins and browser users authenticate twice; [Flowscape](<https://homelab-apps.wlkr.ch/flowscape/index.md>) and the [Extractor admin UI](<https://homelab-apps.wlkr.ch/extractor-admin/index.md>) have no login, so the outpost is the only one. All use `auth.k8s.wlkr.ch`, Authentik's only hostname; see [One hostname](<https://homelab.wlkr.ch/platform/authentik/#one-hostname>). The three APIs without a browser session carry their own credential, the exception in [Conventions → rule 6](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>).
 
 ## Adding one
 
@@ -69,7 +69,7 @@ Everything beside `application.yaml` is what that Application deploys, which is 
       exclude: "application.yaml"
 ```
 
-Exception: the `claude-*` sessions have no `exclude`, because an OCI chart source has no directory for it to act on; see [Claude agents](<https://homelab-apps.wlkr.ch/claude-agents/#configuration>).
+Exception: the `claude-*` sessions have no `exclude`, because an OCI chart source has no directory for it to act on; see [Claude agents](<https://homelab-apps.wlkr.ch/claude-agents/index.md#configuration>).
 
 ## The rules
 
@@ -118,7 +118,7 @@ Ship a `namespace.yaml` at sync wave `-2` carrying the three Pod Security Admiss
 
 Annotate it `Prune=false`: pruning a `Namespace` deletes every PVC inside it.
 
-Exception: the `claude-*` sessions ship no namespace and share the one `claude-agents/` owns, so removing a session cannot prune the others' volumes; see [Claude agents](<https://homelab-apps.wlkr.ch/claude-agents/#configuration>).
+Exception: the `claude-*` sessions ship no namespace and share the one `claude-agents/` owns, so removing a session cannot prune the others' volumes; see [Claude agents](<https://homelab-apps.wlkr.ch/claude-agents/index.md#configuration>).
 
 ### 5\. Ship a `CiliumNetworkPolicy`
 
@@ -133,7 +133,7 @@ Put it at sync wave `-2`, with the namespace:
 
 At the default wave it lands after the `Cluster` from rule 3, and a rule the `Cluster` needs in order to go Healthy can never unblock the wave it is stuck behind — see [Sync stuck on the database](<#sync-stuck-on-the-database>).
 
-Exception: the `homelab` session's policy allows every public address as a `toCIDRSet` instead of names, because a diagnosis fetches whatever it needs and a name list would be a firewall change per lookup; see [Claude agents → Network policy](<https://homelab-apps.wlkr.ch/claude-agents/#network-policy>).
+Exception: the `homelab` session's policy allows every public address as a `toCIDRSet` instead of names, because a diagnosis fetches whatever it needs and a name list would be a firewall change per lookup; see [Claude agents → Network policy](<https://homelab-apps.wlkr.ch/claude-agents/index.md#network-policy>).
 
 ### 6\. Authentication is Authentik's, not the application's
 
@@ -157,7 +157,7 @@ An `ExternalSecret` reading `kv/<app>/config`, with a comment at the top of the 
 
 OIDC client credentials go in the application's own `kv/<app>/config`, never under `kv/authentik/config`: a `bao kv put` replaces a path wholesale, so sharing it would make adding an application an Authentik outage.
 
-Exception: the `claude-*` sessions read `kv/claude-<session>/` through the `openbao-claude-agents` store, whose login identity is in `claude-agents/serviceaccounts.yaml`, because the sessions share a namespace and the paths sit outside its prefix; see [Claude agents → Secrets](<https://homelab-apps.wlkr.ch/claude-agents/#secrets>).
+Exception: the `claude-*` sessions read `kv/claude-<session>/` through the `openbao-claude-agents` store, whose login identity is in `claude-agents/serviceaccounts.yaml`, because the sessions share a namespace and the paths sit outside its prefix; see [Claude agents → Secrets](<https://homelab-apps.wlkr.ch/claude-agents/index.md#secrets>).
 
 ### 8\. The shared `syncPolicy`
 
@@ -227,7 +227,7 @@ The default-deny policy must allow the `cnpg-system` namespace to reach the data
 
 # Wollbi Adventsfenster
 
-[advent.wollbi.ch](<https://advent.wollbi.ch>) is the invitation to the street's advent windows: the flyer, the dates and the calendar file to import. It was a Pelican site until the pages became rows in a database: the content is now edited at `/admin` and the repository holds the application, not the text. The image is built in [JanWelker/advent.wollbi.ch](<https://github.com/JanWelker/advent.wollbi.ch>), so its upstream is our own — per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
+[advent.wollbi.ch](<https://advent.wollbi.ch>) is the invitation to the street's advent windows: the flyer, the dates and the calendar file to import. It was a Pelican site until the pages became rows in a database: the content is now edited at `/admin` and the repository holds the application, not the text. The image is built in [JanWelker/advent.wollbi.ch](<https://github.com/JanWelker/advent.wollbi.ch>), so its upstream is our own — per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -248,8 +248,8 @@ The default-deny policy must allow the `cnpg-system` namespace to reach the data
 | Plain manifests around our own image | One Next.js process with one port and one database; the site repository's README is the whole deployment contract |
 | The namespace enforces `restricted` | The image is distroless and runs as uid 65532, its `nonroot` user, with a read-only root filesystem; the two things it writes, the uploads and Next.js' render cache, are volumes. There is no shell in it, so `kubectl exec` is for `node -e`, not for poking around |
 | `DATABASE_URL` from `advent-wollbi-db-app`, key `uri` | Payload wants one connection string and CloudNativePG assembles it; see [the contract](<https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract>) |
-| `PAYLOAD_SECRET` from OpenBao | It signs every editor session. The `PushSecret` in `secrets.yaml` writes it once, `IfNotExists`, so a rebuilt cluster reads the same value back and nobody is logged out; see [Conventions → Real secrets come from OpenBao](<https://homelab-apps.wlkr.ch/conventions/#7-real-secrets-come-from-openbao>) |
-| `NEXT_PUBLIC_SERVER_URL` | The origin Payload trusts for CSRF and builds absolute URLs from. TLS ends at the Gateway, so the pod's own address is the wrong answer — see [Behind the Gateway](<https://homelab-apps.wlkr.ch/conventions/#behind-the-gateway>) |
+| `PAYLOAD_SECRET` from OpenBao | It signs every editor session. The `PushSecret` in `secrets.yaml` writes it once, `IfNotExists`, so a rebuilt cluster reads the same value back and nobody is logged out; see [Conventions → Real secrets come from OpenBao](<https://homelab-apps.wlkr.ch/conventions/index.md#7-real-secrets-come-from-openbao>) |
+| `NEXT_PUBLIC_SERVER_URL` | The origin Payload trusts for CSRF and builds absolute URLs from. TLS ends at the Gateway, so the pod's own address is the wrong answer — see [Behind the Gateway](<https://homelab-apps.wlkr.ch/conventions/index.md#behind-the-gateway>) |
 | An `emptyDir` on `/app/.next/cache` | Next.js writes its render cache at runtime and the root filesystem is read-only. It is a cache: losing it on a restart costs one slow first request |
 | Two rules on one `HTTPRoute` | Every path reaches the app, `/admin` and `/api` included: Payload checks the editor's session itself, so the Gateway has nothing to gate. `/seed` redirects to `/`: the seed hook calls the Service, so nothing outside the namespace has a reason to reach it, and Gateway API has no rule that refuses a request |
 | The media collection accepts PDFs and `text/calendar` | The flyer and the `.ics` are content here, not attachments; as uploads the CMS knows about them, where the Pelican site had them as links in prose that outlive the file |
@@ -277,16 +277,16 @@ The provider, the `wollbi-editors` group and the binding are in [`advent-wollbi/
 | The group checked twice | Authentik's binding refuses everyone else; the app also refuses a `groups` claim without `wollbi-editors`, so an unbound application does not open the site to every Authentik account |
 | Users matched by email | An editor created before the switch keeps their pages when they first sign in with the same email |
 
-The rules in [`advent-wollbi/networkpolicy.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/advent-wollbi/networkpolicy.yaml>), and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
+The rules in [`advent-wollbi/networkpolicy.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/advent-wollbi/networkpolicy.yaml>), and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
 
 | Rule | Why |
 | --- | --- |
 | Ingress from the namespace, from `host` and `remote-node`; egress to the namespace | The rules every policy carries: [What every policy contains](<https://homelab.wlkr.ch/platform/security-policies/#what-every-policy-contains>) |
 | Ingress on 3000 from `ingress` | The public site and `/admin`; the site is meant to be read by people Authentik has never heard of |
 | Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics. Payload exposes none |
-| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/#sync-stuck-on-the-database>) |
+| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>) |
 | Egress to the namespace | The site renders from its own database and serves its own uploads |
-| Egress from the app to `auth.k8s.wlkr.ch` on 443 and to the Authentik server pods on 9000 | The token and userinfo calls of a sign-in. The name resolves to the Gateway, `world` to Cilium, and the Gateway's Envoy then checks the pod it picks, so both halves are needed, as for [OpenCloud](<https://homelab-apps.wlkr.ch/opencloud/#network-policy>) |
+| Egress from the app to `auth.k8s.wlkr.ch` on 443 and to the Authentik server pods on 9000 | The token and userinfo calls of a sign-in. The name resolves to the Gateway, `world` to Cilium, and the Gateway's Envoy then checks the pod it picks, so both halves are needed, as for [OpenCloud](<https://homelab-apps.wlkr.ch/opencloud/index.md#network-policy>) |
 | Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise. The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](<https://homelab.wlkr.ch/platform/cloudnative-pg/#backups>) |
 
 ### Secrets
@@ -330,7 +330,7 @@ The seed Job's log is the whole migration report: `{"seeded":true,...}` on the f
 
 # Claude agents
 
-Each session is a Claude Code instance that keeps running when the laptop is closed: a pod with `sshd`, a tmux session and a volume, reached at `<session>.ssh.wlkr.ch`. The same session is also driven from the Claude apps through Remote Control. The image and the Helm chart are the user's own, built in the [`agent-mooring`](<https://github.com/JanWelker/agent-mooring>) repository, which [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>) allows for the same reason as the Flowscape image. This repository holds the namespace, three ServiceAccounts (two the platform binds to its ClusterRoles, one the `openbao-claude-agents` store logs in as) and one directory per session.
+Each session is a Claude Code instance that keeps running when the laptop is closed: a pod with `sshd`, a tmux session and a volume, reached at `<session>.ssh.wlkr.ch`. The same session is also driven from the Claude apps through Remote Control. The image and the Helm chart are the user's own, built in the [`agent-mooring`](<https://github.com/JanWelker/agent-mooring>) repository, which [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>) allows for the same reason as the Flowscape image. This repository holds the namespace, three ServiceAccounts (two the platform binds to its ClusterRoles, one the `openbao-claude-agents` store logs in as) and one directory per session.
 
 ## At a glance
 
@@ -372,12 +372,12 @@ Each session is a Claude Code instance that keeps running when the laptop is clo
 
 ### Network policy
 
-Every rule in [`claude-agents/networkpolicy.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/claude-agents/networkpolicy.yaml>), and why it is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>). The names an agent may reach live in each session's own policy, rendered by the chart from its values (`extraEgressFQDNs` adds to them).
+Every rule in [`claude-agents/networkpolicy.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/claude-agents/networkpolicy.yaml>), and why it is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>). The names an agent may reach live in each session's own policy, rendered by the chart from its values (`extraEgressFQDNs` adds to them).
 
 | Rule | Why |
 | --- | --- |
 | Ingress on 2222 from the `ingress` entity | The Gateway passes the TLS stream through by SNI to the pod's TLS sidecar, so the Gateway is the only way in |
-| Ingress from `host` and `remote-node` | The kubelet's probes, the pair every policy names ([Conventions → rule 5](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>)) |
+| Ingress from `host` and `remote-node` | The kubelet's probes, the pair every policy names ([Conventions → rule 5](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>)) |
 | Ingress and egress within the namespace | Sessions share the namespace; the policy does not split them further |
 | Default egress to the namespace only | A session reaches nothing else unless its own policy says so. Those names (the Claude API, GitHub when `repos` or `skills.repo` is set, the Argo CD server) are the agent's reach, so adding one is reviewed like a firewall change |
 | `homelab-session`: every public address, minus the private, carrier-grade and link-local ranges and the router's public address | The cluster session installs tools, reads docs and fetches whatever a diagnosis needs; a name list would be a firewall change per lookup. Cutting the private ranges keeps the LAN, the nodes' LAN side and the Gateway addresses out; the public address is the `external-dns` target of `apps-gateway`, which hairpin NAT would otherwise hand back to the Gateway and every route on it |
@@ -504,7 +504,7 @@ The last command prints the SSH banner (`SSH-2.0-OpenSSH_...`) when the whole pa
 
 # Dependency-Track
 
-[Dependency-Track](<https://dependencytrack.org/>) keeps a software bill of materials for every image the cluster runs and re-checks each one against the vulnerability feeds every day, so a new CVE shows up against images that were already scanned, not only the next time Trivy looks. Upstream publishes the [`dependency-track` chart](<https://github.com/DependencyTrack/helm-charts/tree/main/charts/dependency-track>), so this is that chart with an external database, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>); the network policy, the database, the Authentik blueprint and the upload job come from a second source pointing at this repository.
+[Dependency-Track](<https://dependencytrack.org/>) keeps a software bill of materials for every image the cluster runs and re-checks each one against the vulnerability feeds every day, so a new CVE shows up against images that were already scanned, not only the next time Trivy looks. Upstream publishes the [`dependency-track` chart](<https://github.com/DependencyTrack/helm-charts/tree/main/charts/dependency-track>), so this is that chart with an external database, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>); the network policy, the database, the Authentik blueprint and the upload job come from a second source pointing at this repository.
 
 The SBOMs are not generated here. The platform's [Trivy Operator](<https://homelab.wlkr.ch/platform/trivy-operator/>) writes one CycloneDX `SbomReport` per running container, and the [upload job](<#sbom-upload>) hands them over once a night. Trivy answers what is in the images today; Dependency-Track answers what changed, which images share a component, and whether a policy holds across the portfolio.
 
@@ -529,7 +529,7 @@ The chart values in `application.yaml` that are not defaults:
 | `secretManagement.database.kek` from `dependency-track-config` | The key that encrypts every secret Dependency-Track stores in its database, API tokens for the feeds included. It must survive a rebuild, so it is generated into OpenBao, never by the chart. See [Secrets](<#secrets>) |
 | `fileStorage.local.existingClaim` | The chart's own PVC carries only `helm.sh/resource-policy: keep`, which a prune ignores; `pvc.yaml` carries `Prune=false` like every other volume here |
 | `DT_TELEMETRY_SUBMISSION_DEFAULT_ENABLED: "false"` | No phone-home. The property seeds the setting once, so it has to be off before the first start; the egress policy would drop the request anyway |
-| `DT_OIDC_*` and the frontend's `OIDC_*` | Both halves must name the same issuer and client ID; the API server validates the ID token the browser obtained. `preferred_username` is Authentik's username claim, which is safe only while users cannot change it (see [Conventions → Authentication](<https://homelab-apps.wlkr.ch/conventions/#6-authentication-is-authentiks-not-the-applications>)); Dependency-Track also stores each account's first `sub` and refuses a later login under another, so a rename could only claim an account that has never logged in. `groups` arrives with the `profile` scope, so team membership follows Authentik's groups. See [OIDC](<#oidc>) |
+| `DT_OIDC_*` and the frontend's `OIDC_*` | Both halves must name the same issuer and client ID; the API server validates the ID token the browser obtained. `preferred_username` is Authentik's username claim, which is safe only while users cannot change it (see [Conventions → Authentication](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>)); Dependency-Track also stores each account's first `sub` and refuses a later login under another, so a rename could only claim an account that has never logged in. `groups` arrives with the `profile` scope, so team membership follows Authentik's groups. See [OIDC](<#oidc>) |
 | `apiServer.web.resources`, below upstream's advice | The JVM sizes its heap from the limit. Upstream recommends 8Gi for production; the portfolio here is a few hundred small images |
 | `serviceMonitor.namespace: dependency-track` | The chart defaults to the `monitoring` namespace, which the `apps` project may not write to. Prometheus reads it from here like every other application's |
 | `httpRoute` on `apps-gateway` | The chart's route sends `/api` to the API server and everything else to the frontend on one hostname, so the frontend's `API_BASE_URL` stays empty and the browser uses relative URLs |
@@ -538,13 +538,13 @@ The chart values in `application.yaml` that are not defaults:
 
 ### Network policy
 
-Every rule in `dependency-track/networkpolicy.yaml`, and why it is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>).
+Every rule in `dependency-track/networkpolicy.yaml`, and why it is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>).
 
 | Rule | Why |
 | --- | --- |
 | Ingress on 8080 from `ingress` | The Gateway reaches the API server and the frontend directly; the login is OIDC, so no outpost sits in front |
 | Ingress from Prometheus on 9000 and 9187, `GET /metrics` only | The API server's management port and the database's exporter |
-| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/#sync-stuck-on-the-database>) |
+| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>) |
 | Egress from the API server to Authentik | Discovery, the signing keys and the userinfo endpoint, on the public name, because the `iss` claim is that name |
 | Egress from the API server to `nvd.nist.gov`, `storage.googleapis.com`, `api.github.com`, `epss.empiricalsecurity.com`, `www.cisa.gov`, `raw.githubusercontent.com` | The feeds the internal analyzer mirrors: NVD, OSV, GitHub Advisories, EPSS, and the CISA and ENISA known-exploited lists (ENISA publishes on GitHub). GitHub stays off until a token is entered in the UI; the rule is there so entering one is the only step |
 | Egress from the API server to `proxy.golang.org`, `registry.npmjs.org`, `pypi.org`, `repo1.maven.org`, `api.nuget.org`, `crates.io`, `index.crates.io`, `rubygems.org` | The registries Dependency-Track asks for the latest version of a component, for the ecosystems the images here contain. The other default repositories are disabled at [first login](<#first-login>) rather than allowed |
@@ -594,7 +594,7 @@ How many retired versions of a project stay is the retention setting's to say, n
 
 ### OIDC
 
-The provider is `dependency-track/authentik-blueprint.yaml`, a ConfigMap targeted at the `authentik` namespace, mounted and discovered as [Conventions → Authentication](<https://homelab-apps.wlkr.ch/conventions/#6-authentication-is-authentiks-not-the-applications>) describes. The fields that matter:
+The provider is `dependency-track/authentik-blueprint.yaml`, a ConfigMap targeted at the `authentik` namespace, mounted and discovered as [Conventions → Authentication](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>) describes. The fields that matter:
 
 | Blueprint field | Why |
 | --- | --- |
@@ -685,14 +685,14 @@ The database should report `Cluster in healthy state`, the version endpoint answ
 
 # Extractor admin UI
 
-Read-only pages over the [shot bridge](<https://homelab-apps.wlkr.ch/shot-bridge/index.md>)'s diagnostics: the shots recorded with the app's diagnostics switch on, their curves, merged timelines and stop legs, the uploaded logs, and the calibration runs. It has no login of its own and reads the bridge server side with the bridge's read-only token, which never reaches a browser. The source, the image and the chart live in [somuch-cloud/extractor.cafe](<https://github.com/somuch-cloud/extractor.cafe/tree/main/admin>); the chart is published to `ghcr.io/somuch-cloud/charts`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
+Read-only pages over the [shot bridge](<https://homelab-apps.wlkr.ch/shot-bridge/index.md>)'s diagnostics: the shots recorded with the app's diagnostics switch on, their curves, merged timelines and stop legs, the uploaded logs, and the calibration runs. It has no login of its own and reads the bridge server side with the bridge's read-only token, which never reaches a browser. The source, the image and the chart live in [somuch-cloud/extractor.cafe](<https://github.com/somuch-cloud/extractor.cafe/tree/main/admin>); the chart is published to `ghcr.io/somuch-cloud/charts`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
 |  |  |
 | --- | --- |
 | URL | [extractor-admin.k8s.wlkr.ch](<https://extractor-admin.k8s.wlkr.ch>) |
-| Authentication | The Authentik outpost in front, per [Conventions → Authentication is Authentik's](<https://homelab-apps.wlkr.ch/conventions/#6-authentication-is-authentiks-not-the-applications>) |
+| Authentication | The Authentik outpost in front, per [Conventions → Authentication is Authentik's](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>) |
 | Storage | None; everything is read from the bridge on each request |
 | Dials | The bridge's pods in `shot-bridge`, nothing outside the cluster |
 | Files | [`extractor-admin/`](<https://github.com/JanWelker/homelab-apps/tree/main/extractor-admin>) |
@@ -703,7 +703,7 @@ Read-only pages over the [shot bridge](<https://homelab-apps.wlkr.ch/shot-bridge
 | --- | --- |
 | Own chart, values in `application.yaml` | The chart ships the Deployment, Service, `HTTPRoute` and `CiliumNetworkPolicy`; this directory adds the namespace and the secret |
 | `HTTPRoute` targets `authentik-server` | The admin UI has no login; the chart refuses a route to its own Service. The platform repository's provider forwards to `extractor-admin.extractor-admin.svc` after the login |
-| Policy admits the Authentik server pods only | No request can skip the outpost. Egress is the bridge's pods on `bridge.port`, plus a DNS rule the chart renders itself, which repeats the platform's cluster-wide one ([Conventions → rule 5](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>)) and cannot be switched off |
+| Policy admits the Authentik server pods only | No request can skip the outpost. Egress is the bridge's pods on `bridge.port`, plus a DNS rule the chart renders itself, which repeats the platform's cluster-wide one ([Conventions → rule 5](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>)) and cannot be switched off |
 | The bridge's `admin.enabled: true` | Passes `BRIDGE_ADMIN_READ_KEY` to the bridge and lets this namespace's pods in on 8080 |
 
 ### Secrets
@@ -712,7 +712,7 @@ Read-only pages over the [shot bridge](<https://homelab-apps.wlkr.ch/shot-bridge
 | --- | --- | --- |
 | `kv/extractor-admin/config` | `admin-read-key` | By hand, as a copy of the bridge's property in `kv/shot-bridge/config`, which the `PushSecret` in [`shot-bridge/secrets.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/shot-bridge/secrets.yaml>) generates — see [Copying the read key](<#copying-the-read-key>) |
 
-A copy, because the `openbao-apps` store confines each namespace to its own `kv/<namespace>/` ([Conventions → Real secrets come from OpenBao](<https://homelab-apps.wlkr.ch/conventions/#7-real-secrets-come-from-openbao>)). The token may only read the bridge's debug routes and the logs; every other bridge route answers 403.
+A copy, because the `openbao-apps` store confines each namespace to its own `kv/<namespace>/` ([Conventions → Real secrets come from OpenBao](<https://homelab-apps.wlkr.ch/conventions/index.md#7-real-secrets-come-from-openbao>)). The token may only read the bridge's debug routes and the logs; every other bridge route answers 403.
 
 ## Usage
 
@@ -757,7 +757,7 @@ The hostname answers with Authentik's login first, then the shot list.
 
 # Wollbi-Fescht
 
-[fest.wollbi.ch](<https://fest.wollbi.ch>) is the invitation to the street's summer party, and the archive of every invitation since 1987. It was a Pelican site until the pages became rows in a database: the content is now edited at `/admin` and the repository holds the application, not the text. The image is built in [JanWelker/fest.wollbi.ch](<https://github.com/JanWelker/fest.wollbi.ch>), so its upstream is our own — per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
+[fest.wollbi.ch](<https://fest.wollbi.ch>) is the invitation to the street's summer party, and the archive of every invitation since 1987. It was a Pelican site until the pages became rows in a database: the content is now edited at `/admin` and the repository holds the application, not the text. The image is built in [JanWelker/fest.wollbi.ch](<https://github.com/JanWelker/fest.wollbi.ch>), so its upstream is our own — per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -778,8 +778,8 @@ The hostname answers with Authentik's login first, then the shot list.
 | Plain manifests around our own image | One Next.js process with one port and one database; the site repository's README is the whole deployment contract |
 | The namespace enforces `restricted` | The image is distroless and runs as uid 65532, its `nonroot` user, with a read-only root filesystem; the two things it writes, the uploads and Next.js' render cache, are volumes. There is no shell in it, so `kubectl exec` is for `node -e`, not for poking around |
 | `DATABASE_URL` from `fest-wollbi-db-app`, key `uri` | Payload wants one connection string and CloudNativePG assembles it; see [the contract](<https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract>) |
-| `PAYLOAD_SECRET` from OpenBao | It signs every editor session and encrypts what Payload keeps encrypted. The `PushSecret` in `secrets.yaml` writes it once, `IfNotExists`, so a rebuilt cluster reads the same value back and nobody is logged out; see [Conventions → Real secrets come from OpenBao](<https://homelab-apps.wlkr.ch/conventions/#7-real-secrets-come-from-openbao>) |
-| `NEXT_PUBLIC_SERVER_URL` | The origin Payload trusts for CSRF and builds absolute URLs from. TLS ends at the Gateway, so the pod's own address is the wrong answer — see [Behind the Gateway](<https://homelab-apps.wlkr.ch/conventions/#behind-the-gateway>) |
+| `PAYLOAD_SECRET` from OpenBao | It signs every editor session and encrypts what Payload keeps encrypted. The `PushSecret` in `secrets.yaml` writes it once, `IfNotExists`, so a rebuilt cluster reads the same value back and nobody is logged out; see [Conventions → Real secrets come from OpenBao](<https://homelab-apps.wlkr.ch/conventions/index.md#7-real-secrets-come-from-openbao>) |
+| `NEXT_PUBLIC_SERVER_URL` | The origin Payload trusts for CSRF and builds absolute URLs from. TLS ends at the Gateway, so the pod's own address is the wrong answer — see [Behind the Gateway](<https://homelab-apps.wlkr.ch/conventions/index.md#behind-the-gateway>) |
 | An `emptyDir` on `/app/.next/cache` | Next.js writes its render cache at runtime and the root filesystem is read-only. It is a cache: losing it on a restart costs one slow first request |
 | Two rules on one `HTTPRoute` | Every path reaches the app, `/admin` and `/api` included: Payload checks the editor's session itself, so the Gateway has nothing to gate. `/seed` redirects to `/`: the seed hook calls the Service, so nothing outside the namespace has a reason to reach it, and Gateway API has no rule that refuses a request |
 | `/healthz` answers without the database | A database outage should show as an empty page, not as a pod the kubelet restarts in a loop |
@@ -806,16 +806,16 @@ The provider, the `wollbi-editors` group and the binding are in [`fest-wollbi/au
 | The group checked twice | Authentik's binding refuses everyone else; the app also refuses a `groups` claim without `wollbi-editors`, so an unbound application does not open the site to every Authentik account |
 | Users matched by email | An editor created before the switch keeps their pages when they first sign in with the same email |
 
-The rules in [`fest-wollbi/networkpolicy.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/fest-wollbi/networkpolicy.yaml>), and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
+The rules in [`fest-wollbi/networkpolicy.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/fest-wollbi/networkpolicy.yaml>), and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
 
 | Rule | Why |
 | --- | --- |
 | Ingress from the namespace, from `host` and `remote-node`; egress to the namespace | The rules every policy carries: [What every policy contains](<https://homelab.wlkr.ch/platform/security-policies/#what-every-policy-contains>) |
 | Ingress on 3000 from `ingress` | The public site and `/admin`; the site is meant to be read by people Authentik has never heard of |
 | Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics. Payload exposes none |
-| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/#sync-stuck-on-the-database>) |
+| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>) |
 | Egress to the namespace | The site renders from its own database and serves its own uploads |
-| Egress from the app to `auth.k8s.wlkr.ch` on 443 and to the Authentik server pods on 9000 | The token and userinfo calls of a sign-in. The name resolves to the Gateway, `world` to Cilium, and the Gateway's Envoy then checks the pod it picks, so both halves are needed, as for [OpenCloud](<https://homelab-apps.wlkr.ch/opencloud/#network-policy>) |
+| Egress from the app to `auth.k8s.wlkr.ch` on 443 and to the Authentik server pods on 9000 | The token and userinfo calls of a sign-in. The name resolves to the Gateway, `world` to Cilium, and the Gateway's Envoy then checks the pod it picks, so both halves are needed, as for [OpenCloud](<https://homelab-apps.wlkr.ch/opencloud/index.md#network-policy>) |
 | Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise. The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](<https://homelab.wlkr.ch/platform/cloudnative-pg/#backups>) |
 
 ### Secrets
@@ -859,7 +859,7 @@ The seed Job's log is the whole migration report: `{"seeded":true,...}` on the f
 
 # Flowscape
 
-[Flowscape](<https://github.com/JanWelker/flowscape>) draws the whole cluster's network traffic as one 3D scene: namespaces as platforms, workloads as lights, every conversation an arc with sparks coloured by verdict. Hubble UI shows one namespace at a time; this answers "who talks to whom across namespaces, and what would a policy have dropped" in one picture. Its upstream is the user's own repository, and it deploys as plain manifests around that image, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
+[Flowscape](<https://github.com/JanWelker/flowscape>) draws the whole cluster's network traffic as one 3D scene: namespaces as platforms, workloads as lights, every conversation an arc with sparks coloured by verdict. Hubble UI shows one namespace at a time; this answers "who talks to whom across namespaces, and what would a policy have dropped" in one picture. Its upstream is the user's own repository, and it deploys as plain manifests around that image, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ![Flowscape showing the demo cluster](<https://raw.githubusercontent.com/JanWelker/flowscape/main/docs/screenshot.png>)
 
@@ -889,7 +889,7 @@ The seed Job's log is the whole migration report: `{"seeded":true,...}` on the f
 
 ### Network policy
 
-Every rule in `flowscape/networkpolicy.yaml`, and why it is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
+Every rule in `flowscape/networkpolicy.yaml`, and why it is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
 
 | Rule | Why |
 | --- | --- |
@@ -941,7 +941,7 @@ The image is distroless, so there is no shell to `exec` into, and the route answ
 
 # Home Assistant
 
-[Home Assistant](<https://www.home-assistant.io/>) runs the house. Upstream publishes no Helm chart and the community ones are repackagers, so `home-assistant/` is plain manifests around the official image: `deployment.yaml`, `service.yaml`, `pvc.yaml`, `configmap.yaml`, `httproute.yaml`, `database.yaml` with `backup.yaml`, `networkpolicy.yaml` and `namespace.yaml`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
+[Home Assistant](<https://www.home-assistant.io/>) runs the house. Upstream publishes no Helm chart and the community ones are repackagers, so `home-assistant/` is plain manifests around the official image: `deployment.yaml`, `service.yaml`, `pvc.yaml`, `configmap.yaml`, `httproute.yaml`, `database.yaml` with `backup.yaml`, `networkpolicy.yaml` and `namespace.yaml`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -975,18 +975,18 @@ The image is distroless, so there is no shell to `exec` into, and the route answ
 | `secrets.yaml` written by the init container on every start | Home Assistant has no `!env_var` tag, so the database URL reaches `configuration.yaml` through `!secret`, from CloudNativePG's Secret, which the operator rotates. The value is written through `json.dumps` so it is valid YAML whatever the generated password contains. Anything added to that file by hand is lost at the next restart; secrets belong in [OpenBao](<https://homelab.wlkr.ch/platform/openbao/>) |
 | `use_x_forwarded_for` with the pod CIDR in `trusted_proxies` | Requests arrive from Cilium's Envoy and the outpost. Without it every request has one source address, so the ban list and rate limiting count the household as one user |
 | `HTTPRoute` targets `authentik-server`, not the app | The outpost authenticates and forwards to `home-assistant.home-assistant.svc:8123`. Home Assistant is the one proxied app with a login of its own, so browser users log in twice: defence in depth, not SSO. The cross-namespace `backendRef` works only because the platform's `referencegrant.yaml` names this namespace. Pointing the route at the Home Assistant Service instead silently removes the whole authentication layer, so it deserves a second look in review |
-| `frontend.extra_module_url`, with `umami.js` from the ConfigMap mounted under `/config/www` | The Umami snippet. The frontend loads the URL through `import()`, and the tracker reads its website ID off its own `<script>` tag, so the module appends that tag rather than being it. See [Umami → Usage](<https://homelab-apps.wlkr.ch/umami/#usage>) |
+| `frontend.extra_module_url`, with `umami.js` from the ConfigMap mounted under `/config/www` | The Umami snippet. The frontend loads the URL through `import()`, and the tracker reads its website ID off its own `<script>` tag, so the module appends that tag rather than being it. See [Umami → Usage](<https://homelab-apps.wlkr.ch/umami/index.md#usage>) |
 
 ### Network policy
 
-The rules in `home-assistant/networkpolicy.yaml`, and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
+The rules in `home-assistant/networkpolicy.yaml`, and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
 
 | Rule | Why |
 | --- | --- |
 | Ingress from the namespace, from `host` and `remote-node`; egress to the namespace | The rules every policy carries: [What every policy contains](<https://homelab.wlkr.ch/platform/security-policies/#what-every-policy-contains>) |
 | Ingress on 8123 from the Authentik server pods only | The outpost is the only path to the UI. No `fromEntities: ingress`, so a request straight from the Gateway cannot skip it. Nothing else in the cluster has a reason to connect: this namespace holds a long-lived token for every device in the house. With the rule missing, the hostname answers with a gateway error after a successful Authentik login |
 | Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics; a week of Hubble records showed no other request |
-| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/#sync-stuck-on-the-database>) |
+| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>) |
 | Egress to `*.home-assistant.io` and `data-v2.hacs.xyz` | The alerts feed and version data; the HACS store index, which HACS polls for its repository list. An integration that talks to a device or a cloud is a line here first |
 | Egress to the multicast and limited-broadcast ranges on 5353 and 1900 | The mDNS and SSDP discovery sockets keep sending, and the overlay carries it nowhere. Allowed only so it does not fill the drop log |
 | Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise. The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](<https://homelab.wlkr.ch/platform/cloudnative-pg/#backups>) |
@@ -1024,7 +1024,7 @@ The database should report `Cluster in healthy state`. A pod stuck in `Init` is 
 
 # Knead Time
 
-[Knead Time](<https://kneadtime.pizza>) is a static pizza-dough calculator on GitHub Pages. Its step reminders cannot come from the page — iOS wakes a web app's service worker only for a server-sent push — so this is the one server it has: a small FastAPI service that holds a phone's push subscription and the times of its hands-on steps, and sends a Web Push notification when each comes due. The source and the image live in the [knead-time](<https://github.com/JanWelker/knead-time/tree/main/push>) repository, so like Flowscape it deploys as plain manifests around our own image, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
+[Knead Time](<https://kneadtime.pizza>) is a static pizza-dough calculator on GitHub Pages. Its step reminders cannot come from the page — iOS wakes a web app's service worker only for a server-sent push — so this is the one server it has: a small FastAPI service that holds a phone's push subscription and the times of its hands-on steps, and sends a Web Push notification when each comes due. The source and the image live in the [knead-time](<https://github.com/JanWelker/knead-time/tree/main/push>) repository, so like Flowscape it deploys as plain manifests around our own image, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -1051,8 +1051,8 @@ The database should report `Cluster in healthy state`. A pod stuck in `Init` is 
 | Plain manifests, no chart | One process, one port, one database; the [service README](<https://github.com/JanWelker/knead-time/blob/main/push/README.md>) lists the environment and that is all there is |
 | The namespace enforces `restricted` | The image runs as uid 65532, writes nothing and needs no capability; CloudNativePG's pods declare restricted-compliant contexts of their own |
 | One replica, the default `RollingUpdate` | The dispatcher that sends due reminders runs inside the process and claims due rows with `FOR UPDATE SKIP LOCKED`, so the two copies that overlap during a rollout never send the same reminder; nothing on the pod needs a `Recreate` gap |
-| A `Cluster`, not SQLite on a PVC | [Conventions → PostgreSQL is always a CloudNativePG Cluster](<https://homelab-apps.wlkr.ch/conventions/#3-postgresql-is-always-a-cloudnativepg-cluster>); `DATABASE_URL` is the `uri` key the operator writes to `kneadtime-db-app` |
-| `VAPID_PRIVATE_KEY` from OpenBao | A P-256 key in PEM, generated by `make bao-secrets` because a `Password` generator cannot produce one, which is why [rule 7](<https://homelab-apps.wlkr.ch/conventions/#7-real-secrets-come-from-openbao>)'s `PushSecret` path does not apply; the service derives the public half at startup and serves it, so the static site carries no key |
+| A `Cluster`, not SQLite on a PVC | [Conventions → PostgreSQL is always a CloudNativePG Cluster](<https://homelab-apps.wlkr.ch/conventions/index.md#3-postgresql-is-always-a-cloudnativepg-cluster>); `DATABASE_URL` is the `uri` key the operator writes to `kneadtime-db-app` |
+| `VAPID_PRIVATE_KEY` from OpenBao | A P-256 key in PEM, generated by `make bao-secrets` because a `Password` generator cannot produce one, which is why [rule 7](<https://homelab-apps.wlkr.ch/conventions/index.md#7-real-secrets-come-from-openbao>)'s `PushSecret` path does not apply; the service derives the public half at startup and serves it, so the static site carries no key |
 | `VAPID_SUBJECT` is the site URL | The contact a push service may use; a URL rather than a mailbox keeps an address out of a manifest |
 | `ALLOWED_ORIGINS` is the site | Only pages loaded from `kneadtime.pizza` may call the API from a browser; PR previews of the app live under the same origin |
 | `FORWARDED_ALLOW_IPS` is the pod CIDR | Envoy is the only thing that reaches the pod, and it appends the client's address to `X-Forwarded-For`; uvicorn trusts that header from the pod network only, so the service's per-address rate limit ([`ratelimit.py`](<https://github.com/JanWelker/knead-time/blob/main/push/kneadtime_push/ratelimit.py>)) counts the phone, not the Gateway |
@@ -1062,7 +1062,7 @@ The database should report `Cluster in healthy state`. A pod stuck in `Init` is 
 
 ### Network policy
 
-The rules in `kneadtime/networkpolicy.yaml`, and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>).
+The rules in `kneadtime/networkpolicy.yaml`, and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>).
 
 | Rule | Why |
 | --- | --- |
@@ -1103,7 +1103,7 @@ curl -s localhost:8080/metrics | grep kneadtime_push
 
 # OpenCloud
 
-[OpenCloud](<https://opencloud.eu/>) is the household's file sync and share: one Go binary, no database, with desktop, iOS and Android clients. Upstream publishes no open Helm chart, so `opencloud/` is plain manifests around the official image: `deployment.yaml`, `service.yaml`, `pvc.yaml`, `httproute.yaml`, `servicemonitor.yaml`, `secrets.yaml`, `networkpolicy.yaml`, `namespace.yaml` and two ConfigMaps, `csp.yaml` and `authentik-blueprint.yaml`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
+[OpenCloud](<https://opencloud.eu/>) is the household's file sync and share: one Go binary, no database, with desktop, iOS and Android clients. Upstream publishes no open Helm chart, so `opencloud/` is plain manifests around the official image: `deployment.yaml`, `service.yaml`, `pvc.yaml`, `httproute.yaml`, `servicemonitor.yaml`, `secrets.yaml`, `networkpolicy.yaml`, `namespace.yaml` and two ConfigMaps, `csp.yaml` and `authentik-blueprint.yaml`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -1130,7 +1130,7 @@ The values in `opencloud/deployment.yaml` that are not self-explanatory:
 
 | Setting | Why |
 | --- | --- |
-| `opencloudeu/opencloud-rolling`, not the production `opencloudeu/opencloud` | Rolling ships every three weeks on a current Alpine; the production line gets a release about every six months, and its image carried a fixable critical in an Alpine package that the [image-scan gate](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>) refuses. Move to the production line at a release that passes the gate. Either way a major bump waits for a human |
+| `opencloudeu/opencloud-rolling`, not the production `opencloudeu/opencloud` | Rolling ships every three weeks on a current Alpine; the production line gets a release about every six months, and its image carried a fixable critical in an Alpine package that the [image-scan gate](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>) refuses. Move to the production line at a release that passes the gate. Either way a major bump waits for a human |
 | `args: ["server"]`, no `init` | `opencloud init` only writes random secrets and IDs into `opencloud.yaml`. Every one of them arrives as an environment variable from `opencloud-env` instead, so `/etc/opencloud` is an emptyDir and the pod carries nothing a backup would have to protect |
 | `strategy: Recreate`, one replica | The volume is `ReadWriteOnce`, and PosixFS in non-collaborative mode tolerates one writer |
 | `runAsUser: 1000`, `fsGroup: 1000`, read-only root, the namespace enforces `restricted` | The image runs as that user and writes only under `/var/lib/opencloud`, `/etc/opencloud` and `/tmp`, the last two emptyDirs |
@@ -1140,7 +1140,7 @@ The values in `opencloud/deployment.yaml` that are not self-explanatory:
 | `PROXY_OIDC_REWRITE_WELLKNOWN` | The desktop and mobile clients discover the identity provider through the server's own `/.well-known/openid-configuration` |
 | `PROXY_OIDC_ACCESS_TOKEN_VERIFY_METHOD=jwt` | Authentik's access tokens are JWTs, so the server checks signature and issuer itself instead of calling userinfo on every request |
 | `PROXY_OIDC_AUDIENCES`, the four client IDs | Authentik writes the client ID into `aud`, so the server accepts only tokens minted for one of its own clients, not any token from the same issuer. Without the list the proxy logs at every start that audience validation is off |
-| `PROXY_AUTOPROVISION_ACCOUNTS`, with `sub` as the username | Accounts are created in the built-in IDM on first login and keyed on the `sub` claim, which never changes, per [Conventions → Authentication](<https://homelab-apps.wlkr.ch/conventions/#6-authentication-is-authentiks-not-the-applications>). Upstream's own autoprovisioning example does the same. Users see display names, never this value |
+| `PROXY_AUTOPROVISION_ACCOUNTS`, with `sub` as the username | Accounts are created in the built-in IDM on first login and keyed on the `sub` claim, which never changes, per [Conventions → Authentication](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>). Upstream's own autoprovisioning example does the same. Users see display names, never this value |
 | `GRAPH_USERNAME_MATCH=none` | Authentik's `sub` is a SHA-256 hex string, and the default rule refuses a username that starts with a digit: `Invalid username`, and the first login ends in a 400 |
 | `FRONTEND_READONLY_USER_ATTRIBUTES` | Name and mail come from Authentik on every login, so the profile page must not offer to edit them |
 | `PROXY_ROLE_ASSIGNMENT_DRIVER=oidc` on the `groups` claim, `GRAPH_ASSIGN_DEFAULT_USER_ROLE=false` | The role comes from Authentik group membership, and a user in neither group gets no role and no access; see [Usage](<#usage>) |
@@ -1161,11 +1161,11 @@ The desktop client redirects to a loopback address with a random port, so its re
 
 `secrets.yaml` generates what `opencloud init` would: a `Password` generator for the JWT, transfer, URL-signing and service-account secrets, the machine-auth and system-user API keys and the IDM service passwords, which the `users`, `groups`, `auth-basic` and `graph` services also receive as their LDAP bind passwords, and one `UUID` generator per ID, because a `UUID` generator yields one value and a `PushSecret` reads one generator. Each `PushSecret` writes its keys into `kv/opencloud/config` once; the `ExternalSecret` templates them into `opencloud-env` under the environment variable names. Losing the OpenBao path and regenerating is a new instance: the JWT secret signs the internal tokens and the IDs name the storage mount and the system user, so the data on the volume would no longer match.
 
-`idm-admin-password` is the built-in IDM's `admin` account, which the first start creates. With the IdP excluded nothing presents a login form for it, so there is no local break-glass account here, not even the one [rule 6](<https://homelab-apps.wlkr.ch/conventions/#6-authentication-is-authentiks-not-the-applications>) allows: Authentik is the only way in.
+`idm-admin-password` is the built-in IDM's `admin` account, which the first start creates. With the IdP excluded nothing presents a login form for it, so there is no local break-glass account here, not even the one [rule 6](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>) allows: Authentik is the only way in.
 
 ### Network policy
 
-The rules in `opencloud/networkpolicy.yaml`, and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>).
+The rules in `opencloud/networkpolicy.yaml`, and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>).
 
 | Rule | Why |
 | --- | --- |
@@ -1272,7 +1272,7 @@ For the two first-start failures above. The volume is `ReadWriteOnce` and stays 
 
 # Shot Timer bridge
 
-The bridge is the always-on half of the Shot Timer iPhone app. iOS will not let an app hold the La Marzocco cloud websocket open in the background, so this one process watches the machine, tracks each shot, looks up the machine's exact extraction time afterwards, keeps the shot history in SQLite, and starts and updates the phone's Live Activity through APNs. The phone and watch apps call its small HTTP API. The source, the image and the chart live in [somuch-cloud/extractor.cafe](<https://github.com/somuch-cloud/extractor.cafe/tree/main/deploy>); the chart is published to `ghcr.io/somuch-cloud/charts`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
+The bridge is the always-on half of the Shot Timer iPhone app. iOS will not let an app hold the La Marzocco cloud websocket open in the background, so this one process watches the machine, tracks each shot, looks up the machine's exact extraction time afterwards, keeps the shot history in SQLite, and starts and updates the phone's Live Activity through APNs. The phone and watch apps call its small HTTP API. The source, the image and the chart live in [somuch-cloud/extractor.cafe](<https://github.com/somuch-cloud/extractor.cafe/tree/main/deploy>); the chart is published to `ghcr.io/somuch-cloud/charts`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -1312,7 +1312,7 @@ The bridge is the always-on half of the Shot Timer iPhone app. iOS will not let 
 
 ### Network policy
 
-The chart's `CiliumNetworkPolicy` selects the bridge's pod; the `default-ingress`, `default-egress` and `database` policies in `networkpolicy.yaml` select the whole namespace, so the database pods are default-deny too. All at sync wave `-2`. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>).
+The chart's `CiliumNetworkPolicy` selects the bridge's pod; the `default-ingress`, `default-egress` and `database` policies in `networkpolicy.yaml` select the whole namespace, so the database pods are default-deny too. All at sync wave `-2`. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>).
 
 | File | Rule | Why |
 | --- | --- | --- |
@@ -1333,7 +1333,7 @@ The chart's `CiliumNetworkPolicy` selects the bridge's pod; the `default-ingress
 | Path | Keys | Written by |
 | --- | --- | --- |
 | `kv/shot-bridge/accounts` | `lm-username`, `lm-password`, `apns-key-id`, `apns-key-p8` | `make bao-secrets` in the platform repository |
-| `kv/shot-bridge/config` | `api-key`, `admin-read-key` (the [admin UI](<https://homelab-apps.wlkr.ch/extractor-admin/index.md>)'s read-only token, which it reads from [a copy](<https://homelab-apps.wlkr.ch/extractor-admin/#copying-the-read-key>)) | The `PushSecret` in `secrets.yaml` |
+| `kv/shot-bridge/config` | `api-key`, `admin-read-key` (the [admin UI](<https://homelab-apps.wlkr.ch/extractor-admin/index.md>)'s read-only token, which it reads from [a copy](<https://homelab-apps.wlkr.ch/extractor-admin/index.md#copying-the-read-key>)) | The `PushSecret` in `secrets.yaml` |
 
 The accounts path holds values from outside the cluster, so it is its own path: a `bao kv put` replaces a path wholesale. `make bao-secrets` asks for the La Marzocco login, then the APNs key ID and the path to the `.p8` file; Enter leaves the APNs half empty until the key exists.
 
@@ -1358,11 +1358,11 @@ kubectl -n shot-bridge logs deploy/shot-bridge
 - **The image and chart have to be public on GHCR.** The cluster has no pull secret for `ghcr.io/somuch-cloud`, and ArgoCD has no credentials for the chart registry.
 - **The sync stops at wave `-1` until `kv/shot-bridge/accounts` exists.** The `ExternalSecret` fails on a missing path, so the Deployment is never created; run `make bao-secrets`.
 - **The pod crash-loops while the APNs keys are empty.** The bridge exits on a missing variable rather than starting half-configured.
-- **Rotating `kv/shot-bridge/config` changes both keys.** The `PushSecret` writes `IfNotExists`, so rotating is [deleting the path](<https://homelab.wlkr.ch/platform/openbao/#rotating-a-credential>). The phone is logged out: enter the new API key in the app's setup screen, the watch receives it from the phone. The [admin UI](<https://homelab-apps.wlkr.ch/extractor-admin/index.md>) reads a hand copy of `admin-read-key` and answers 403 until it is [copied again](<https://homelab-apps.wlkr.ch/extractor-admin/#copying-the-read-key>).
+- **Rotating `kv/shot-bridge/config` changes both keys.** The `PushSecret` writes `IfNotExists`, so rotating is [deleting the path](<https://homelab.wlkr.ch/platform/openbao/#rotating-a-credential>). The phone is logged out: enter the new API key in the app's setup screen, the watch receives it from the phone. The [admin UI](<https://homelab-apps.wlkr.ch/extractor-admin/index.md>) reads a hand copy of `admin-read-key` and answers 403 until it is [copied again](<https://homelab-apps.wlkr.ch/extractor-admin/index.md#copying-the-read-key>).
 
 # Umami
 
-[Umami](<https://umami.is/>) counts the visits to every site: the two documentation sites, the GitHub Pages projects and Home Assistant. It sets no cookie and stores no address, so the sites need no consent banner. Upstream publishes an image and no chart, so `umami/` is plain manifests around the official image: `deployment.yaml`, `service.yaml`, `pdb.yaml`, `httproute.yaml`, `database.yaml` with `backup.yaml`, `secrets.yaml`, `networkpolicy.yaml` and `namespace.yaml`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
+[Umami](<https://umami.is/>) counts the visits to every site: the two documentation sites, the GitHub Pages projects and Home Assistant. It sets no cookie and stores no address, so the sites need no consent banner. Upstream publishes an image and no chart, so `umami/` is plain manifests around the official image: `deployment.yaml`, `service.yaml`, `pdb.yaml`, `httproute.yaml`, `database.yaml` with `backup.yaml`, `secrets.yaml`, `networkpolicy.yaml` and `namespace.yaml`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -1393,14 +1393,14 @@ kubectl -n shot-bridge logs deploy/shot-bridge
 
 ### Network policy
 
-The rules in `umami/networkpolicy.yaml`, and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
+The rules in `umami/networkpolicy.yaml`, and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
 
 | Rule | Why |
 | --- | --- |
 | Ingress from the namespace, from `host` and `remote-node`; egress to the namespace | The rules every policy carries: [What every policy contains](<https://homelab.wlkr.ch/platform/security-policies/#what-every-policy-contains>) |
 | Ingress on 3000 from the Authentik server pods only | The outpost proxies the tracker paths as well as the dashboard, so the Gateway never talks to the pod. No `fromEntities: ingress`, so a request straight from the Gateway cannot skip the login |
 | Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics. Umami itself exposes none |
-| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/#sync-stuck-on-the-database>) |
+| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>) |
 | Egress to the namespace only | The database. With the three phone-home switches off, nothing else is dialled |
 | Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise. The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](<https://homelab.wlkr.ch/platform/cloudnative-pg/#backups>) |
 
@@ -1459,6 +1459,6 @@ The database should report `Cluster in healthy state` and the script should answ
 >
 > Browser users authenticate twice, and `/script.js` and `/api/send` are behind neither login; the collect endpoint accepts nothing but page views and events for a known website ID. See [Authentik → Pitfalls](<https://homelab.wlkr.ch/platform/authentik/#pitfalls>).
 
-- **A visit shows the cluster's country, or none.** Umami takes the visitor from `X-Forwarded-For`. If every visit resolves to the same place, the header is not reaching the pod: see [Behind the Gateway](<https://homelab-apps.wlkr.ch/conventions/#behind-the-gateway>).
+- **A visit shows the cluster's country, or none.** Umami takes the visitor from `X-Forwarded-For`. If every visit resolves to the same place, the header is not reaching the pod: see [Behind the Gateway](<https://homelab-apps.wlkr.ch/conventions/index.md#behind-the-gateway>).
 - **Deleting `kv/umami/config` logs everyone out.** The `PushSecret` writes both keys anew: a rotated `APP_SECRET` invalidates every session and a rotated 2FA key every second factor.
 - **`data-domains` is the only guard against noise.** A snippet without it reports from every copy of the site: a laptop, a preview, a fork.

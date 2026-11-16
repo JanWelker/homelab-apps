@@ -1,6 +1,6 @@
 # OpenCloud
 
-[OpenCloud](<https://opencloud.eu/>) is the household's file sync and share: one Go binary, no database, with desktop, iOS and Android clients. Upstream publishes no open Helm chart, so `opencloud/` is plain manifests around the official image: `deployment.yaml`, `service.yaml`, `pvc.yaml`, `httproute.yaml`, `servicemonitor.yaml`, `secrets.yaml`, `networkpolicy.yaml`, `namespace.yaml` and two ConfigMaps, `csp.yaml` and `authentik-blueprint.yaml`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
+[OpenCloud](<https://opencloud.eu/>) is the household's file sync and share: one Go binary, no database, with desktop, iOS and Android clients. Upstream publishes no open Helm chart, so `opencloud/` is plain manifests around the official image: `deployment.yaml`, `service.yaml`, `pvc.yaml`, `httproute.yaml`, `servicemonitor.yaml`, `secrets.yaml`, `networkpolicy.yaml`, `namespace.yaml` and two ConfigMaps, `csp.yaml` and `authentik-blueprint.yaml`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -27,7 +27,7 @@ The values in `opencloud/deployment.yaml` that are not self-explanatory:
 
 | Setting | Why |
 | --- | --- |
-| `opencloudeu/opencloud-rolling`, not the production `opencloudeu/opencloud` | Rolling ships every three weeks on a current Alpine; the production line gets a release about every six months, and its image carried a fixable critical in an Alpine package that the [image-scan gate](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>) refuses. Move to the production line at a release that passes the gate. Either way a major bump waits for a human |
+| `opencloudeu/opencloud-rolling`, not the production `opencloudeu/opencloud` | Rolling ships every three weeks on a current Alpine; the production line gets a release about every six months, and its image carried a fixable critical in an Alpine package that the [image-scan gate](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>) refuses. Move to the production line at a release that passes the gate. Either way a major bump waits for a human |
 | `args: ["server"]`, no `init` | `opencloud init` only writes random secrets and IDs into `opencloud.yaml`. Every one of them arrives as an environment variable from `opencloud-env` instead, so `/etc/opencloud` is an emptyDir and the pod carries nothing a backup would have to protect |
 | `strategy: Recreate`, one replica | The volume is `ReadWriteOnce`, and PosixFS in non-collaborative mode tolerates one writer |
 | `runAsUser: 1000`, `fsGroup: 1000`, read-only root, the namespace enforces `restricted` | The image runs as that user and writes only under `/var/lib/opencloud`, `/etc/opencloud` and `/tmp`, the last two emptyDirs |
@@ -37,7 +37,7 @@ The values in `opencloud/deployment.yaml` that are not self-explanatory:
 | `PROXY_OIDC_REWRITE_WELLKNOWN` | The desktop and mobile clients discover the identity provider through the server's own `/.well-known/openid-configuration` |
 | `PROXY_OIDC_ACCESS_TOKEN_VERIFY_METHOD=jwt` | Authentik's access tokens are JWTs, so the server checks signature and issuer itself instead of calling userinfo on every request |
 | `PROXY_OIDC_AUDIENCES`, the four client IDs | Authentik writes the client ID into `aud`, so the server accepts only tokens minted for one of its own clients, not any token from the same issuer. Without the list the proxy logs at every start that audience validation is off |
-| `PROXY_AUTOPROVISION_ACCOUNTS`, with `sub` as the username | Accounts are created in the built-in IDM on first login and keyed on the `sub` claim, which never changes, per [Conventions → Authentication](<https://homelab-apps.wlkr.ch/conventions/#6-authentication-is-authentiks-not-the-applications>). Upstream's own autoprovisioning example does the same. Users see display names, never this value |
+| `PROXY_AUTOPROVISION_ACCOUNTS`, with `sub` as the username | Accounts are created in the built-in IDM on first login and keyed on the `sub` claim, which never changes, per [Conventions → Authentication](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>). Upstream's own autoprovisioning example does the same. Users see display names, never this value |
 | `GRAPH_USERNAME_MATCH=none` | Authentik's `sub` is a SHA-256 hex string, and the default rule refuses a username that starts with a digit: `Invalid username`, and the first login ends in a 400 |
 | `FRONTEND_READONLY_USER_ATTRIBUTES` | Name and mail come from Authentik on every login, so the profile page must not offer to edit them |
 | `PROXY_ROLE_ASSIGNMENT_DRIVER=oidc` on the `groups` claim, `GRAPH_ASSIGN_DEFAULT_USER_ROLE=false` | The role comes from Authentik group membership, and a user in neither group gets no role and no access; see [Usage](<#usage>) |
@@ -58,11 +58,11 @@ The desktop client redirects to a loopback address with a random port, so its re
 
 `secrets.yaml` generates what `opencloud init` would: a `Password` generator for the JWT, transfer, URL-signing and service-account secrets, the machine-auth and system-user API keys and the IDM service passwords, which the `users`, `groups`, `auth-basic` and `graph` services also receive as their LDAP bind passwords, and one `UUID` generator per ID, because a `UUID` generator yields one value and a `PushSecret` reads one generator. Each `PushSecret` writes its keys into `kv/opencloud/config` once; the `ExternalSecret` templates them into `opencloud-env` under the environment variable names. Losing the OpenBao path and regenerating is a new instance: the JWT secret signs the internal tokens and the IDs name the storage mount and the system user, so the data on the volume would no longer match.
 
-`idm-admin-password` is the built-in IDM's `admin` account, which the first start creates. With the IdP excluded nothing presents a login form for it, so there is no local break-glass account here, not even the one [rule 6](<https://homelab-apps.wlkr.ch/conventions/#6-authentication-is-authentiks-not-the-applications>) allows: Authentik is the only way in.
+`idm-admin-password` is the built-in IDM's `admin` account, which the first start creates. With the IdP excluded nothing presents a login form for it, so there is no local break-glass account here, not even the one [rule 6](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>) allows: Authentik is the only way in.
 
 ### Network policy
 
-The rules in `opencloud/networkpolicy.yaml`, and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>).
+The rules in `opencloud/networkpolicy.yaml`, and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>).
 
 | Rule | Why |
 | --- | --- |

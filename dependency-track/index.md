@@ -1,6 +1,6 @@
 # Dependency-Track
 
-[Dependency-Track](<https://dependencytrack.org/>) keeps a software bill of materials for every image the cluster runs and re-checks each one against the vulnerability feeds every day, so a new CVE shows up against images that were already scanned, not only the next time Trivy looks. Upstream publishes the [`dependency-track` chart](<https://github.com/DependencyTrack/helm-charts/tree/main/charts/dependency-track>), so this is that chart with an external database, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>); the network policy, the database, the Authentik blueprint and the upload job come from a second source pointing at this repository.
+[Dependency-Track](<https://dependencytrack.org/>) keeps a software bill of materials for every image the cluster runs and re-checks each one against the vulnerability feeds every day, so a new CVE shows up against images that were already scanned, not only the next time Trivy looks. Upstream publishes the [`dependency-track` chart](<https://github.com/DependencyTrack/helm-charts/tree/main/charts/dependency-track>), so this is that chart with an external database, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>); the network policy, the database, the Authentik blueprint and the upload job come from a second source pointing at this repository.
 
 The SBOMs are not generated here. The platform's [Trivy Operator](<https://homelab.wlkr.ch/platform/trivy-operator/>) writes one CycloneDX `SbomReport` per running container, and the [upload job](<#sbom-upload>) hands them over once a night. Trivy answers what is in the images today; Dependency-Track answers what changed, which images share a component, and whether a policy holds across the portfolio.
 
@@ -25,7 +25,7 @@ The chart values in `application.yaml` that are not defaults:
 | `secretManagement.database.kek` from `dependency-track-config` | The key that encrypts every secret Dependency-Track stores in its database, API tokens for the feeds included. It must survive a rebuild, so it is generated into OpenBao, never by the chart. See [Secrets](<#secrets>) |
 | `fileStorage.local.existingClaim` | The chart's own PVC carries only `helm.sh/resource-policy: keep`, which a prune ignores; `pvc.yaml` carries `Prune=false` like every other volume here |
 | `DT_TELEMETRY_SUBMISSION_DEFAULT_ENABLED: "false"` | No phone-home. The property seeds the setting once, so it has to be off before the first start; the egress policy would drop the request anyway |
-| `DT_OIDC_*` and the frontend's `OIDC_*` | Both halves must name the same issuer and client ID; the API server validates the ID token the browser obtained. `preferred_username` is Authentik's username claim, which is safe only while users cannot change it (see [Conventions → Authentication](<https://homelab-apps.wlkr.ch/conventions/#6-authentication-is-authentiks-not-the-applications>)); Dependency-Track also stores each account's first `sub` and refuses a later login under another, so a rename could only claim an account that has never logged in. `groups` arrives with the `profile` scope, so team membership follows Authentik's groups. See [OIDC](<#oidc>) |
+| `DT_OIDC_*` and the frontend's `OIDC_*` | Both halves must name the same issuer and client ID; the API server validates the ID token the browser obtained. `preferred_username` is Authentik's username claim, which is safe only while users cannot change it (see [Conventions → Authentication](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>)); Dependency-Track also stores each account's first `sub` and refuses a later login under another, so a rename could only claim an account that has never logged in. `groups` arrives with the `profile` scope, so team membership follows Authentik's groups. See [OIDC](<#oidc>) |
 | `apiServer.web.resources`, below upstream's advice | The JVM sizes its heap from the limit. Upstream recommends 8Gi for production; the portfolio here is a few hundred small images |
 | `serviceMonitor.namespace: dependency-track` | The chart defaults to the `monitoring` namespace, which the `apps` project may not write to. Prometheus reads it from here like every other application's |
 | `httpRoute` on `apps-gateway` | The chart's route sends `/api` to the API server and everything else to the frontend on one hostname, so the frontend's `API_BASE_URL` stays empty and the browser uses relative URLs |
@@ -34,13 +34,13 @@ The chart values in `application.yaml` that are not defaults:
 
 ### Network policy
 
-Every rule in `dependency-track/networkpolicy.yaml`, and why it is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>).
+Every rule in `dependency-track/networkpolicy.yaml`, and why it is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>).
 
 | Rule | Why |
 | --- | --- |
 | Ingress on 8080 from `ingress` | The Gateway reaches the API server and the frontend directly; the login is OIDC, so no outpost sits in front |
 | Ingress from Prometheus on 9000 and 9187, `GET /metrics` only | The API server's management port and the database's exporter |
-| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/#sync-stuck-on-the-database>) |
+| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>) |
 | Egress from the API server to Authentik | Discovery, the signing keys and the userinfo endpoint, on the public name, because the `iss` claim is that name |
 | Egress from the API server to `nvd.nist.gov`, `storage.googleapis.com`, `api.github.com`, `epss.empiricalsecurity.com`, `www.cisa.gov`, `raw.githubusercontent.com` | The feeds the internal analyzer mirrors: NVD, OSV, GitHub Advisories, EPSS, and the CISA and ENISA known-exploited lists (ENISA publishes on GitHub). GitHub stays off until a token is entered in the UI; the rule is there so entering one is the only step |
 | Egress from the API server to `proxy.golang.org`, `registry.npmjs.org`, `pypi.org`, `repo1.maven.org`, `api.nuget.org`, `crates.io`, `index.crates.io`, `rubygems.org` | The registries Dependency-Track asks for the latest version of a component, for the ecosystems the images here contain. The other default repositories are disabled at [first login](<#first-login>) rather than allowed |
@@ -90,7 +90,7 @@ How many retired versions of a project stay is the retention setting's to say, n
 
 ### OIDC
 
-The provider is `dependency-track/authentik-blueprint.yaml`, a ConfigMap targeted at the `authentik` namespace, mounted and discovered as [Conventions → Authentication](<https://homelab-apps.wlkr.ch/conventions/#6-authentication-is-authentiks-not-the-applications>) describes. The fields that matter:
+The provider is `dependency-track/authentik-blueprint.yaml`, a ConfigMap targeted at the `authentik` namespace, mounted and discovered as [Conventions → Authentication](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>) describes. The fields that matter:
 
 | Blueprint field | Why |
 | --- | --- |

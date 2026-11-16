@@ -1,6 +1,6 @@
 # Flowscape
 
-[Flowscape](<https://github.com/JanWelker/flowscape>) draws the whole cluster's network traffic as one 3D scene: namespaces as platforms, workloads as lights, every conversation an arc with sparks coloured by verdict. Hubble UI shows one namespace at a time; this answers "who talks to whom across namespaces, and what would a policy have dropped" in one picture. Its upstream is the user's own repository, and it deploys as plain manifests around that image, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
+[Flowscape](<https://github.com/JanWelker/flowscape>) draws the whole cluster's network traffic as one 3D scene: namespaces as platforms, workloads as lights, every conversation an arc with sparks coloured by verdict. Hubble UI shows one namespace at a time; this answers "who talks to whom across namespaces, and what would a policy have dropped" in one picture. Its upstream is the user's own repository, and it deploys as plain manifests around that image, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ![Flowscape showing the demo cluster](<https://raw.githubusercontent.com/JanWelker/flowscape/main/docs/screenshot.png>)
 
@@ -30,7 +30,7 @@
 
 ### Network policy
 
-Every rule in `flowscape/networkpolicy.yaml`, and why it is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
+Every rule in `flowscape/networkpolicy.yaml`, and why it is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
 
 | Rule | Why |
 | --- | --- |

@@ -1,6 +1,6 @@
 # Shot Timer bridge
 
-The bridge is the always-on half of the Shot Timer iPhone app. iOS will not let an app hold the La Marzocco cloud websocket open in the background, so this one process watches the machine, tracks each shot, looks up the machine's exact extraction time afterwards, keeps the shot history in SQLite, and starts and updates the phone's Live Activity through APNs. The phone and watch apps call its small HTTP API. The source, the image and the chart live in [somuch-cloud/extractor.cafe](<https://github.com/somuch-cloud/extractor.cafe/tree/main/deploy>); the chart is published to `ghcr.io/somuch-cloud/charts`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/#2-official-upstream-sources-only>).
+The bridge is the always-on half of the Shot Timer iPhone app. iOS will not let an app hold the La Marzocco cloud websocket open in the background, so this one process watches the machine, tracks each shot, looks up the machine's exact extraction time afterwards, keeps the shot history in SQLite, and starts and updates the phone's Live Activity through APNs. The phone and watch apps call its small HTTP API. The source, the image and the chart live in [somuch-cloud/extractor.cafe](<https://github.com/somuch-cloud/extractor.cafe/tree/main/deploy>); the chart is published to `ghcr.io/somuch-cloud/charts`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -40,7 +40,7 @@ The bridge is the always-on half of the Shot Timer iPhone app. iOS will not let 
 
 ### Network policy
 
-The chart's `CiliumNetworkPolicy` selects the bridge's pod; the `default-ingress`, `default-egress` and `database` policies in `networkpolicy.yaml` select the whole namespace, so the database pods are default-deny too. All at sync wave `-2`. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/#5-ship-a-ciliumnetworkpolicy>).
+The chart's `CiliumNetworkPolicy` selects the bridge's pod; the `default-ingress`, `default-egress` and `database` policies in `networkpolicy.yaml` select the whole namespace, so the database pods are default-deny too. All at sync wave `-2`. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>).
 
 | File | Rule | Why |
 | --- | --- | --- |
@@ -61,7 +61,7 @@ The chart's `CiliumNetworkPolicy` selects the bridge's pod; the `default-ingress
 | Path | Keys | Written by |
 | --- | --- | --- |
 | `kv/shot-bridge/accounts` | `lm-username`, `lm-password`, `apns-key-id`, `apns-key-p8` | `make bao-secrets` in the platform repository |
-| `kv/shot-bridge/config` | `api-key`, `admin-read-key` (the [admin UI](<https://homelab-apps.wlkr.ch/extractor-admin/index.md>)'s read-only token, which it reads from [a copy](<https://homelab-apps.wlkr.ch/extractor-admin/#copying-the-read-key>)) | The `PushSecret` in `secrets.yaml` |
+| `kv/shot-bridge/config` | `api-key`, `admin-read-key` (the [admin UI](<https://homelab-apps.wlkr.ch/extractor-admin/index.md>)'s read-only token, which it reads from [a copy](<https://homelab-apps.wlkr.ch/extractor-admin/index.md#copying-the-read-key>)) | The `PushSecret` in `secrets.yaml` |
 
 The accounts path holds values from outside the cluster, so it is its own path: a `bao kv put` replaces a path wholesale. `make bao-secrets` asks for the La Marzocco login, then the APNs key ID and the path to the `.p8` file; Enter leaves the APNs half empty until the key exists.
 
@@ -86,4 +86,4 @@ kubectl -n shot-bridge logs deploy/shot-bridge
 - **The image and chart have to be public on GHCR.** The cluster has no pull secret for `ghcr.io/somuch-cloud`, and ArgoCD has no credentials for the chart registry.
 - **The sync stops at wave `-1` until `kv/shot-bridge/accounts` exists.** The `ExternalSecret` fails on a missing path, so the Deployment is never created; run `make bao-secrets`.
 - **The pod crash-loops while the APNs keys are empty.** The bridge exits on a missing variable rather than starting half-configured.
-- **Rotating `kv/shot-bridge/config` changes both keys.** The `PushSecret` writes `IfNotExists`, so rotating is [deleting the path](<https://homelab.wlkr.ch/platform/openbao/#rotating-a-credential>). The phone is logged out: enter the new API key in the app's setup screen, the watch receives it from the phone. The [admin UI](<https://homelab-apps.wlkr.ch/extractor-admin/index.md>) reads a hand copy of `admin-read-key` and answers 403 until it is [copied again](<https://homelab-apps.wlkr.ch/extractor-admin/#copying-the-read-key>).
+- **Rotating `kv/shot-bridge/config` changes both keys.** The `PushSecret` writes `IfNotExists`, so rotating is [deleting the path](<https://homelab.wlkr.ch/platform/openbao/#rotating-a-credential>). The phone is logged out: enter the new API key in the app's setup screen, the watch receives it from the phone. The [admin UI](<https://homelab-apps.wlkr.ch/extractor-admin/index.md>) reads a hand copy of `admin-read-key` and answers 403 until it is [copied again](<https://homelab-apps.wlkr.ch/extractor-admin/index.md#copying-the-read-key>).
