@@ -26,8 +26,9 @@ data:
     many namespaces run it; the namespaces become tags on the project.
 
     A report outlives its workload: a ReplicaSet scaled to zero keeps its
-    SbomReport until it is garbage-collected. Those are skipped, so the
-    portfolio is what runs, and the highest running version is the latest.
+    SbomReport until it is garbage-collected, and a finished Job until the
+    Job is deleted. Those are skipped, so the portfolio is what runs, and
+    the highest running version is the latest.
 
     Afterwards the findings named in false-positives.json are marked as
     such and suppressed. An analysis belongs to one project version, so it
@@ -101,6 +102,27 @@ data:
             if error.code != 403:
                 raise
             print("may not list ReplicaSets: superseded revisions are uploaded too")
+            return None
+
+
+    def jobs():
+        """(namespace, name) of every Job, mapped to whether it has finished.
+
+        None when the list is refused, as for idle_replicasets(): the job
+        then uploads the reports of finished Jobs too.
+        """
+        try:
+            return {
+                (item["metadata"]["namespace"], item["metadata"]["name"]): any(
+                    condition["type"] in ("Complete", "Failed") and condition["status"] == "True"
+                    for condition in item.get("status", {}).get("conditions", [])
+                )
+                for item in pages("/apis/batch/v1/jobs", 200)
+            }
+        except urllib.error.HTTPError as error:
+            if error.code != 403:
+                raise
+            print("may not list Jobs: the reports of finished Jobs are uploaded too")
             return None
 
 
@@ -258,11 +280,19 @@ data:
         images = {}
         skipped = 0
         superseded = 0
+        finished = 0
         idle = idle_replicasets() or set()
+        known_jobs = jobs()
         for item in reports():
             kind, namespace, name = owner(item)
             if kind == "ReplicaSet" and (namespace, name) in idle:
                 superseded += 1
+                continue
+            # A finished Job keeps its report as long as the Job is kept, and
+            # a report whose Job is gone has outlived it: neither image runs.
+            # A CronJob's runs are reported as the CronJob, so they stay.
+            if kind == "Job" and known_jobs is not None and known_jobs.get((namespace, name), True):
+                finished += 1
                 continue
             # A report still being written has no document yet. One of those
             # is not a reason to abandon the other few hundred.
@@ -299,7 +329,7 @@ data:
                 print(f"FAILED {name}:{version} {error}")
         print(
             f"{len(projects)} images, {failed} failed, {skipped} reports skipped, "
-            f"{superseded} from superseded revisions"
+            f"{superseded} from superseded revisions, {finished} from finished Jobs"
         )
         unmarked, marked = suppress()
         print(f"{marked} false positives suppressed, {unmarked} rules not applied")
