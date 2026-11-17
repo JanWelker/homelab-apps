@@ -56,10 +56,11 @@ Every rule in `dependency-track/networkpolicy.yaml`, and why it is there. The sh
 | Project name is the image reference without its tag, version is the tag | A project's version history is then Renovate's bump history, and two namespaces running the same image share one project |
 | Namespaces become `namespace:<name>` tags on the project | Where a finding runs is the first question when it fires |
 | Reports owned by a ReplicaSet scaled to zero are skipped | A report outlives its workload until the ReplicaSet is garbage-collected, and a superseded revision is not part of what runs. If the platform's grant lacks `replicasets`, the job says so and uploads everything |
+| Reports owned by a finished Job, or by a Job that no longer exists, are skipped | Rook keeps its finished `osd-prepare` Jobs and their reports for weeks, and a report without an owner is never collected; neither image runs. A CronJob's runs are reported as the CronJob and stay. Without `jobs` in the grant the job says so and uploads them |
 | `isLatest` goes to the highest version that is running | Two versions of one image can run at once, and the flag otherwise lands on whichever was uploaded last |
 | Two digests under one tag are one upload | They are one project version; the namespaces of both become its tags |
 | Reads `report.components` from the report, unchanged | Trivy Operator already writes CycloneDX; Dependency-Track accepts the same document, `specVersion` 1.7 included |
-| The `ClusterRole` that lets it list reports and ReplicaSets is the platform's | The `apps` project may not create cluster-scoped RBAC, and who may read Trivy's findings is the platform's call. It is `sbom-readers.yaml` next to the operator in the homelab repository |
+| The `ClusterRole` that lets it list reports, ReplicaSets and Jobs is the platform's | The `apps` project may not create cluster-scoped RBAC, and who may read Trivy's findings is the platform's call. It is `sbom-readers.yaml` next to the operator in the homelab repository |
 | The API key is `optional` on the container, and its `ExternalSecret` is at sync wave 1 | A missing Secret would leave the pod in `CreateContainerConfigError`, and a `Forbid` CronJob never runs again behind a Job that never finishes; the script exits 1 with the reason instead. The wave is the same argument one level up: this is the one secret only a running Dependency-Track can issue, so it is fetched after the application, never in a wave that gates it. `make bao-secrets` writes the path empty rather than leaving it absent, for the same reason |
 | Runs before the platform's [`findings-history`](<https://homelab.wlkr.ch/platform/trivy-operator/#history>) job | Both read the same reports; neither depends on the other |
 | `activeDeadlineSeconds` ends the Job before `findings-history` starts | `concurrencyPolicy: Forbid` never starts tonight's run behind one still hanging on a request, and the later job reads the same reports; a run that overran is killed in time for both |
@@ -163,7 +164,7 @@ kubectl -n dependency-track get cluster dependency-track-db
 curl -s https://sbom.k8s.wlkr.ch/api/version | jq .version
 ```
 
-The database should report `Cluster in healthy state`, the version endpoint answers without a login, and the last `sbom-upload` job should have succeeded with its closing line of images uploaded, failed, reports skipped and superseded revisions, the first three of which should read `0`. In the UI, the Dashboard's portfolio count should match the images number.
+The database should report `Cluster in healthy state`, the version endpoint answers without a login, and the last `sbom-upload` job should have succeeded with its closing line of images uploaded, failed, reports skipped, superseded revisions and finished Jobs, the first three of which should read `0`. In the UI, the Dashboard's portfolio count should match the images number.
 
 ## Pitfalls
 

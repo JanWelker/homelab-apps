@@ -1418,6 +1418,10 @@ each distinct image that is running, once, to <code>PUT /api/v1/bom</code> with
 <td>A report outlives its workload until the ReplicaSet is garbage-collected, and a superseded revision is not part of what runs. If the platform's grant lacks <code>replicasets</code>, the job says so and uploads everything</td>
 </tr>
 <tr>
+<td>Reports owned by a finished Job, or by a Job that no longer exists, are skipped</td>
+<td>Rook keeps its finished <code>osd-prepare</code> Jobs and their reports for weeks, and a report without an owner is never collected; neither image runs. A CronJob's runs are reported as the CronJob and stay. Without <code>jobs</code> in the grant the job says so and uploads them</td>
+</tr>
+<tr>
 <td><code>isLatest</code> goes to the highest version that is running</td>
 <td>Two versions of one image can run at once, and the flag otherwise lands on whichever was uploaded last</td>
 </tr>
@@ -1430,7 +1434,7 @@ each distinct image that is running, once, to <code>PUT /api/v1/bom</code> with
 <td>Trivy Operator already writes CycloneDX; Dependency-Track accepts the same document, <code>specVersion</code> 1.7 included</td>
 </tr>
 <tr>
-<td>The <code>ClusterRole</code> that lets it list reports and ReplicaSets is the platform's</td>
+<td>The <code>ClusterRole</code> that lets it list reports, ReplicaSets and Jobs is the platform's</td>
 <td>The <code>apps</code> project may not create cluster-scoped RBAC, and who may read Trivy's findings is the platform's call. It is <code>sbom-readers.yaml</code> next to the operator in the homelab repository</td>
 </tr>
 <tr>
@@ -1661,8 +1665,8 @@ Access Management → Teams, or the upload job's:</p>
 </span></code></pre></div>
 <p>The database should report <code>Cluster in healthy state</code>, the version endpoint
 answers without a login, and the last <code>sbom-upload</code> job should have
-succeeded with its closing line of images uploaded, failed, reports skipped
-and superseded revisions, the first three of which should read <code>0</code>. In the
+succeeded with its closing line of images uploaded, failed, reports skipped,
+superseded revisions and finished Jobs, the first three of which should read <code>0</code>. In the
 UI, the Dashboard's portfolio count should match the images number.</p>
 <h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
 <div class="admonition warning">
