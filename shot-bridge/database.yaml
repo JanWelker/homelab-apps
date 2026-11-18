@@ -11,6 +11,10 @@ spec:
   # Two instances so a drain or a node loss fails over instead of taking the
   # bridge's history down; see docs/shot-bridge.md#configuration
   instances: 2
+  # A spec change promotes a replica first, and no shutdown waits on the
+  # app's connection pool; see docs/conventions.md
+  primaryUpdateMethod: switchover
+  smartShutdownTimeout: 15
   # The operator's PDBs stay on: a drain switches the primary over first.
   # See docs/shot-bridge.md#configuration
 

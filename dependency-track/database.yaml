@@ -9,6 +9,8 @@ metadata:
     argocd.argoproj.io/sync-wave: "-1"
 spec:
   instances: 1
+  # No shutdown waits on the app's connection pool; see docs/conventions.md
+  smartShutdownTimeout: 15
   # One instance: the -primary PDB would refuse every drain; see docs/conventions.md
   enablePDB: false
 
