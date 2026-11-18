@@ -54,7 +54,7 @@ rollout and debugging are in
 | Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics. Umami itself exposes none |
 | Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](conventions.md#sync-stuck-on-the-database) |
 | Egress to the namespace only | The database. With the three phone-home switches off, nothing else is dialled |
-| Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise. The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](https://homelab.wlkr.ch/platform/cloudnative-pg/#backups) |
+| Egress from the database's pods to `kube-apiserver` | The instance manager reports its status there, and its liveness check fails otherwise; the operator's join and initdb Jobs read the `Cluster` before they start, see [Sync stuck on the database](conventions.md#sync-stuck-on-the-database). The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](https://homelab.wlkr.ch/platform/cloudnative-pg/#backups) |
 
 ### Secrets
 

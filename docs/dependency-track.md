@@ -64,7 +64,7 @@ shape is [Conventions → Ship a `CiliumNetworkPolicy`](conventions.md#5-ship-a-
 | Egress from the API server to `nvd.nist.gov`, `storage.googleapis.com`, `api.github.com`, `epss.empiricalsecurity.com`, `www.cisa.gov`, `raw.githubusercontent.com` | The feeds the internal analyzer mirrors: NVD, OSV, GitHub Advisories, EPSS, and the CISA and ENISA known-exploited lists (ENISA publishes on GitHub). GitHub stays off until a token is entered in the UI; the rule is there so entering one is the only step |
 | Egress from the API server to `proxy.golang.org`, `registry.npmjs.org`, `pypi.org`, `repo1.maven.org`, `api.nuget.org`, `crates.io`, `index.crates.io`, `rubygems.org` | The registries Dependency-Track asks for the latest version of a component, for the ecosystems the images here contain. The other default repositories are disabled at [first login](#first-login) rather than allowed |
 | Egress from the upload job to `kube-apiserver` | It lists the `SbomReport` objects; the API it posts to is in the namespace |
-| Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise |
+| Egress from the database's pods to `kube-apiserver` | The instance manager reports its status there, and its liveness check fails otherwise; the operator's join and initdb Jobs read the `Cluster` before they start, see [Sync stuck on the database](conventions.md#sync-stuck-on-the-database) |
 
 ### SBOM upload
 
