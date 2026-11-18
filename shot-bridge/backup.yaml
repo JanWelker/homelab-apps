@@ -12,6 +12,20 @@ metadata:
 spec:
   bucketName: cnpg-shot-bridge
   storageClassName: ceph-bucket
+  additionalConfig:
+    # offsite-reader may list and read; https://homelab.wlkr.ch/platform/rook-ceph/#off-cluster-reader
+    bucketPolicy: |
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Principal": {"AWS": ["arn:aws:iam:::user/offsite-reader"]},
+            "Action": ["s3:ListBucket", "s3:GetBucketLocation", "s3:GetObject"],
+            "Resource": ["arn:aws:s3:::cnpg-shot-bridge", "arn:aws:s3:::cnpg-shot-bridge/*"]
+          }
+        ]
+      }
 ---
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore

@@ -75,8 +75,9 @@ shutdown never ends early and only lengthens every restart and every move.
 
 Every `Cluster` gets a `backup.yaml` beside it, the
 [stanza from the platform](https://homelab.wlkr.ch/platform/cloudnative-pg/#backing-up-a-database)
-with the `Cluster`'s name and namespace filled in, and the `plugins` entry in
-the `Cluster`. Velero's nightly PVC snapshot alone restores only to the night
+with the `Cluster`'s name and namespace filled in, its `bucketPolicy`
+included so the [off-cluster copy](https://homelab.wlkr.ch/operations/backups/#off-cluster-copy)
+can read the bucket, and the `plugins` entry in the `Cluster`. Velero's nightly PVC snapshot alone restores only to the night
 it was taken; the WAL archive restores to any second.
 
 The operator writes a `<cluster-name>-app` Secret with `username`, `password`,
