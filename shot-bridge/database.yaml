@@ -11,9 +11,8 @@ spec:
   # Two instances so a drain or a node loss fails over instead of taking the
   # bridge's history down; see docs/shot-bridge.md#configuration
   instances: 2
-  # The -primary PDB would refuse the primary's eviction on every drain;
-  # without it the operator fails over. See docs/conventions.md
-  enablePDB: false
+  # The operator's PDBs stay on: a drain switches the primary over first.
+  # See docs/shot-bridge.md#configuration
 
   # The operator's anti-affinity is a preference the scheduler outweighs on
   # unequal nodes; this keeps the two apart.
