@@ -1221,7 +1221,7 @@ chart is published to <code>ghcr.io/somuch-cloud/charts</code>, per
 </tr>
 <tr>
 <td><code>Cluster</code> <code>shot-bridge-db</code>, two instances, 1Gi</td>
-<td>A few rows a day, but the phones log every shot as it happens; a replica turns a drain or a node loss into a failover of seconds instead of a restart. <code>enablePDB: false</code> still, so the drain triggers that failover rather than hanging, and a topology spread keeps the two on different nodes. WAL and a nightly base backup through <code>backup.yaml</code></td>
+<td>A few rows a day, but the phones log every shot as it happens; a replica turns a drain into a switchover of seconds and a node loss into a failover instead of a restart. The operator's PodDisruptionBudgets stay on, so a drain waits for the switchover; <code>enablePDB: false</code> is for single-instance clusters only, see <a href="../conventions/">Conventions</a>. A topology spread keeps the two on different nodes. WAL and a nightly base backup through <code>backup.yaml</code></td>
 </tr>
 <tr>
 <td><code>HTTPRoute</code> targets the bridge's Service</td>
