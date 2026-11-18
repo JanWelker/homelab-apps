@@ -272,7 +272,11 @@ redirect loops, this is why.
 
 The default-deny policy must allow the `cnpg-system` namespace to reach the
 database pod on port 8000, the instance manager's status endpoint the operator
-polls, and the policy must sit at sync wave `-2` with the namespace. At the
+polls, and the policy must sit at sync wave `-2` with the namespace. Its
+`kube-apiserver` egress selects `cnpg.io/cluster: <cluster>`, not
+`cnpg.io/podRole: instance`: the operator's `join` and `initdb` Jobs carry
+`cnpg.io/jobRole` instead, and without the API they wait forever, so a new
+replica stays at `Creating a new replica`. At the
 default wave it lands after the `Cluster` at `-1`, and a wave that never
 finishes never applies the rule that would unblock it.
 

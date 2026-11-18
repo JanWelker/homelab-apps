@@ -72,10 +72,11 @@ metadata:
 spec:
   description: >-
     The CloudNativePG instance manager reports its status to the API
-    server; its liveness check fails without it.
+    server, and its liveness check fails without it; the operator's join
+    and initdb Jobs read the Cluster before they start.
   endpointSelector:
     matchLabels:
-      cnpg.io/podRole: instance
+      cnpg.io/cluster: advent-wollbi-db
   egress:
     - toEntities:
         - kube-apiserver
