@@ -67,6 +67,12 @@ A single-instance `Cluster` sets `enablePDB: false`: the operator's
 so a drain of that node hangs until Kured's timeout and the node is never
 rebooted. The pod moves and the database is down for the move either way.
 
+Every `Cluster` sets `smartShutdownTimeout: 15`, and one with replicas
+`primaryUpdateMethod: switchover`; the reasoning is in
+[the contract](https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract).
+Each application holds a connection pool, so the default 180-second smart
+shutdown never ends early and only lengthens every restart and every move.
+
 Every `Cluster` gets a `backup.yaml` beside it, the
 [stanza from the platform](https://homelab.wlkr.ch/platform/cloudnative-pg/#backing-up-a-database)
 with the `Cluster`'s name and namespace filled in, and the `plugins` entry in
