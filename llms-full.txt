@@ -194,7 +194,7 @@ Traffic arrives from Cilium's Envoy inside the [pod subnet](<https://homelab.wlk
 
 ## Sync stuck on the database
 
-The default-deny policy must allow the `cnpg-system` namespace to reach the database pod on port 8000, the instance manager's status endpoint the operator polls, and the policy must sit at sync wave `-2` with the namespace. At the default wave it lands after the `Cluster` at `-1`, and a wave that never finishes never applies the rule that would unblock it.
+The default-deny policy must allow the `cnpg-system` namespace to reach the database pod on port 8000, the instance manager's status endpoint the operator polls, and the policy must sit at sync wave `-2` with the namespace. Its `kube-apiserver` egress selects `cnpg.io/cluster: <cluster>`, not `cnpg.io/podRole: instance`: the operator's `join` and `initdb` Jobs carry `cnpg.io/jobRole` instead, and without the API they wait forever, so a new replica stays at `Creating a new replica`. At the default wave it lands after the `Cluster` at `-1`, and a wave that never finishes never applies the rule that would unblock it.
 
 1. **Symptom.** Postgres serves the application and `kubectl get cluster` reads `1/1`, but the phase is `Instance Status Extraction Error: HTTP    communication issue`. The Application is `Synced` with health `Unknown` and every entry in `status.resources` lacks a health field: a genuinely unhealthy workload names the failing resource.
 
@@ -288,7 +288,7 @@ The rules in [`advent-wollbi/networkpolicy.yaml`](<https://github.com/JanWelker/
 | Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>) |
 | Egress to the namespace | The site renders from its own database and serves its own uploads |
 | Egress from the app to `auth.k8s.wlkr.ch` on 443 and to the Authentik server pods on 9000 | The token and userinfo calls of a sign-in. The name resolves to the Gateway, `world` to Cilium, and the Gateway's Envoy then checks the pod it picks, so both halves are needed, as for [OpenCloud](<https://homelab-apps.wlkr.ch/opencloud/index.md#network-policy>) |
-| Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise. The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](<https://homelab.wlkr.ch/platform/cloudnative-pg/#backups>) |
+| Egress from the database's pods to `kube-apiserver` | The instance manager reports its status there, and its liveness check fails otherwise; the operator's join and initdb Jobs read the `Cluster` before they start, see [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>). The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](<https://homelab.wlkr.ch/platform/cloudnative-pg/#backups>) |
 
 ### Secrets
 
@@ -551,7 +551,7 @@ Every rule in `dependency-track/networkpolicy.yaml`, and why it is there. The sh
 | Egress from the API server to `nvd.nist.gov`, `storage.googleapis.com`, `api.github.com`, `epss.empiricalsecurity.com`, `www.cisa.gov`, `raw.githubusercontent.com` | The feeds the internal analyzer mirrors: NVD, OSV, GitHub Advisories, EPSS, and the CISA and ENISA known-exploited lists (ENISA publishes on GitHub). GitHub stays off until a token is entered in the UI; the rule is there so entering one is the only step |
 | Egress from the API server to `proxy.golang.org`, `registry.npmjs.org`, `pypi.org`, `repo1.maven.org`, `api.nuget.org`, `crates.io`, `index.crates.io`, `rubygems.org` | The registries Dependency-Track asks for the latest version of a component, for the ecosystems the images here contain. The other default repositories are disabled at [first login](<#first-login>) rather than allowed |
 | Egress from the upload job to `kube-apiserver` | It lists the `SbomReport` objects; the API it posts to is in the namespace |
-| Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise |
+| Egress from the database's pods to `kube-apiserver` | The instance manager reports its status there, and its liveness check fails otherwise; the operator's join and initdb Jobs read the `Cluster` before they start, see [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>) |
 
 ### SBOM upload
 
@@ -832,7 +832,7 @@ The rules in [`fest-wollbi/networkpolicy.yaml`](<https://github.com/JanWelker/ho
 | Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>) |
 | Egress to the namespace | The site renders from its own database and serves its own uploads |
 | Egress from the app to `auth.k8s.wlkr.ch` on 443 and to the Authentik server pods on 9000 | The token and userinfo calls of a sign-in. The name resolves to the Gateway, `world` to Cilium, and the Gateway's Envoy then checks the pod it picks, so both halves are needed, as for [OpenCloud](<https://homelab-apps.wlkr.ch/opencloud/index.md#network-policy>) |
-| Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise. The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](<https://homelab.wlkr.ch/platform/cloudnative-pg/#backups>) |
+| Egress from the database's pods to `kube-apiserver` | The instance manager reports its status there, and its liveness check fails otherwise; the operator's join and initdb Jobs read the `Cluster` before they start, see [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>). The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](<https://homelab.wlkr.ch/platform/cloudnative-pg/#backups>) |
 
 ### Secrets
 
@@ -1005,7 +1005,7 @@ The rules in `home-assistant/networkpolicy.yaml`, and why each is there. The sha
 | Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>) |
 | Egress to `*.home-assistant.io` and `data-v2.hacs.xyz` | The alerts feed and version data; the HACS store index, which HACS polls for its repository list. An integration that talks to a device or a cloud is a line here first |
 | Egress to the multicast and limited-broadcast ranges on 5353 and 1900 | The mDNS and SSDP discovery sockets keep sending, and the overlay carries it nowhere. Allowed only so it does not fill the drop log |
-| Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise. The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](<https://homelab.wlkr.ch/platform/cloudnative-pg/#backups>) |
+| Egress from the database's pods to `kube-apiserver` | The instance manager reports its status there, and its liveness check fails otherwise; the operator's join and initdb Jobs read the `Cluster` before they start, see [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>). The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](<https://homelab.wlkr.ch/platform/cloudnative-pg/#backups>) |
 
 ## Usage
 
@@ -1418,7 +1418,7 @@ The rules in `umami/networkpolicy.yaml`, and why each is there. The shape is [Co
 | Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics. Umami itself exposes none |
 | Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>) |
 | Egress to the namespace only | The database. With the three phone-home switches off, nothing else is dialled |
-| Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise. The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](<https://homelab.wlkr.ch/platform/cloudnative-pg/#backups>) |
+| Egress from the database's pods to `kube-apiserver` | The instance manager reports its status there, and its liveness check fails otherwise; the operator's join and initdb Jobs read the `Cluster` before they start, see [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>). The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](<https://homelab.wlkr.ch/platform/cloudnative-pg/#backups>) |
 
 ### Secrets
 

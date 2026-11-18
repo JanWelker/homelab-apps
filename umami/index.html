@@ -1288,8 +1288,8 @@ rollout and debugging are in
 <td>The database. With the three phone-home switches off, nothing else is dialled</td>
 </tr>
 <tr>
-<td>Egress from the database pod to <code>kube-apiserver</code></td>
-<td>The instance manager reports its status there; its liveness check fails otherwise. The object store for WAL and base backups is the platform's <code>cnpg-backups</code> policy, see <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#backups">CloudNativePG → Backups</a></td>
+<td>Egress from the database's pods to <code>kube-apiserver</code></td>
+<td>The instance manager reports its status there, and its liveness check fails otherwise; the operator's join and initdb Jobs read the <code>Cluster</code> before they start, see <a href="../conventions/#sync-stuck-on-the-database">Sync stuck on the database</a>. The object store for WAL and base backups is the platform's <code>cnpg-backups</code> policy, see <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#backups">CloudNativePG → Backups</a></td>
 </tr>
 </tbody>
 </table>

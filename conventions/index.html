@@ -1518,7 +1518,11 @@ redirect loops, this is why.</p>
 <h2 id="sync-stuck-on-the-database">Sync stuck on the database<a class="headerlink" href="#sync-stuck-on-the-database" title="Permanent link">&para;</a></h2>
 <p>The default-deny policy must allow the <code>cnpg-system</code> namespace to reach the
 database pod on port 8000, the instance manager's status endpoint the operator
-polls, and the policy must sit at sync wave <code>-2</code> with the namespace. At the
+polls, and the policy must sit at sync wave <code>-2</code> with the namespace. Its
+<code>kube-apiserver</code> egress selects <code>cnpg.io/cluster: &lt;cluster&gt;</code>, not
+<code>cnpg.io/podRole: instance</code>: the operator's <code>join</code> and <code>initdb</code> Jobs carry
+<code>cnpg.io/jobRole</code> instead, and without the API they wait forever, so a new
+replica stays at <code>Creating a new replica</code>. At the
 default wave it lands after the <code>Cluster</code> at <code>-1</code>, and a wave that never
 finishes never applies the rule that would unblock it.</p>
 <ol>

@@ -48,7 +48,7 @@ The rules in `home-assistant/networkpolicy.yaml`, and why each is there. The sha
 | Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>) |
 | Egress to `*.home-assistant.io` and `data-v2.hacs.xyz` | The alerts feed and version data; the HACS store index, which HACS polls for its repository list. An integration that talks to a device or a cloud is a line here first |
 | Egress to the multicast and limited-broadcast ranges on 5353 and 1900 | The mDNS and SSDP discovery sockets keep sending, and the overlay carries it nowhere. Allowed only so it does not fill the drop log |
-| Egress from the database pod to `kube-apiserver` | The instance manager reports its status there; its liveness check fails otherwise. The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](<https://homelab.wlkr.ch/platform/cloudnative-pg/#backups>) |
+| Egress from the database's pods to `kube-apiserver` | The instance manager reports its status there, and its liveness check fails otherwise; the operator's join and initdb Jobs read the `Cluster` before they start, see [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>). The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](<https://homelab.wlkr.ch/platform/cloudnative-pg/#backups>) |
 
 ## Usage
 

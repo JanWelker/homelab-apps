@@ -1390,8 +1390,8 @@ shape is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → 
 <td>It lists the <code>SbomReport</code> objects; the API it posts to is in the namespace</td>
 </tr>
 <tr>
-<td>Egress from the database pod to <code>kube-apiserver</code></td>
-<td>The instance manager reports its status there; its liveness check fails otherwise</td>
+<td>Egress from the database's pods to <code>kube-apiserver</code></td>
+<td>The instance manager reports its status there, and its liveness check fails otherwise; the operator's join and initdb Jobs read the <code>Cluster</code> before they start, see <a href="../conventions/#sync-stuck-on-the-database">Sync stuck on the database</a></td>
 </tr>
 </tbody>
 </table>
