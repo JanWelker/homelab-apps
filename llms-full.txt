@@ -655,10 +655,23 @@ KEY="$(kubectl -n dependency-track get secret sbom-upload -o jsonpath='{.data.ap
 curl -s -H "X-Api-Key: $KEY" "https://sbom.k8s.wlkr.ch/api/v1/project?sortName=lastBomImport&sortOrder=desc" \
   | jq -r '.[] | [.name, .version, .lastBomImport] | @tsv'
 
-# Findings for one project
-curl -s -H "X-Api-Key: $KEY" "https://sbom.k8s.wlkr.ch/api/v1/finding/project/<uuid>" \
-  | jq -r '.[] | [.vulnerability.severity, .vulnerability.vulnId, .component.purl] | @tsv'
+# Findings for one project; /finding/ needs VIEW_VULNERABILITY, which the job's team lacks
+curl -s -H "X-Api-Key: $KEY" "https://sbom.k8s.wlkr.ch/api/v1/vulnerability/project/<uuid>?pageSize=5000" \
+  | jq -r '.[] | . as $v | .components[] | [$v.severity, $v.vulnId, .purl] | @tsv'
+
+# Portfolio totals per day, with the per-project average the chart does not show
+curl -s -H "X-Api-Key: $KEY" "https://sbom.k8s.wlkr.ch/api/v1/metrics/portfolio/60/days" \
+  | jq -r '.[] | select(.projects > 0) | [(.firstOccurrence / 1000 | strftime("%F")), .projects, .vulnerabilities, (.vulnerabilities / .projects | floor)] | @tsv'
 ```
+
+The Dashboard's Portfolio Vulnerabilities chart rarely goes down, however current the images are:
+
+| Behaviour | Why |
+| --- | --- |
+| It sums findings over every active project | It grows with the number of images that run; the per-project average is the trend that shows patching |
+| One advisory counts once per image that contains the component | A Go standard library advisory lands in every image built with an affected Go version |
+| A bump clears findings while new advisories add them | Go's security releases add advisories against every binary built with an older toolchain, so third-party images only lose them when upstream rebuilds |
+| Most findings are Unassigned | They come from the Go vulnerability database (`GO-` ids via OSV), which publishes no severity; they are real, but neither Trivy nor Dependency-Track checks whether the vulnerable code is reachable |
 
 ## Health check
 
