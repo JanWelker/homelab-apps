@@ -27,12 +27,13 @@ spec:
     parameters:
       shared_buffers: 256MB
 
+  # Request at the measured median, limit at 2.5x the peak; see docs/dependency-track.md
   resources:
     requests:
       cpu: 100m
-      memory: 512Mi
+      memory: 640Mi
     limits:
-      memory: 1Gi
+      memory: 2304Mi
 
   plugins:
     - name: barman-cloud.cloudnative-pg.io

@@ -8,9 +8,20 @@ metadata:
     argocd.argoproj.io/sync-options: Prune=false
     argocd.argoproj.io/sync-wave: "-1"
 spec:
-  instances: 1
-  # One instance: the -primary PDB would refuse every drain; see docs/conventions.md
-  enablePDB: false
+  # Two instances so a drain is a switchover of seconds, not the site down
+  # for the move; see docs/advent-wollbi.md#configuration
+  instances: 2
+  # The operator's anti-affinity is a preference the scheduler outweighs on
+  # unequal nodes; this keeps the two apart.
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      nodeTaintsPolicy: Honor
+      labelSelector:
+        matchLabels:
+          cnpg.io/cluster: advent-wollbi-db
+          cnpg.io/podRole: instance
 
   imageName: ghcr.io/cloudnative-pg/postgresql:18.7-system-trixie@sha256:5a5dfbde88d5909fd4938189c141f53fb153f53c519f14907dce9e7c04baa153
 
