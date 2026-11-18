@@ -26,6 +26,7 @@
 | An `emptyDir` on `/app/.next/cache` | Next.js writes its render cache at runtime and the root filesystem is read-only. It is a cache: losing it on a restart costs one slow first request |
 | Two rules on one `HTTPRoute` | Every path reaches the app, `/admin` and `/api` included: Payload checks the editor's session itself, so the Gateway has nothing to gate. `/seed` redirects to `/`: the seed hook calls the Service, so nothing outside the namespace has a reason to reach it, and Gateway API has no rule that refuses a request |
 | The media collection accepts PDFs and `text/calendar` | The flyer and the `.ics` are content here, not attachments; as uploads the CMS knows about them, where the Pelican site had them as links in prose that outlive the file |
+| `advent-wollbi-db` with two instances and a topology spread | The site is public and editors work in it through December; with one instance every node drain took it down for the move, about four minutes. A replica on another node turns a drain into a switchover of seconds, and the operator's PodDisruptionBudgets stay on so the drain waits for it, see [Conventions](<https://homelab-apps.wlkr.ch/conventions/index.md>) |
 | `/healthz` answers without the database | A database outage should show as an empty page, not as a pod the kubelet restarts in a loop |
 
 ### Seeding

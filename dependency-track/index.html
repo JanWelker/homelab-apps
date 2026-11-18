@@ -1329,6 +1329,10 @@ whether a policy holds across the portfolio.</p>
 <td>The JVM sizes its heap from the limit. Upstream recommends 8Gi for production; the portfolio here is a few hundred small images</td>
 </tr>
 <tr>
+<td><code>dependency-track-db</code> resources</td>
+<td>The largest database here, a few GB of vulnerability data, and its working set sits above half a gigabyte; the request is the measured median and the limit 2.5x the peak, per the <a href="https://homelab.wlkr.ch/platform/#components">platform rule</a></td>
+</tr>
+<tr>
 <td><code>serviceMonitor.namespace: dependency-track</code></td>
 <td>The chart defaults to the <code>monitoring</code> namespace, which the <code>apps</code> project may not write to. Prometheus reads it from here like every other application's</td>
 </tr>

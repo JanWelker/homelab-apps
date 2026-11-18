@@ -1245,6 +1245,10 @@ so its upstream is our own — per
 <td>The flyer and the <code>.ics</code> are content here, not attachments; as uploads the CMS knows about them, where the Pelican site had them as links in prose that outlive the file</td>
 </tr>
 <tr>
+<td><code>advent-wollbi-db</code> with two instances and a topology spread</td>
+<td>The site is public and editors work in it through December; with one instance every node drain took it down for the move, about four minutes. A replica on another node turns a drain into a switchover of seconds, and the operator's PodDisruptionBudgets stay on so the drain waits for it, see <a href="../conventions/">Conventions</a></td>
+</tr>
+<tr>
 <td><code>/healthz</code> answers without the database</td>
 <td>A database outage should show as an empty page, not as a pod the kubelet restarts in a loop</td>
 </tr>

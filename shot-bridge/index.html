@@ -1220,8 +1220,8 @@ chart is published to <code>ghcr.io/somuch-cloud/charts</code>, per
 <td>The bridge reads <code>DATABASE_URL</code> from the Secret CloudNativePG writes for <code>shot-bridge-db</code> (<code>uri</code> key); without it the chart falls back to the SQLite file on the PVC. The PVC stays for the La Marzocco installation key</td>
 </tr>
 <tr>
-<td><code>Cluster</code> <code>shot-bridge-db</code>, two instances, 1Gi</td>
-<td>A few rows a day, but the phones log every shot as it happens; a replica turns a drain into a switchover of seconds and a node loss into a failover instead of a restart. The operator's PodDisruptionBudgets stay on, so a drain waits for the switchover; <code>enablePDB: false</code> is for single-instance clusters only, see <a href="../conventions/">Conventions</a>. A topology spread keeps the two on different nodes. WAL and a nightly base backup through <code>backup.yaml</code></td>
+<td><code>Cluster</code> <code>shot-bridge-db</code>, two instances</td>
+<td>A few rows a day, but the phones log every shot as it happens; a replica turns a drain into a switchover of seconds and a node loss into a failover instead of a restart. The volume is sized for <code>pg_wal</code>, which holds about 600 MiB whatever the data, not for the few MiB of rows. The operator's PodDisruptionBudgets stay on, so a drain waits for the switchover; <code>enablePDB: false</code> is for single-instance clusters only, see <a href="../conventions/">Conventions</a>. A topology spread keeps the two on different nodes. WAL and a nightly base backup through <code>backup.yaml</code></td>
 </tr>
 <tr>
 <td><code>HTTPRoute</code> targets the bridge's Service</td>
