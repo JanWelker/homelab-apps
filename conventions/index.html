@@ -1308,9 +1308,12 @@ Each application holds a connection pool, so the default 180-second smart
 shutdown never ends early and only lengthens every restart and every move.</p>
 <p>Every <code>Cluster</code> gets a <code>backup.yaml</code> beside it, the
 <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#backing-up-a-database">stanza from the platform</a>
-with the <code>Cluster</code>'s name and namespace filled in, its <code>bucketPolicy</code>
-included so the <a href="https://homelab.wlkr.ch/operations/backups/#off-cluster-copy">off-cluster copy</a>
-can read the bucket, and the <code>plugins</code> entry in the <code>Cluster</code>. Velero's nightly PVC snapshot alone restores only to the night
+with the <code>Cluster</code>'s name and namespace filled in, and the <code>plugins</code> entry
+in the <code>Cluster</code>. Its S3 user writes only its own prefix of the bucket the
+<a href="https://homelab.wlkr.ch/operations/backups/#off-cluster-copy">off-cluster copy</a>
+pulls, and is named <code>&lt;namespace&gt;.&lt;purpose&gt;</code> or the platform refuses it. So
+is a <code>Cluster</code> without the <code>plugins</code> entry, unless it carries
+<code>homelab.wlkr.ch/backup-exempt</code> with the reason. Velero's nightly PVC snapshot alone restores only to the night
 it was taken; the WAL archive restores to any second.</p>
 <p>The operator writes a <code>&lt;cluster-name&gt;-app</code> Secret with <code>username</code>, <code>password</code>,
 <code>host</code>, <code>port</code>, <code>dbname</code> and a ready-assembled <code>uri</code>. Consume those keys; never
@@ -1478,7 +1481,7 @@ repositories diff and apply the same way.</p>
 <tr>
 <td>Backups of a database</td>
 <td><code>backup.yaml</code> and a <code>plugins</code> entry (rule 3)</td>
-<td>WAL archived continuously, a base backup nightly, to the database's own bucket</td>
+<td>WAL archived continuously, a base backup nightly, to the database's own prefix of <code>offsite</code></td>
 </tr>
 <tr>
 <td>Metrics</td>
