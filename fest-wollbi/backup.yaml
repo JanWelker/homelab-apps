@@ -1,31 +1,17 @@
 ---
-# WAL and nightly base backups to this database's own bucket; the stanza and
-# every choice in it: https://homelab.wlkr.ch/platform/cloudnative-pg/#backups
-apiVersion: objectbucket.io/v1alpha1
-kind: ObjectBucketClaim
+# WAL and nightly base backups to this database's prefix of offsite; the
+# stanza and every choice in it: https://homelab.wlkr.ch/platform/cloudnative-pg/#backups
+apiVersion: ceph.rook.io/v1
+kind: CephObjectStoreUser
 metadata:
-  name: fest-wollbi-db-backup
+  name: fest-wollbi.db
   namespace: fest-wollbi
   annotations:
-    argocd.argoproj.io/sync-options: Prune=false
     argocd.argoproj.io/sync-wave: "-2"
 spec:
-  bucketName: cnpg-fest-wollbi
-  storageClassName: ceph-bucket
-  additionalConfig:
-    # offsite-reader may list and read; https://homelab.wlkr.ch/platform/rook-ceph/#off-cluster-reader
-    bucketPolicy: |
-      {
-        "Version": "2012-10-17",
-        "Statement": [
-          {
-            "Effect": "Allow",
-            "Principal": {"AWS": ["arn:aws:iam:::user/offsite-reader"]},
-            "Action": ["s3:ListBucket", "s3:GetBucketLocation", "s3:GetObject"],
-            "Resource": ["arn:aws:s3:::cnpg-fest-wollbi", "arn:aws:s3:::cnpg-fest-wollbi/*"]
-          }
-        ]
-      }
+  store: object-store
+  clusterNamespace: rook-ceph
+  displayName: fest-wollbi database backups
 ---
 apiVersion: barmancloud.cnpg.io/v1
 kind: ObjectStore
@@ -38,11 +24,11 @@ metadata:
 spec:
   retentionPolicy: 14d
   configuration:
-    destinationPath: s3://cnpg-fest-wollbi/
+    destinationPath: s3://offsite/fest-wollbi.db/
     endpointURL: https://s3.infra.k8s.wlkr.ch
     s3Credentials:
-      accessKeyId: {name: fest-wollbi-db-backup, key: AWS_ACCESS_KEY_ID}
-      secretAccessKey: {name: fest-wollbi-db-backup, key: AWS_SECRET_ACCESS_KEY}
+      accessKeyId: {name: rook-ceph-object-user-object-store-fest-wollbi.db, key: AccessKey}
+      secretAccessKey: {name: rook-ceph-object-user-object-store-fest-wollbi.db, key: SecretKey}
     wal:
       compression: gzip
     data:
