@@ -114,9 +114,9 @@ visible.
 
 Annotate it `Prune=false`: pruning a `Namespace` deletes every PVC inside it.
 
-Exception: the `claude-*` sessions ship no namespace and share the one
-`claude-agents/` owns, so removing a session cannot prune the others' volumes;
-see [Claude agents](claude-agents.md#configuration).
+Exception: the `claude-*` sessions ship no namespace: the platform declares
+each `claude-<session>` and refuses it from here; see
+[Claude agents](claude-agents.md#configuration).
 
 ### 5. Ship a `CiliumNetworkPolicy`
 
@@ -218,10 +218,8 @@ OIDC client credentials go in the application's own `kv/<app>/config`, never
 under `kv/authentik/config`: a `bao kv put` replaces a path wholesale, so
 sharing it would make adding an application an Authentik outage.
 
-Exception: the `claude-*` sessions read `kv/claude-<session>/` through the
-`openbao-claude-agents` store, whose login identity is in
-`claude-agents/serviceaccounts.yaml`, because the sessions share a namespace
-and the paths sit outside its prefix; see
+Exception: the `claude-*` sessions' `ExternalSecret`s come from the chart and
+read `kv/claude-<session>/github`, the prefix of their own namespace; see
 [Claude agents → Secrets](claude-agents.md#secrets).
 
 ### 8. The shared `syncPolicy`

@@ -10,10 +10,9 @@ closed: a pod with `sshd`, a tmux session and a volume, reached at
 through Remote Control. The image and the Helm chart are the user's own,
 built in the [`agent-mooring`](https://github.com/JanWelker/agent-mooring) repository, which
 [Conventions → Official upstream sources only](conventions.md#2-official-upstream-sources-only)
-allows for the same reason as the Flowscape image. This repository holds the
-namespace, three ServiceAccounts (two the platform binds to its ClusterRoles,
-one the `openbao-claude-agents` store logs in as) and one directory per
-session.
+allows for the same reason as the Flowscape image. This repository holds one
+directory per session; the `claude-<session>` namespace itself is the
+platform's.
 
 ## At a glance
 
@@ -23,8 +22,9 @@ session.
 | Authentication | SSH public keys only; no password, no root |
 | Storage | One PVC per session: `$HOME`, the clone, the Claude login and the conversation history |
 | Database | None |
-| Secrets | `kv/claude-<session>/github` and `kv/claude-agents/argocd` in OpenBao |
-| Files | [`claude-agents/`](https://github.com/JanWelker/homelab-apps/tree/main/claude-agents) for the namespace; one `claude-<session>/` per session, see [Sessions](#sessions) |
+| Namespace | `claude-<session>`, one per session, declared in the platform repository |
+| Secrets | `kv/claude-<session>/github`, and `kv/claude-<session>/argocd` where `argocd.enabled`, in OpenBao |
+| Files | One `claude-<session>/` per session, see [Sessions](#sessions) |
 
 ## Sessions
 
@@ -38,10 +38,11 @@ session.
 
 | Setting | Why |
 | --- | --- |
-| `claude-agents/` is plain manifests; each session is a separate Application on the OCI chart | The namespace outlives any one session. Removing a session must not prune the namespace or the other sessions |
-| Session Applications have a single source and no `directory.exclude` | `exclude` filters a Git directory source. An OCI chart has none, so there is nothing for `application.yaml` to be excluded from |
+| Each session is its own namespace, and an Application on the OCI chart plus a directory source for what the chart does not render | A session's token, host name and network reach are its own, so another session's pod or `ExternalSecret` gets none of them. The platform refuses a `claude-*` namespace from this repository ([Security Policies](https://homelab.wlkr.ch/platform/security-policies/#agent-rbac)), so a new session starts with a platform pull request and removing one cannot prune another's volume |
+| Only the directory source has a `directory.exclude` | `exclude` filters a Git directory source. An OCI chart has none, so there is nothing for `application.yaml` to be excluded from |
 | The namespace enforces `restricted` | The image runs as uid 1000 with every capability dropped and a read-only root filesystem |
-| `claude-reader` and `claude-writer` are created here with `automountServiceAccountToken: false` | The platform binds them to the read and write ClusterRoles. A pod gets a token only by setting `kubernetes.access`, which keeps the choice visible in the session's own file |
+| `secrets.yaml` holds `external-secrets-vault`, the identity the `openbao-apps` store logs in as | The store then reaches `kv/claude-<session>/` and no other prefix; it grants create, read and update there, so a session's own pod could rewrite its token |
+| `claude-reader` and `claude-writer` are created in `claude-homelab` with `automountServiceAccountToken: false` | The platform binds them to the read and write ClusterRoles, and only for that namespace. A pod gets a token only by setting `kubernetes.access`, which keeps the choice visible in the session's own file |
 | `kubernetes.access`, per session | Only the cluster session has a token, and a read-only one: it investigates and opens pull requests; the cluster changes through Git and ArgoCD, not through the agent. The sessions hosted elsewhere set no access |
 | `argocd.enabled`, per session | On for the cluster session only. Lets the agent read applications with the `claude` account's token instead of guessing from the Git side. The platform binds that account to `role:readonly`, so it cannot sync. Through `argo-grpc` it also needs the `homelab-session` rule to the server pod; the chart's name rule alone gets a 403 ([agent-mooring#3](https://github.com/JanWelker/agent-mooring/issues/3)) |
 | `repos` set per session | Clones each repository once into `$HOME` and creates the GitHub token `ExternalSecret`; one token covers the list. Without repositories or `skills.repo` there is no clone, no token and no GitHub egress |
@@ -56,8 +57,7 @@ session.
 ### Network policy
 
 Every rule in
-[`claude-agents/networkpolicy.yaml`](https://github.com/JanWelker/homelab-apps/blob/main/claude-agents/networkpolicy.yaml),
-and why it is there. The shape is
+`claude-<session>/networkpolicy.yaml`, and why it is there. The shape is
 [Conventions → Ship a `CiliumNetworkPolicy`](conventions.md#5-ship-a-ciliumnetworkpolicy);
 rollout and debugging are in
 [Security Policies](https://homelab.wlkr.ch/platform/security-policies/#network-policies).
@@ -68,7 +68,7 @@ the chart from its values (`extraEgressFQDNs` adds to them).
 | --- | --- |
 | Ingress on 2222 from the `ingress` entity | The Gateway passes the TLS stream through by SNI to the pod's TLS sidecar, so the Gateway is the only way in |
 | Ingress from `host` and `remote-node` | The kubelet's probes, the pair every policy names ([Conventions → rule 5](conventions.md#5-ship-a-ciliumnetworkpolicy)) |
-| Ingress and egress within the namespace | Sessions share the namespace; the policy does not split them further |
+| Ingress and egress within the namespace | The chart's pod and its sidecar; no other session shares it |
 | Default egress to the namespace only | A session reaches nothing else unless its own policy says so. Those names (the Claude API, GitHub when `repos` or `skills.repo` is set, the Argo CD server) are the agent's reach, so adding one is reviewed like a firewall change |
 | `homelab-session`: every public address, minus the private, carrier-grade and link-local ranges and the router's public address | The cluster session installs tools, reads docs and fetches whatever a diagnosis needs; a name list would be a firewall change per lookup. Cutting the private ranges keeps the LAN, the nodes' LAN side and the Gateway addresses out; the public address is the `external-dns` target of `apps-gateway`, which hairpin NAT would otherwise hand back to the Gateway and every route on it |
 | `homelab-session`: Prometheus, Hubble Relay, the Argo CD server and OpenBao | The APIs the session diagnoses with; each service's own policy admits the session in the platform repository. The Argo CD server pod is needed for `argo-grpc` too, because the Gateway checks the caller's egress against the backend |
@@ -124,16 +124,16 @@ session's ConfigMap; the session appears in the Claude apps as
 
 None is generated: each comes from an account outside the cluster. In the
 platform repository, `make claude-session-pat SESSION=<session>` writes a
-session's token and `make bao-secrets` the shared Argo CD one. Both are read
-through the `openbao-claude-agents` store (`secretStore` in each session's
-values), which reads `kv/claude-*` and nothing else: the session paths sit
-outside the namespace's own prefix, so `openbao-apps` cannot reach them — see
+session's token and `make bao-secrets` the Argo CD one. Both are read through
+the `openbao-apps` store (`secretStore` in each session's values) as the
+session's own namespace, which reaches `kv/claude-<session>/` and nothing
+else — see
 [Kubernetes auth](https://homelab.wlkr.ch/platform/openbao/#kubernetes-auth).
 
 | Path | Key | Read as |
 | --- | --- | --- |
 | `kv/claude-<session>/github` | `token` | `GH_TOKEN`: the fine-grained token for that session's repositories and `skills.repo`. Only when either is set |
-| `kv/claude-agents/argocd` | `token` | The Argo CD `claude` account's API token, from `argocd account generate-token --account claude`. Only when `argocd.enabled` |
+| `kv/claude-<session>/argocd` | `token` | The Argo CD `claude` account's API token, from `argocd account generate-token --account claude`. Only when `argocd.enabled` |
 
 A rotated token needs no pod restart: the chart mounts both as files and the
 `gh`, `git` and `argocd` wrappers read them on every call. The
@@ -172,14 +172,19 @@ session's repositories and the shared skills only:
 
 The `claude-session` skill walks through these steps.
 
-1. Copy a session directory, for example `claude-sitzplan/` to
-   `claude-<session>/`.
-2. In `application.yaml`, change `metadata.name`, `session`, `repos`, the
-   access toggles and `extraEgressFQDNs`, keep `skills.repo`, and put the
-   session's own key into `ssh.authorizedKeys` (see [SSH keys](#ssh-keys)).
-3. Create the token and write it to OpenBao before the merge, so the
+1. In the platform repository, add `claude-<session>` as a Namespace in
+   `pod-security.yaml` and to the `openbao-apps` list in
+   `cluster-secret-store.yaml`; after the merge run `make bao-policies`.
+2. Create the token and write it to OpenBao (`make claude-session-pat`), so the
    `ExternalSecret` resolves on the first sync.
-4. Add the session to [Sessions](#sessions) and merge. It answers at
+3. Copy a session directory, for example `claude-sitzplan/` to
+   `claude-<session>/`, and replace the old name in `secrets.yaml` and
+   `networkpolicy.yaml`.
+4. In `application.yaml`, change `metadata.name`, `session`, `repos`, the
+   access toggles, `extraEgressFQDNs`, the directory source's `path` and
+   `destination.namespace`, keep `skills.repo`, and put the session's own key
+   into `ssh.authorizedKeys` (see [SSH keys](#ssh-keys)).
+5. Add the session to [Sessions](#sessions) and merge. It answers at
    `<session>.ssh.wlkr.ch` once the Application is Healthy; then do the
    [first login](#first-login).
 
@@ -188,13 +193,92 @@ The `claude-session` skill walks through these steps.
 1. Delete `claude-<session>/` and its row in [Sessions](#sessions), and
    merge.
 2. The ApplicationSet preserves resources on deletion, so remove them by
-   hand: `kubectl -n claude-agents delete all,configmap,externalsecret,certificate,secret,tlsroute,ciliumnetworkpolicy,serviceaccount -l app.kubernetes.io/instance=claude-<session>`,
-   then `secret/claude-<session>-tls`, which cert-manager creates without
-   that label.
+   hand: `kubectl -n claude-<session> delete all,configmap,externalsecret,certificate,secret,tlsroute,ciliumnetworkpolicy,serviceaccount --all`; the list leaves out `pvc`.
 3. The volume is kept on purpose (`Prune=false`, `helm.sh/resource-policy:
    keep`). Delete `pvc/claude-<session>` once nothing on it is needed.
 4. Remove the token: `make claude-session-pat SESSION=<session> DELETE=1` in
    the platform repository, and revoke it on GitHub.
+5. In the platform repository, remove the Namespace and the `openbao-apps`
+   entry, then run `make bao-policies`; the namespace goes only after step 3,
+   because deleting a namespace deletes its volume.
+
+### Moving a session out of claude-agents
+
+For a session whose volume is in `claude-agents`; delete this section with the
+last one. The merge cannot delete the old volume: the chart annotates the PVC
+`Prune=false`, no workload owns it, and the namespace is `Prune=false` too, so
+only a hand-run `kubectl delete` removes it. The session is down from the merge
+until step 5. `homelab` moves last, once the chart release that reads
+`kv/claude-homelab/argocd` is in its `targetRevision`.
+
+1. Before the merge, the platform pull request is in and `make bao-policies`
+   has run ([Adding a session](#adding-a-session)); `kv/claude-<session>/github`
+   already exists. Take a backup, the fallback if the volume is lost, and wait
+   until it is `Completed` ([Backups & Recovery](https://homelab.wlkr.ch/operations/backups/#velero)):
+
+    ```bash
+    velero -n backup backup create claude-move-$(date +%s) --include-namespaces claude-agents
+    ```
+
+2. Merge. Argo CD prunes the session's objects in `claude-agents` except the
+   volume and creates the new namespace's, with an empty PVC. The new pod waits
+   for its `Certificate`. If the old pod or `TLSRoute` is still there, which
+   would keep the new route from being accepted, delete them; the PVC is not
+   theirs:
+
+    ```bash
+    kubectl -n claude-agents delete statefulset,tlsroute claude-<session> --ignore-not-found
+    ```
+
+3. Mount the old volume read-only in a pod of its own, in the new pod's image:
+
+    ```bash
+    image=$(kubectl -n claude-<session> get pod claude-<session>-0 -o jsonpath='{.spec.containers[?(@.name=="agent")].image}')
+    kubectl -n claude-agents apply -f - <<EOF
+    apiVersion: v1
+    kind: Pod
+    metadata: {name: copy-<session>}
+    spec:
+      restartPolicy: Never
+      securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, fsGroup: 1000, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: copy
+          image: $image
+          command: [sleep, "3600"]
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
+          volumeMounts: [{name: home, mountPath: /home/agent, readOnly: true}]
+      volumes: [{name: home, persistentVolumeClaim: {claimName: claude-<session>, readOnly: true}}]
+    EOF
+    ```
+
+4. Once the new pod is `Ready`, stream the home directory across. The
+   volumes sit in different namespaces, so the stream goes through your
+   terminal; the image also has `rsync` if `tar` fails:
+
+    ```bash
+    kubectl -n claude-agents exec copy-<session> -- tar -C /home/agent -cf - . \
+      | kubectl -n claude-<session> exec -i claude-<session>-0 -c agent -- tar -C /home/agent -xf -
+    ```
+
+5. Restart the pod so `sshd` and Claude Code read the copied keys and login,
+   then remove the copy pod:
+
+    ```bash
+    kubectl -n claude-<session> delete pod claude-<session>-0
+    kubectl -n claude-agents delete pod copy-<session>
+    ```
+
+6. Verify: the pod is `Ready`, the SSH banner answers
+   ([Health check](#health-check)), and `ssh <session>.ssh.wlkr.ch` resumes the
+   old conversation without a login.
+7. After the last session, delete `claude-agents/` and the platform's
+   `claude-agents` entries in two pull requests, the platform one second. Then
+   remove the old volumes and the namespace, which deletes them, and
+   `kv/claude-agents/argocd`:
+
+    ```bash
+    kubectl delete namespace claude-agents
+    ```
 
 Every session shares one `targetRevision` in practice: Renovate groups them
 into one pull request.
@@ -225,8 +309,7 @@ What lives on Anthropic's and GitHub's side, not in this repository:
 ## Health check
 
 ```bash
-kubectl -n claude-agents get pods,statefulsets
-kubectl -n claude-agents get tlsroute
+kubectl get pods,statefulsets,tlsroute -A -l app.kubernetes.io/name=agent-mooring
 openssl s_client -quiet -servername homelab.ssh.wlkr.ch -connect homelab.ssh.wlkr.ch:443 </dev/null 2>&1 | head -1
 ```
 
