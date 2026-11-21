@@ -1382,17 +1382,14 @@ and a name list would be a firewall change per lookup; see
   <a href="../shot-bridge/">Shot Timer bridge</a> checks its own bearer key, and the
   <a href="../claude-agents/">Claude agents</a> admit SSH keys on a TLS passthrough.</li>
 </ul>
-<p>The OIDC provider's blueprint lives here, in the application's directory, as a
-ConfigMap targeted at the <code>authentik</code> namespace with a key ending in <code>.yaml</code>
-(see <code>dependency-track/authentik-blueprint.yaml</code>). The platform mounts it as
-an optional projected volume, because a fresh cluster has Authentik before it
-has any workload, and discovers it on the worker's startup, hourly, and
-through a file watcher. The client credentials are generated here, by the
-generator and <code>PushSecret</code> in the application's <code>secrets.yaml</code> (rule 7), and
-read on Authentik's side by an <code>ExternalSecret</code> in the platform repository
-(<code>payload/platform/authentik/secrets-&lt;app&gt;.yaml</code>), where the outpost's
-provider list and any <code>referencegrant.yaml</code> entry also live, so going behind
-SSO is deliberately two pull requests.</p>
+<p>The OIDC provider's blueprint lives in the platform repository, because a
+blueprint has full access to Authentik; see
+<a href="https://homelab.wlkr.ch/platform/authentik/#where-a-blueprint-lives">Authentik → Where a blueprint lives</a>.
+The client credentials are generated here, by the generator and <code>PushSecret</code>
+in the application's <code>secrets.yaml</code> (rule 7), and read on Authentik's side by
+an <code>ExternalSecret</code> there, where the outpost's provider list and any
+<code>referencegrant.yaml</code> entry also live, so going behind SSO is deliberately two
+pull requests.</p>
 <p>Because blueprint discovery is asynchronous, anything that configures itself
 against the provider must tolerate it not existing yet: fail soft and log.
 Watch for SSRF guards, too: <code>auth.k8s.wlkr.ch</code> resolves to a private address,

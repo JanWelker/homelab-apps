@@ -1,6 +1,6 @@
 # Dependency-Track
 
-[Dependency-Track](<https://dependencytrack.org/>) keeps a software bill of materials for every image the cluster runs and re-checks each one against the vulnerability feeds every day, so a new CVE shows up against images that were already scanned, not only the next time Trivy looks. Upstream publishes the [`dependency-track` chart](<https://github.com/DependencyTrack/helm-charts/tree/main/charts/dependency-track>), so this is that chart with an external database, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>); the network policy, the database, the Authentik blueprint and the upload job come from a second source pointing at this repository.
+[Dependency-Track](<https://dependencytrack.org/>) keeps a software bill of materials for every image the cluster runs and re-checks each one against the vulnerability feeds every day, so a new CVE shows up against images that were already scanned, not only the next time Trivy looks. Upstream publishes the [`dependency-track` chart](<https://github.com/DependencyTrack/helm-charts/tree/main/charts/dependency-track>), so this is that chart with an external database, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>); the network policy, the database and the upload job come from a second source pointing at this repository.
 
 The SBOMs are not generated here. The platform's [Trivy Operator](<https://homelab.wlkr.ch/platform/trivy-operator/>) writes one CycloneDX `SbomReport` per running container, and the [upload job](<#sbom-upload>) hands them over once a night. Trivy answers what is in the images today; Dependency-Track answers what changed, which images share a component, and whether a policy holds across the portfolio.
 
@@ -92,14 +92,14 @@ How many retired versions of a project stay is the retention setting's to say, n
 
 ### OIDC
 
-The provider is `dependency-track/authentik-blueprint.yaml`, a ConfigMap targeted at the `authentik` namespace, mounted and discovered as [Conventions → Authentication](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>) describes. The fields that matter:
+The provider's blueprint is in the platform repository, per [Conventions → Authentication](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>). What the workload side has to match:
 
-| Blueprint field | Why |
+| Provider setting | Why |
 | --- | --- |
 | `client_type: public`, no `client_secret` | The frontend is a browser application and authenticates with authorization code plus PKCE; there is nowhere to keep a secret and the API server only validates the resulting ID token |
 | `redirect_uris` ends in `/static/oidc-callback.html` | The page the frontend ships for the return leg |
 | `client_id` from `!Env` | Authentik reads it from its own `ExternalSecret` on `kv/dependency-track/config`, the same value both Deployments read |
-| A `dependency-track-admins` group | Mapped to the `Administrators` team, so the `groups` claim is what grants admin, in the shape [ArgoCD and Grafana](<https://homelab.wlkr.ch/platform/authentik/#groups-and-roles>) already use. The group is in the blueprint because it is the contract; who is in it stays in Authentik and out of Git |
+| A `dependency-track-admins` group | Mapped to the `Administrators` team, so the `groups` claim is what grants admin, in the shape [ArgoCD and Grafana](<https://homelab.wlkr.ch/platform/authentik/#groups-and-roles>) already use. The blueprint declares the group because it is the contract; who is in it stays in Authentik and out of Git |
 
 The issuer is `https://auth.k8s.wlkr.ch/application/o/dependency-track/`, trailing slash included: Dependency-Track compares the discovered issuer with the configured one character for character, and Authentik's carries the slash. Use `auth.k8s.wlkr.ch`, Authentik's only hostname; see [One hostname](<https://homelab.wlkr.ch/platform/authentik/#one-hostname>).
 
@@ -121,7 +121,7 @@ The API key is its own path because Dependency-Track issues it, after the first 
 
 The first start seeds `admin` with the password `admin` and asks for a new one. The account stays as break-glass, suspended once OIDC works; everything after is Authentik.
 
-1. Add yourself to `dependency-track-admins` in Authentik. The blueprint creates the group and the mapping to the `Administrators` team is under Administration → Access Management → OpenID Connect Groups; team synchronization grants it on the next login.
+1. Add yourself to `dependency-track-admins` in Authentik. The blueprint creates the group; the mapping to the `Administrators` team is under Administration → Access Management → OpenID Connect Groups; team synchronization grants it on the next login.
 
    > **A team with no mapped group is emptied at every login**
    >

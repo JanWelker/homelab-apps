@@ -1251,7 +1251,7 @@ already scanned, not only the next time Trivy looks. Upstream publishes the
 <a href="https://github.com/DependencyTrack/helm-charts/tree/main/charts/dependency-track"><code>dependency-track</code> chart</a>,
 so this is that chart with an external database, per
 <a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>;
-the network policy, the database, the Authentik blueprint and the upload job
+the network policy, the database and the upload job
 come from a second source pointing at this repository.</p>
 <p>The SBOMs are not generated here. The platform's
 <a href="https://homelab.wlkr.ch/platform/trivy-operator/">Trivy Operator</a> writes one
@@ -1519,14 +1519,13 @@ projects.</p>
 <p>How many retired versions of a project stay is the retention setting's
 to say, not the job's.</p>
 <h3 id="oidc">OIDC<a class="headerlink" href="#oidc" title="Permanent link">&para;</a></h3>
-<p>The provider is <code>dependency-track/authentik-blueprint.yaml</code>, a ConfigMap
-targeted at the <code>authentik</code> namespace, mounted and discovered as
-<a href="../conventions/#6-authentication-is-authentiks-not-the-applications">Conventions → Authentication</a>
-describes. The fields that matter:</p>
+<p>The provider's blueprint is in the platform repository, per
+<a href="../conventions/#6-authentication-is-authentiks-not-the-applications">Conventions → Authentication</a>.
+What the workload side has to match:</p>
 <table>
 <thead>
 <tr>
-<th>Blueprint field</th>
+<th>Provider setting</th>
 <th>Why</th>
 </tr>
 </thead>
@@ -1545,7 +1544,7 @@ describes. The fields that matter:</p>
 </tr>
 <tr>
 <td>A <code>dependency-track-admins</code> group</td>
-<td>Mapped to the <code>Administrators</code> team, so the <code>groups</code> claim is what grants admin, in the shape <a href="https://homelab.wlkr.ch/platform/authentik/#groups-and-roles">ArgoCD and Grafana</a> already use. The group is in the blueprint because it is the contract; who is in it stays in Authentik and out of Git</td>
+<td>Mapped to the <code>Administrators</code> team, so the <code>groups</code> claim is what grants admin, in the shape <a href="https://homelab.wlkr.ch/platform/authentik/#groups-and-roles">ArgoCD and Grafana</a> already use. The blueprint declares the group because it is the contract; who is in it stays in Authentik and out of Git</td>
 </tr>
 </tbody>
 </table>
@@ -1599,7 +1598,7 @@ after is Authentik.</p>
 <ol>
 <li>
 <p>Add yourself to <code>dependency-track-admins</code> in Authentik. The blueprint
-   creates the group and the mapping to the <code>Administrators</code> team is under
+   creates the group; the mapping to the <code>Administrators</code> team is under
    Administration → Access Management → OpenID Connect Groups; team
    synchronization grants it on the next login.</p>
 <div class="admonition danger">

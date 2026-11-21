@@ -1205,8 +1205,7 @@ one Go binary, no database, with desktop, iOS and Android clients. Upstream
 publishes no open Helm chart, so <code>opencloud/</code> is plain manifests around the
 official image: <code>deployment.yaml</code>, <code>service.yaml</code>, <code>pvc.yaml</code>,
 <code>httproute.yaml</code>, <code>servicemonitor.yaml</code>, <code>secrets.yaml</code>, <code>networkpolicy.yaml</code>,
-<code>namespace.yaml</code> and two ConfigMaps, <code>csp.yaml</code> and
-<code>authentik-blueprint.yaml</code>, per
+<code>namespace.yaml</code> and the <code>csp.yaml</code> ConfigMap, per
 <a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>.</p>
 <h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
 <table>
@@ -1346,9 +1345,9 @@ is rebuilt if it disagrees after a restore; nothing is lost.</p>
 <p>OpenCloud's web, desktop, iOS and Android clients are four OIDC clients with
 IDs fixed by the clients (<code>web</code>, <code>OpenCloudDesktop</code>, <code>OpenCloudIOS</code>,
 <code>OpenCloudAndroid</code>), all public, authorization code with PKCE, so
-<code>opencloud/authentik-blueprint.yaml</code> holds four providers and four
-applications. Only the web one is visible in the Authentik library; the
-native ones carry <code>blank://blank</code> as their launch URL.</p>
+the platform's blueprint holds four providers and four applications. Only the
+web one is visible in the Authentik library; the native ones carry
+<code>blank://blank</code> as their launch URL.</p>
 <p>The server and the native clients verify every token against the one
 issuer the server advertises, and Authentik derives a provider's issuer from
 its application slug. All four providers therefore use <code>issuer_mode:
@@ -1358,8 +1357,7 @@ global</code>, and the platform rewrites <code>/.well-known/openid-configuration
 <p>The desktop client redirects to a loopback address with a random port, so
 its redirect URI is a regular expression; the mobile ones are custom-scheme
 URLs the apps register. There are no client secrets, so nothing lands in
-OpenBao for Authentik's side, and the platform repository only mounts the
-blueprint.</p>
+OpenBao for Authentik's side.</p>
 <h3 id="secrets">Secrets<a class="headerlink" href="#secrets" title="Permanent link">&para;</a></h3>
 <p><code>secrets.yaml</code> generates what <code>opencloud init</code> would: a <code>Password</code>
 generator for the JWT, transfer, URL-signing and service-account secrets,

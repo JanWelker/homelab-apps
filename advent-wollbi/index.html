@@ -1273,9 +1273,8 @@ The Job's <code>activeDeadlineSeconds</code> is the backstop: a site that never 
 fails the sync instead of holding the Application in Syncing, and the
 curl's own retries fit inside it.</p>
 <h3 id="oidc">OIDC<a class="headerlink" href="#oidc" title="Permanent link">&para;</a></h3>
-<p>The provider, the <code>wollbi-editors</code> group and the binding are in
-<a href="https://github.com/JanWelker/homelab-apps/blob/main/advent-wollbi/authentik-blueprint.yaml"><code>advent-wollbi/authentik-blueprint.yaml</code></a>;
-the platform mounts it, and reads the client secret, as in
+<p>The provider, the <code>wollbi-editors</code> group and the binding are a blueprint in
+the platform repository, which also reads the client secret; see
 <a href="https://homelab.wlkr.ch/platform/authentik/#adding-an-application">Authentik → Adding an application</a>.</p>
 <table>
 <thead>

@@ -145,7 +145,7 @@ Which shape applies is decided by what the application supports:
 - **It does not.** Point its `HTTPRoute` at `authentik-server` in the `authentik` namespace, so the outpost authenticates in front of it. Home Assistant is the worked example; where the application has its own login this is defence in depth, not single sign-on.
 - **It has no browser session.** An API carries its own credential, since an outpost would answer its caller with a login page: [Knead Time](<https://homelab-apps.wlkr.ch/kneadtime/index.md>) has none and CORS admits one origin, the [Shot Timer bridge](<https://homelab-apps.wlkr.ch/shot-bridge/index.md>) checks its own bearer key, and the [Claude agents](<https://homelab-apps.wlkr.ch/claude-agents/index.md>) admit SSH keys on a TLS passthrough.
 
-The OIDC provider's blueprint lives here, in the application's directory, as a ConfigMap targeted at the `authentik` namespace with a key ending in `.yaml` (see `dependency-track/authentik-blueprint.yaml`). The platform mounts it as an optional projected volume, because a fresh cluster has Authentik before it has any workload, and discovers it on the worker's startup, hourly, and through a file watcher. The client credentials are generated here, by the generator and `PushSecret` in the application's `secrets.yaml` (rule 7), and read on Authentik's side by an `ExternalSecret` in the platform repository (`payload/platform/authentik/secrets-<app>.yaml`), where the outpost's provider list and any `referencegrant.yaml` entry also live, so going behind SSO is deliberately two pull requests.
+The OIDC provider's blueprint lives in the platform repository, because a blueprint has full access to Authentik; see [Authentik → Where a blueprint lives](<https://homelab.wlkr.ch/platform/authentik/#where-a-blueprint-lives>). The client credentials are generated here, by the generator and `PushSecret` in the application's `secrets.yaml` (rule 7), and read on Authentik's side by an `ExternalSecret` there, where the outpost's provider list and any `referencegrant.yaml` entry also live, so going behind SSO is deliberately two pull requests.
 
 Because blueprint discovery is asynchronous, anything that configures itself against the provider must tolerate it not existing yet: fail soft and log. Watch for SSRF guards, too: `auth.k8s.wlkr.ch` resolves to a private address, which an application that refuses local addresses rejects.
 
@@ -273,7 +273,7 @@ Afterwards the database is the source of truth and the seed is a no-op. The Job'
 
 ### OIDC
 
-The provider, the `wollbi-editors` group and the binding are in [`advent-wollbi/authentik-blueprint.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/advent-wollbi/authentik-blueprint.yaml>); the platform mounts it, and reads the client secret, as in [Authentik → Adding an application](<https://homelab.wlkr.ch/platform/authentik/#adding-an-application>).
+The provider, the `wollbi-editors` group and the binding are a blueprint in the platform repository, which also reads the client secret; see [Authentik → Adding an application](<https://homelab.wlkr.ch/platform/authentik/#adding-an-application>).
 
 | Setting | Why |
 | --- | --- |
@@ -510,7 +510,7 @@ The last command prints the SSH banner (`SSH-2.0-OpenSSH_...`) when the whole pa
 
 # Dependency-Track
 
-[Dependency-Track](<https://dependencytrack.org/>) keeps a software bill of materials for every image the cluster runs and re-checks each one against the vulnerability feeds every day, so a new CVE shows up against images that were already scanned, not only the next time Trivy looks. Upstream publishes the [`dependency-track` chart](<https://github.com/DependencyTrack/helm-charts/tree/main/charts/dependency-track>), so this is that chart with an external database, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>); the network policy, the database, the Authentik blueprint and the upload job come from a second source pointing at this repository.
+[Dependency-Track](<https://dependencytrack.org/>) keeps a software bill of materials for every image the cluster runs and re-checks each one against the vulnerability feeds every day, so a new CVE shows up against images that were already scanned, not only the next time Trivy looks. Upstream publishes the [`dependency-track` chart](<https://github.com/DependencyTrack/helm-charts/tree/main/charts/dependency-track>), so this is that chart with an external database, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>); the network policy, the database and the upload job come from a second source pointing at this repository.
 
 The SBOMs are not generated here. The platform's [Trivy Operator](<https://homelab.wlkr.ch/platform/trivy-operator/>) writes one CycloneDX `SbomReport` per running container, and the [upload job](<#sbom-upload>) hands them over once a night. Trivy answers what is in the images today; Dependency-Track answers what changed, which images share a component, and whether a policy holds across the portfolio.
 
@@ -602,14 +602,14 @@ How many retired versions of a project stay is the retention setting's to say, n
 
 ### OIDC
 
-The provider is `dependency-track/authentik-blueprint.yaml`, a ConfigMap targeted at the `authentik` namespace, mounted and discovered as [Conventions → Authentication](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>) describes. The fields that matter:
+The provider's blueprint is in the platform repository, per [Conventions → Authentication](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>). What the workload side has to match:
 
-| Blueprint field | Why |
+| Provider setting | Why |
 | --- | --- |
 | `client_type: public`, no `client_secret` | The frontend is a browser application and authenticates with authorization code plus PKCE; there is nowhere to keep a secret and the API server only validates the resulting ID token |
 | `redirect_uris` ends in `/static/oidc-callback.html` | The page the frontend ships for the return leg |
 | `client_id` from `!Env` | Authentik reads it from its own `ExternalSecret` on `kv/dependency-track/config`, the same value both Deployments read |
-| A `dependency-track-admins` group | Mapped to the `Administrators` team, so the `groups` claim is what grants admin, in the shape [ArgoCD and Grafana](<https://homelab.wlkr.ch/platform/authentik/#groups-and-roles>) already use. The group is in the blueprint because it is the contract; who is in it stays in Authentik and out of Git |
+| A `dependency-track-admins` group | Mapped to the `Administrators` team, so the `groups` claim is what grants admin, in the shape [ArgoCD and Grafana](<https://homelab.wlkr.ch/platform/authentik/#groups-and-roles>) already use. The blueprint declares the group because it is the contract; who is in it stays in Authentik and out of Git |
 
 The issuer is `https://auth.k8s.wlkr.ch/application/o/dependency-track/`, trailing slash included: Dependency-Track compares the discovered issuer with the configured one character for character, and Authentik's carries the slash. Use `auth.k8s.wlkr.ch`, Authentik's only hostname; see [One hostname](<https://homelab.wlkr.ch/platform/authentik/#one-hostname>).
 
@@ -631,7 +631,7 @@ The API key is its own path because Dependency-Track issues it, after the first 
 
 The first start seeds `admin` with the password `admin` and asks for a new one. The account stays as break-glass, suspended once OIDC works; everything after is Authentik.
 
-1. Add yourself to `dependency-track-admins` in Authentik. The blueprint creates the group and the mapping to the `Administrators` team is under Administration → Access Management → OpenID Connect Groups; team synchronization grants it on the next login.
+1. Add yourself to `dependency-track-admins` in Authentik. The blueprint creates the group; the mapping to the `Administrators` team is under Administration → Access Management → OpenID Connect Groups; team synchronization grants it on the next login.
 
    > **A team with no mapped group is emptied at every login**
    >
@@ -827,7 +827,7 @@ Afterwards the database is the source of truth and the seed is a no-op. The Job'
 
 ### OIDC
 
-The provider, the `wollbi-editors` group and the binding are in [`fest-wollbi/authentik-blueprint.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/fest-wollbi/authentik-blueprint.yaml>); the platform mounts it, and reads the client secret, as in [Authentik → Adding an application](<https://homelab.wlkr.ch/platform/authentik/#adding-an-application>).
+The provider, the `wollbi-editors` group and the binding are a blueprint in the platform repository, which also reads the client secret; see [Authentik → Adding an application](<https://homelab.wlkr.ch/platform/authentik/#adding-an-application>).
 
 | Setting | Why |
 | --- | --- |
@@ -1133,7 +1133,7 @@ curl -s localhost:8080/metrics | grep kneadtime_push
 
 # OpenCloud
 
-[OpenCloud](<https://opencloud.eu/>) is the household's file sync and share: one Go binary, no database, with desktop, iOS and Android clients. Upstream publishes no open Helm chart, so `opencloud/` is plain manifests around the official image: `deployment.yaml`, `service.yaml`, `pvc.yaml`, `httproute.yaml`, `servicemonitor.yaml`, `secrets.yaml`, `networkpolicy.yaml`, `namespace.yaml` and two ConfigMaps, `csp.yaml` and `authentik-blueprint.yaml`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
+[OpenCloud](<https://opencloud.eu/>) is the household's file sync and share: one Go binary, no database, with desktop, iOS and Android clients. Upstream publishes no open Helm chart, so `opencloud/` is plain manifests around the official image: `deployment.yaml`, `service.yaml`, `pvc.yaml`, `httproute.yaml`, `servicemonitor.yaml`, `secrets.yaml`, `networkpolicy.yaml`, `namespace.yaml` and the `csp.yaml` ConfigMap, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -1181,11 +1181,11 @@ The values in `opencloud/deployment.yaml` that are not self-explanatory:
 
 ### OIDC
 
-OpenCloud's web, desktop, iOS and Android clients are four OIDC clients with IDs fixed by the clients (`web`, `OpenCloudDesktop`, `OpenCloudIOS`, `OpenCloudAndroid`), all public, authorization code with PKCE, so `opencloud/authentik-blueprint.yaml` holds four providers and four applications. Only the web one is visible in the Authentik library; the native ones carry `blank://blank` as their launch URL.
+OpenCloud's web, desktop, iOS and Android clients are four OIDC clients with IDs fixed by the clients (`web`, `OpenCloudDesktop`, `OpenCloudIOS`, `OpenCloudAndroid`), all public, authorization code with PKCE, so the platform's blueprint holds four providers and four applications. Only the web one is visible in the Authentik library; the native ones carry `blank://blank` as their launch URL.
 
 The server and the native clients verify every token against the one issuer the server advertises, and Authentik derives a provider's issuer from its application slug. All four providers therefore use `issuer_mode: global`, and the platform rewrites `/.well-known/openid-configuration` on `auth.k8s.wlkr.ch` to the `opencloud` application's document; see [One issuer for OpenCloud](<https://homelab.wlkr.ch/platform/authentik/#one-issuer-for-opencloud>).
 
-The desktop client redirects to a loopback address with a random port, so its redirect URI is a regular expression; the mobile ones are custom-scheme URLs the apps register. There are no client secrets, so nothing lands in OpenBao for Authentik's side, and the platform repository only mounts the blueprint.
+The desktop client redirects to a loopback address with a random port, so its redirect URI is a regular expression; the mobile ones are custom-scheme URLs the apps register. There are no client secrets, so nothing lands in OpenBao for Authentik's side.
 
 ### Secrets
 
