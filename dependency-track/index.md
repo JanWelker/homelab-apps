@@ -9,7 +9,7 @@ The SBOMs are not generated here. The platform's [Trivy Operator](<https://homel
 |  |  |
 | --- | --- |
 | URL | [sbom.k8s.wlkr.ch](<https://sbom.k8s.wlkr.ch>) |
-| Authentication | Authentik OIDC, code flow with PKCE; `admin` kept as break-glass |
+| Authentication | Authentik OIDC, code flow with PKCE; `admin` suspended, kept as break-glass |
 | Storage | A PVC for uploaded BOM files and the mirrored feeds |
 | Database | CloudNativePG `Cluster` `dependency-track-db` |
 | Secrets | `kv/dependency-track/config` and `kv/dependency-track/sbom-upload` in OpenBao |
@@ -119,7 +119,7 @@ The API key is its own path because Dependency-Track issues it, after the first 
 
 ### First login
 
-The first start seeds `admin` with the password `admin` and asks for a new one. Keep the account as break-glass; everything after is Authentik.
+The first start seeds `admin` with the password `admin` and asks for a new one. The account stays as break-glass, suspended once OIDC works; everything after is Authentik.
 
 1. Add yourself to `dependency-track-admins` in Authentik. The blueprint creates the group and the mapping to the `Administrators` team is under Administration → Access Management → OpenID Connect Groups; team synchronization grants it on the next login.
 
@@ -139,7 +139,15 @@ The first start seeds `admin` with the password `admin` and asks for a new one. 
    >
    > NVD describes what a vulnerability affects as a CPE, and the internal analyzer skips any component without one. Trivy's SBOMs are mostly operating-system and language packages, which carry a PURL and no CPE, so NVD alone matches almost nothing here however many hundred thousand advisories it has mirrored. OSV and GitHub Advisories are the ones that match on PURL. A full portfolio reporting zero vulnerabilities is this, not a clean estate.
 
-   OSV mirrors at 03:00 and NVD at 04:00, so findings appear the morning after the source is switched on, not the minute it is. 4. Administration → Configuration → Maintenance: enable inactive project deletion, by versions. Without it a [retired](<#retired-projects>) project stays forever. 5. Administration → Repositories: disable the repositories the [egress policy](<#network-policy>) does not allow, or every analysis logs a failed lookup for them.
+   OSV mirrors at 03:00 and NVD at 04:00, so findings appear the morning after the source is switched on, not the minute it is. 4. Administration → Configuration → Maintenance: enable inactive project deletion, by versions. Without it a [retired](<#retired-projects>) project stays forever. 5. Administration → Repositories: disable the repositories the [egress policy](<#network-policy>) does not allow, or every analysis logs a failed lookup for them. 6. Log in through Authentik as a member of `dependency-track-admins`, then Administration → Access Management → Managed Users → `admin`: tick Suspended. The route is public and Dependency-Track has no second factor for managed users, so an active `admin` is an Internet-facing administrator login with a password alone.
+
+   With Authentik down there is no UI to lift the suspension, so the break-glass login starts in the database; tick Suspended again once OIDC is back:
+
+   ```bash
+   kubectl -n dependency-track exec -c postgres "$(kubectl -n dependency-track get pod \
+     -l cnpg.io/cluster=dependency-track-db,cnpg.io/instanceRole=primary -o name)" -- \
+     psql -d dtrack -c "UPDATE \"USER\" SET \"SUSPENDED\" = false WHERE \"USERNAME\" = 'admin'"
+   ```
 
 ### Reading it
 

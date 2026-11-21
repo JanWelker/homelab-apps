@@ -1274,7 +1274,7 @@ whether a policy holds across the portfolio.</p>
 </tr>
 <tr>
 <td>Authentication</td>
-<td>Authentik OIDC, code flow with PKCE; <code>admin</code> kept as break-glass</td>
+<td>Authentik OIDC, code flow with PKCE; <code>admin</code> suspended, kept as break-glass</td>
 </tr>
 <tr>
 <td>Storage</td>
@@ -1594,7 +1594,8 @@ a key. The database password is not here; CloudNativePG generates it.</p>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
 <h3 id="first-login">First login<a class="headerlink" href="#first-login" title="Permanent link">&para;</a></h3>
 <p>The first start seeds <code>admin</code> with the password <code>admin</code> and asks for a new
-one. Keep the account as break-glass; everything after is Authentik.</p>
+one. The account stays as break-glass, suspended once OIDC works; everything
+after is Authentik.</p>
 <ol>
 <li>
 <p>Add yourself to <code>dependency-track-admins</code> in Authentik. The blueprint
@@ -1643,7 +1644,19 @@ after the source is switched on, not the minute it is.
    stays forever.
 5. Administration → Repositories: disable the repositories the
    <a href="#network-policy">egress policy</a> does not allow, or every analysis logs a
-   failed lookup for them.</p>
+   failed lookup for them.
+6. Log in through Authentik as a member of <code>dependency-track-admins</code>, then
+   Administration → Access Management → Managed Users → <code>admin</code>: tick
+   Suspended. The route is public and Dependency-Track has no second factor
+   for managed users, so an active <code>admin</code> is an Internet-facing
+   administrator login with a password alone.</p>
+<p>With Authentik down there is no UI to lift the suspension, so the
+break-glass login starts in the database; tick Suspended again once OIDC
+is back:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>dependency-track<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-c<span class="w"> </span>postgres<span class="w"> </span><span class="s2">"</span><span class="k">$(</span>kubectl<span class="w"> </span>-n<span class="w"> </span>dependency-track<span class="w"> </span>get<span class="w"> </span>pod<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>-l<span class="w"> </span>cnpg.io/cluster<span class="o">=</span>dependency-track-db,cnpg.io/instanceRole<span class="o">=</span>primary<span class="w"> </span>-o<span class="w"> </span>name<span class="k">)</span><span class="s2">"</span><span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span>psql<span class="w"> </span>-d<span class="w"> </span>dtrack<span class="w"> </span>-c<span class="w"> </span><span class="s2">"UPDATE \"USER\" SET \"SUSPENDED\" = false WHERE \"USERNAME\" = 'admin'"</span>
+</span></code></pre></div>
 </li>
 </ol>
 <h3 id="reading-it">Reading it<a class="headerlink" href="#reading-it" title="Permanent link">&para;</a></h3>
@@ -1652,19 +1665,19 @@ runs. A vulnerability's Affected Projects view is the cross-image question
 Trivy's per-container reports cannot answer directly. The same objects are
 in the API, with <code>$KEY</code> an API key of a team created under Administration →
 Access Management → Teams, or the upload job's:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nv">KEY</span><span class="o">=</span><span class="s2">"</span><span class="k">$(</span>kubectl<span class="w"> </span>-n<span class="w"> </span>dependency-track<span class="w"> </span>get<span class="w"> </span>secret<span class="w"> </span>sbom-upload<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.data.api-key}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>base64<span class="w"> </span>-d<span class="k">)</span><span class="s2">"</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Every project and its version, newest upload first</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-Api-Key: </span><span class="nv">$KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"https://sbom.k8s.wlkr.ch/api/v1/project?sortName=lastBomImport&amp;sortOrder=desc"</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.[] | [.name, .version, .lastBomImport] | @tsv'</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Findings for one project; /finding/ needs VIEW_VULNERABILITY, which the job's team lacks</span>
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-Api-Key: </span><span class="nv">$KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"https://sbom.k8s.wlkr.ch/api/v1/vulnerability/project/&lt;uuid&gt;?pageSize=5000"</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.[] | . as $v | .components[] | [$v.severity, $v.vulnId, .purl] | @tsv'</span>
-</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
-</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="c1"># Portfolio totals per day, with the per-project average the chart does not show</span>
-</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-Api-Key: </span><span class="nv">$KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"https://sbom.k8s.wlkr.ch/api/v1/metrics/portfolio/60/days"</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.[] | select(.projects &gt; 0) | [(.firstOccurrence / 1000 | strftime("%F")), .projects, .vulnerabilities, (.vulnerabilities / .projects | floor)] | @tsv'</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">KEY</span><span class="o">=</span><span class="s2">"</span><span class="k">$(</span>kubectl<span class="w"> </span>-n<span class="w"> </span>dependency-track<span class="w"> </span>get<span class="w"> </span>secret<span class="w"> </span>sbom-upload<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.data.api-key}'</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>base64<span class="w"> </span>-d<span class="k">)</span><span class="s2">"</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># Every project and its version, newest upload first</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-Api-Key: </span><span class="nv">$KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"https://sbom.k8s.wlkr.ch/api/v1/project?sortName=lastBomImport&amp;sortOrder=desc"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.[] | [.name, .version, .lastBomImport] | @tsv'</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="c1"># Findings for one project; /finding/ needs VIEW_VULNERABILITY, which the job's team lacks</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-Api-Key: </span><span class="nv">$KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"https://sbom.k8s.wlkr.ch/api/v1/vulnerability/project/&lt;uuid&gt;?pageSize=5000"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.[] | . as $v | .components[] | [$v.severity, $v.vulnId, .purl] | @tsv'</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="c1"># Portfolio totals per day, with the per-project average the chart does not show</span>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>curl<span class="w"> </span>-s<span class="w"> </span>-H<span class="w"> </span><span class="s2">"X-Api-Key: </span><span class="nv">$KEY</span><span class="s2">"</span><span class="w"> </span><span class="s2">"https://sbom.k8s.wlkr.ch/api/v1/metrics/portfolio/60/days"</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">'.[] | select(.projects &gt; 0) | [(.firstOccurrence / 1000 | strftime("%F")), .projects, .vulnerabilities, (.vulnerabilities / .projects | floor)] | @tsv'</span>
 </span></code></pre></div>
 <p>The Dashboard's Portfolio Vulnerabilities chart rarely goes down, however
 current the images are:</p>
@@ -1695,9 +1708,9 @@ current the images are:</p>
 </tbody>
 </table>
 <h2 id="health-check">Health check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>dependency-track<span class="w"> </span>get<span class="w"> </span>pods,cronjob
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>dependency-track<span class="w"> </span>get<span class="w"> </span>cluster<span class="w"> </span>dependency-track-db
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>curl<span class="w"> </span>-s<span class="w"> </span>https://sbom.k8s.wlkr.ch/api/version<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>.version
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>dependency-track<span class="w"> </span>get<span class="w"> </span>pods,cronjob
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>dependency-track<span class="w"> </span>get<span class="w"> </span>cluster<span class="w"> </span>dependency-track-db
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>curl<span class="w"> </span>-s<span class="w"> </span>https://sbom.k8s.wlkr.ch/api/version<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>.version
 </span></code></pre></div>
 <p>The database should report <code>Cluster in healthy state</code>, the version endpoint
 answers without a login, and the last <code>sbom-upload</code> job should have

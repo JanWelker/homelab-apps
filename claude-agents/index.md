@@ -38,7 +38,7 @@ Each session is a Claude Code instance that keeps running when the laptop is clo
 | `targetRevision` is the only version | The chart's `appVersion` is the Claude Code version and its packaged values pin the image by digest, so a Claude Code or base-image release is a chart release and a re-pushed tag cannot change a running session |
 | TLS ends in a proxy sidecar from the same image, with a per-session `Certificate` | Cilium's Gateway only passes `TLSRoute` traffic through, it cannot terminate it; sshd itself listens on loopback only |
 | `resources` in each session's values | An agent idles between prompts at a few hundred MiB; the chart's default request does not fit beside the rest of the workers. The limit leaves room for builds and subagents |
-| `ssh.authorizedKeys` holds the laptop's one key, the same in every session | The listener is on the public Gateway, so a key is a login from the Internet, and this one opens every session, the one with the homelab write token included. Public keys are not secret; the private one is guarded like the laptop itself |
+| `ssh.authorizedKeys` holds one key per session, used for nothing else | The listener is on the public Gateway, so a key is a login from the Internet; a leaked key opens its own session only, not the one with the homelab write token. Public keys are not secret; the private ones are guarded like the laptop itself |
 
 ### Network policy
 
@@ -65,18 +65,19 @@ Host *.ssh.wlkr.ch
   ProxyCommand openssl s_client -quiet -verify_return_error -servername %h -connect %h:443
 ```
 
-`sshd` admits only the user `agent`. Add the `IdentityFile` from [SSH keys](<#ssh-keys>). Then `ssh homelab.ssh.wlkr.ch` attaches to the tmux session `main`. With a command, `ssh homelab.ssh.wlkr.ch <command>` runs it directly, so `scp` and `rsync` work.
+`sshd` admits only the user `agent`. Add the per-session `Host` block from [SSH keys](<#ssh-keys>). Then `ssh homelab.ssh.wlkr.ch` attaches to the tmux session `main`. With a command, `ssh homelab.ssh.wlkr.ch <command>` runs it directly, so `scp` and `rsync` work.
 
 ### SSH keys
 
-One key pair for the sessions, generated on the laptop and used for nothing else:
+One key pair per session, generated on the laptop and used for nothing else, so one leaked key opens one session:
 
-1. `ssh-keygen -t ed25519 -f ~/.ssh/claude-agents -C claude-agents`.
-2. Put the content of `~/.ssh/claude-agents.pub` into every session's `ssh.authorizedKeys`, replacing any other line, and merge.
-3. In the `Host *.ssh.wlkr.ch` block of `~/.ssh/config`:
+1. `ssh-keygen -t ed25519 -f ~/.ssh/claude-<session> -C claude-<session>`.
+2. Put the content of `~/.ssh/claude-<session>.pub` into that session's `ssh.authorizedKeys`, replacing any other line, and merge.
+3. Above the `Host *.ssh.wlkr.ch` block of `~/.ssh/config`:
 
    ```text
-     IdentityFile ~/.ssh/claude-agents
+   Host <session>.ssh.wlkr.ch
+     IdentityFile ~/.ssh/claude-<session>
      IdentitiesOnly yes
    ```
 
@@ -125,7 +126,7 @@ A fine-grained personal access token, one per session, so a leak costs that sess
 The `claude-session` skill walks through these steps.
 
 1. Copy a session directory, for example `claude-sitzplan/` to `claude-<session>/`.
-2. In `application.yaml`, change `metadata.name`, `session`, `repos`, the access toggles and `extraEgressFQDNs`, and keep `skills.repo` and `ssh.authorizedKeys` (see [SSH keys](<#ssh-keys>)).
+2. In `application.yaml`, change `metadata.name`, `session`, `repos`, the access toggles and `extraEgressFQDNs`, keep `skills.repo`, and put the session's own key into `ssh.authorizedKeys` (see [SSH keys](<#ssh-keys>)).
 3. Create the token and write it to OpenBao before the merge, so the `ExternalSecret` resolves on the first sync.
 4. Add the session to [Sessions](<#sessions>) and merge. It answers at `<session>.ssh.wlkr.ch` once the Application is Healthy; then do the [first login](<#first-login>).
 
