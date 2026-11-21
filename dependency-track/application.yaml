@@ -13,7 +13,7 @@ spec:
     # Why each value is what it is: docs/dependency-track.md#configuration
     - repoURL: https://dependencytrack.github.io/helm-charts
       chart: dependency-track
-      targetRevision: 2.9.0
+      targetRevision: 2.10.0
       helm:
         valuesObject:
           database:
@@ -38,7 +38,7 @@ spec:
             # Pinned by digest, grouped with the chart: docs/dependency-track.md#configuration
             image:
               # renovate: datasource=docker depName=docker.io/dependencytrack/apiserver
-              tag: 5.2.1@sha256:a7ce7a42928c6c03e94e8255e2ee871f5268f55b638a69729cae7afc47ef43b8
+              tag: 5.2.2@sha256:cd5bed12ff30fd36980dbee2d6c3b177c37b99c63b60f5a5b15fbca0b31d0f38
             extraEnv:
               - name: DT_TELEMETRY_SUBMISSION_DEFAULT_ENABLED
                 value: "false"
@@ -74,7 +74,7 @@ spec:
           frontend:
             image:
               # renovate: datasource=docker depName=docker.io/dependencytrack/frontend
-              tag: 5.2.1@sha256:1c0f63b083af8e89ff4ede5e7ed5cfc4e23ab871fa140ed101e8dc56f53eb51c
+              tag: 5.2.2@sha256:fd15b6cdc38692518a703eab0ed2867fa34e1276034cbe00773c61a9975cf719
             revisionHistoryLimit: 2
             extraEnv:
               - name: OIDC_ISSUER
