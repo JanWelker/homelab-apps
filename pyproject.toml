@@ -8,8 +8,14 @@ dependencies = []
 
 [dependency-groups]
 dev = [
-    "zensical>=0.0.59",
+    "zensical>=0.1.2",
     "yamllint>=1.37.1",
     "pre-commit>=4.5.1",
     "pyyaml>=6.0.3",
 ]
+
+[tool.uv]
+# Lock only releases at least 3 days old, the minimumReleaseAge of the shared
+# Renovate preset. Without it uv locks a newer release than the one Renovate
+# proposes, and Renovate rejects the lock file as an artifact failure.
+exclude-newer = "3 days"
