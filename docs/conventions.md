@@ -168,17 +168,14 @@ Which shape applies is decided by what the application supports:
   [Shot Timer bridge](shot-bridge.md) checks its own bearer key, and the
   [Claude agents](claude-agents.md) admit SSH keys on a TLS passthrough.
 
-The OIDC provider's blueprint lives here, in the application's directory, as a
-ConfigMap targeted at the `authentik` namespace with a key ending in `.yaml`
-(see `dependency-track/authentik-blueprint.yaml`). The platform mounts it as
-an optional projected volume, because a fresh cluster has Authentik before it
-has any workload, and discovers it on the worker's startup, hourly, and
-through a file watcher. The client credentials are generated here, by the
-generator and `PushSecret` in the application's `secrets.yaml` (rule 7), and
-read on Authentik's side by an `ExternalSecret` in the platform repository
-(`payload/platform/authentik/secrets-<app>.yaml`), where the outpost's
-provider list and any `referencegrant.yaml` entry also live, so going behind
-SSO is deliberately two pull requests.
+The OIDC provider's blueprint lives in the platform repository, because a
+blueprint has full access to Authentik; see
+[Authentik → Where a blueprint lives](https://homelab.wlkr.ch/platform/authentik/#where-a-blueprint-lives).
+The client credentials are generated here, by the generator and `PushSecret`
+in the application's `secrets.yaml` (rule 7), and read on Authentik's side by
+an `ExternalSecret` there, where the outpost's provider list and any
+`referencegrant.yaml` entry also live, so going behind SSO is deliberately two
+pull requests.
 
 Because blueprint discovery is asynchronous, anything that configures itself
 against the provider must tolerate it not existing yet: fail soft and log.
