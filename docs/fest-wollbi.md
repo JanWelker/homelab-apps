@@ -60,9 +60,8 @@ curl's own retries fit inside it.
 
 ### OIDC
 
-The provider, the `wollbi-editors` group and the binding are in
-[`fest-wollbi/authentik-blueprint.yaml`](https://github.com/JanWelker/homelab-apps/blob/main/fest-wollbi/authentik-blueprint.yaml);
-the platform mounts it, and reads the client secret, as in
+The provider, the `wollbi-editors` group and the binding are a blueprint in
+the platform repository, which also reads the client secret; see
 [Authentik → Adding an application](https://homelab.wlkr.ch/platform/authentik/#adding-an-application).
 
 | Setting | Why |

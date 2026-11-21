@@ -9,8 +9,7 @@ one Go binary, no database, with desktop, iOS and Android clients. Upstream
 publishes no open Helm chart, so `opencloud/` is plain manifests around the
 official image: `deployment.yaml`, `service.yaml`, `pvc.yaml`,
 `httproute.yaml`, `servicemonitor.yaml`, `secrets.yaml`, `networkpolicy.yaml`,
-`namespace.yaml` and two ConfigMaps, `csp.yaml` and
-`authentik-blueprint.yaml`, per
+`namespace.yaml` and the `csp.yaml` ConfigMap, per
 [Conventions → Official upstream sources only](conventions.md#2-official-upstream-sources-only).
 
 ## At a glance
@@ -73,9 +72,9 @@ The values in `opencloud/deployment.yaml` that are not self-explanatory:
 OpenCloud's web, desktop, iOS and Android clients are four OIDC clients with
 IDs fixed by the clients (`web`, `OpenCloudDesktop`, `OpenCloudIOS`,
 `OpenCloudAndroid`), all public, authorization code with PKCE, so
-`opencloud/authentik-blueprint.yaml` holds four providers and four
-applications. Only the web one is visible in the Authentik library; the
-native ones carry `blank://blank` as their launch URL.
+the platform's blueprint holds four providers and four applications. Only the
+web one is visible in the Authentik library; the native ones carry
+`blank://blank` as their launch URL.
 
 The server and the native clients verify every token against the one
 issuer the server advertises, and Authentik derives a provider's issuer from
@@ -87,8 +86,7 @@ global`, and the platform rewrites `/.well-known/openid-configuration` on
 The desktop client redirects to a loopback address with a random port, so
 its redirect URI is a regular expression; the mobile ones are custom-scheme
 URLs the apps register. There are no client secrets, so nothing lands in
-OpenBao for Authentik's side, and the platform repository only mounts the
-blueprint.
+OpenBao for Authentik's side.
 
 ### Secrets
 
