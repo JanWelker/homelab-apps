@@ -175,7 +175,7 @@ The platform handles all of this; adding your own is the usual mistake:
 | HTTPS | Nothing | The Gateway holds a `*.k8s.wlkr.ch` wildcard |
 | Storage | `storageClassName: rook-ceph-block` | Rook-Ceph replicates it three ways |
 | Logs | Nothing | Alloy ships stdout to Loki |
-| Backups of a PVC | Nothing | Velero snapshots it nightly; restoring is in [Backups & Recovery](<https://homelab.wlkr.ch/operations/backups/>) |
+| Backups of a PVC | Nothing | Velero snapshots it nightly; restoring is in [Backups &amp; Recovery](<https://homelab.wlkr.ch/operations/backups/>) |
 | Backups of a database | `backup.yaml` and a `plugins` entry (rule 3) | WAL archived continuously, a base backup nightly, to the database's own prefix of `offsite` |
 | Metrics | A `ServiceMonitor` or `PodMonitor` | Prometheus scrapes it |
 
