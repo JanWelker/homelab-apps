@@ -1,0 +1,38 @@
+---
+# Every rule and its reason: docs/extractor-admin.md#configuration
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-ingress
+  namespace: extractor-admin
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    Default-deny ingress for any pod the chart's policy does not select.
+    The namespace itself and the node's health probes; the Authentik
+    outpost reaches the UI through the chart's policy.
+  endpointSelector: {}
+  ingress:
+    - fromEndpoints:
+        - {}
+    - fromEntities:
+        - host
+        - remote-node
+---
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: default-egress
+  namespace: extractor-admin
+  annotations:
+    argocd.argoproj.io/sync-wave: "-2"
+spec:
+  description: >-
+    Default-deny egress for any pod the chart's policy does not select.
+    The namespace only; the UI's way to the shot bridge is in the chart's
+    policy.
+  endpointSelector: {}
+  egress:
+    - toEndpoints:
+        - {}
