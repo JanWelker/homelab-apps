@@ -226,7 +226,7 @@ read `kv/claude-<session>/github`, the prefix of their own namespace; see
 
 `automated` with `prune` and `selfHeal`, plus `retry` with a limit of 10 and
 a 30s backoff up to 5m, and `syncOptions` with `ServerSideApply=true`, copied
-from any sibling but the four `claude-*` Applications, which leave the option
+from any sibling but the `claude-*` Applications, which leave the option
 out. ArgoCD never re-attempts a failed sync of the same revision without
 `retry`, and a workload that lands a minute before the platform resource it
 names would otherwise stay failed until someone ran `argocd app sync`.

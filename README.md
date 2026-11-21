@@ -20,7 +20,7 @@ publishes the same two files.
 
 | Application | URL | Auth | Manifests | Page |
 | --- | --- | --- | --- | --- |
-| Claude agents | `<session>.ssh.wlkr.ch` | SSH keys | [`claude-agents/`](claude-agents/) | [docs](https://homelab-apps.wlkr.ch/claude-agents/) |
+| Claude agents | `<session>.ssh.wlkr.ch` | SSH keys | one `claude-<session>/` per session | [docs](https://homelab-apps.wlkr.ch/claude-agents/) |
 | Dependency-Track | `sbom.infra.k8s.wlkr.ch` | Authentik OIDC | [`dependency-track/`](dependency-track/) | [docs](https://homelab-apps.wlkr.ch/dependency-track/) |
 | Extractor admin UI | `extractor-admin.k8s.wlkr.ch` | Authentik proxy | [`extractor-admin/`](extractor-admin/) | [docs](https://homelab-apps.wlkr.ch/extractor-admin/) |
 | Flowscape | `flowscape.k8s.wlkr.ch` ([live demo](https://janwelker.github.io/flowscape/)) | Authentik proxy | [`flowscape/`](flowscape/) | [docs](https://homelab-apps.wlkr.ch/flowscape/) |
