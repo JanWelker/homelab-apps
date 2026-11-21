@@ -8,7 +8,7 @@ The SBOMs are not generated here. The platform's [Trivy Operator](<https://homel
 
 |  |  |
 | --- | --- |
-| URL | [sbom.k8s.wlkr.ch](<https://sbom.k8s.wlkr.ch>) |
+| URL | [sbom.infra.k8s.wlkr.ch](<https://sbom.infra.k8s.wlkr.ch>), LAN and VPN only |
 | Authentication | Authentik OIDC, code flow with PKCE; `admin` suspended, kept as break-glass |
 | Storage | A PVC for uploaded BOM files and the mirrored feeds |
 | Database | CloudNativePG `Cluster` `dependency-track-db` |
@@ -29,7 +29,7 @@ The chart values in `application.yaml` that are not defaults:
 | `apiServer.web.resources`, below upstream's advice | The JVM sizes its heap from the limit. Upstream recommends 8Gi for production; the portfolio here is a few hundred small images |
 | `dependency-track-db` resources | The largest database here, a few GB of vulnerability data, and its working set sits above half a gigabyte; the request is the measured median and the limit 2.5x the peak, per the [platform rule](<https://homelab.wlkr.ch/platform/#components>) |
 | `serviceMonitor.namespace: dependency-track` | The chart defaults to the `monitoring` namespace, which the `apps` project may not write to. Prometheus reads it from here like every other application's |
-| `httpRoute` on `apps-gateway` | The chart's route sends `/api` to the API server and everything else to the frontend on one hostname, so the frontend's `API_BASE_URL` stays empty and the browser uses relative URLs |
+| `httpRoute` on `infra-gateway`, not `apps-gateway` | The whole vulnerability portfolio sits behind one login, so it is not on the Internet; the upload job uses the Service, and only `apps-gateway` gets a public DNS record. The chart's route sends `/api` to the API server and everything else to the frontend on one hostname, so the frontend's `API_BASE_URL` stays empty and the browser uses relative URLs |
 | `apiServer.image.tag` and `frontend.image.tag` pinned by digest, though the chart derives both from its `appVersion` | A tag re-pushed upstream would otherwise change what runs without a commit, and Renovate sees a rebuild only through a digest. The chart and the two pins are one Renovate group, so a chart bump cannot leave a pod on the previous release. |
 | `revisionHistoryLimit: 2` on both Deployments | Superseded ReplicaSets keep their Trivy config-audit reports until garbage collection; the chart keeps five |
 
@@ -139,7 +139,7 @@ The first start seeds `admin` with the password `admin` and asks for a new one. 
    >
    > NVD describes what a vulnerability affects as a CPE, and the internal analyzer skips any component without one. Trivy's SBOMs are mostly operating-system and language packages, which carry a PURL and no CPE, so NVD alone matches almost nothing here however many hundred thousand advisories it has mirrored. OSV and GitHub Advisories are the ones that match on PURL. A full portfolio reporting zero vulnerabilities is this, not a clean estate.
 
-   OSV mirrors at 03:00 and NVD at 04:00, so findings appear the morning after the source is switched on, not the minute it is. 4. Administration → Configuration → Maintenance: enable inactive project deletion, by versions. Without it a [retired](<#retired-projects>) project stays forever. 5. Administration → Repositories: disable the repositories the [egress policy](<#network-policy>) does not allow, or every analysis logs a failed lookup for them. 6. Log in through Authentik as a member of `dependency-track-admins`, then Administration → Access Management → Managed Users → `admin`: tick Suspended. The route is public and Dependency-Track has no second factor for managed users, so an active `admin` is an Internet-facing administrator login with a password alone.
+   OSV mirrors at 03:00 and NVD at 04:00, so findings appear the morning after the source is switched on, not the minute it is. 4. Administration → Configuration → Maintenance: enable inactive project deletion, by versions. Without it a [retired](<#retired-projects>) project stays forever. 5. Administration → Repositories: disable the repositories the [egress policy](<#network-policy>) does not allow, or every analysis logs a failed lookup for them. 6. Log in through Authentik as a member of `dependency-track-admins`, then Administration → Access Management → Managed Users → `admin`: tick Suspended. Dependency-Track has no second factor for managed users, so an active `admin` is an administrator login with a password alone.
 
    With Authentik down there is no UI to lift the suspension, so the break-glass login starts in the database; tick Suspended again once OIDC is back:
 
@@ -157,15 +157,15 @@ The portfolio is one project per image; the `namespace:` tags say where it runs.
 KEY="$(kubectl -n dependency-track get secret sbom-upload -o jsonpath='{.data.api-key}' | base64 -d)"
 
 # Every project and its version, newest upload first
-curl -s -H "X-Api-Key: $KEY" "https://sbom.k8s.wlkr.ch/api/v1/project?sortName=lastBomImport&sortOrder=desc" \
+curl -s -H "X-Api-Key: $KEY" "https://sbom.infra.k8s.wlkr.ch/api/v1/project?sortName=lastBomImport&sortOrder=desc" \
   | jq -r '.[] | [.name, .version, .lastBomImport] | @tsv'
 
 # Findings for one project; /finding/ needs VIEW_VULNERABILITY, which the job's team lacks
-curl -s -H "X-Api-Key: $KEY" "https://sbom.k8s.wlkr.ch/api/v1/vulnerability/project/<uuid>?pageSize=5000" \
+curl -s -H "X-Api-Key: $KEY" "https://sbom.infra.k8s.wlkr.ch/api/v1/vulnerability/project/<uuid>?pageSize=5000" \
   | jq -r '.[] | . as $v | .components[] | [$v.severity, $v.vulnId, .purl] | @tsv'
 
 # Portfolio totals per day, with the per-project average the chart does not show
-curl -s -H "X-Api-Key: $KEY" "https://sbom.k8s.wlkr.ch/api/v1/metrics/portfolio/60/days" \
+curl -s -H "X-Api-Key: $KEY" "https://sbom.infra.k8s.wlkr.ch/api/v1/metrics/portfolio/60/days" \
   | jq -r '.[] | select(.projects > 0) | [(.firstOccurrence / 1000 | strftime("%F")), .projects, .vulnerabilities, (.vulnerabilities / .projects | floor)] | @tsv'
 ```
 
@@ -183,7 +183,7 @@ The Dashboard's Portfolio Vulnerabilities chart rarely goes down, however curren
 ```bash
 kubectl -n dependency-track get pods,cronjob
 kubectl -n dependency-track get cluster dependency-track-db
-curl -s https://sbom.k8s.wlkr.ch/api/version | jq .version
+curl -s https://sbom.infra.k8s.wlkr.ch/api/version | jq .version
 ```
 
 The database should report `Cluster in healthy state`, the version endpoint answers without a login, and the last `sbom-upload` job should have succeeded with its closing line of images uploaded, failed, reports skipped, superseded revisions and finished Jobs, the first three of which should read `0`. In the UI, the Dashboard's portfolio count should match the images number.

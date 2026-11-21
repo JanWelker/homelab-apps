@@ -7,7 +7,7 @@ The applications the [homelab cluster](<https://homelab.wlkr.ch/>) exists to run
 | Application | URL | Storage | Database | Authentication |
 | --- | --- | --- | --- | --- |
 | [Claude agents](<https://homelab-apps.wlkr.ch/claude-agents/index.md>) | `<session>.ssh.wlkr.ch` | One PVC per session: `$HOME`, clone and login | None | SSH public keys |
-| [Dependency-Track](<https://homelab-apps.wlkr.ch/dependency-track/index.md>) | [sbom.k8s.wlkr.ch](<https://sbom.k8s.wlkr.ch>) | A PVC for uploaded BOMs and mirrored feeds | CloudNativePG | Authentik OIDC |
+| [Dependency-Track](<https://homelab-apps.wlkr.ch/dependency-track/index.md>) | [sbom.infra.k8s.wlkr.ch](<https://sbom.infra.k8s.wlkr.ch>) | A PVC for uploaded BOMs and mirrored feeds | CloudNativePG | Authentik OIDC |
 | [Extractor admin UI](<https://homelab-apps.wlkr.ch/extractor-admin/index.md>) | [extractor-admin.k8s.wlkr.ch](<https://extractor-admin.k8s.wlkr.ch>) | None | None | Authentik proxy |
 | [Flowscape](<https://homelab-apps.wlkr.ch/flowscape/index.md>) | [flowscape.k8s.wlkr.ch](<https://flowscape.k8s.wlkr.ch>) | None | None | Authentik proxy |
 | [Home Assistant](<https://homelab-apps.wlkr.ch/home-assistant/index.md>) | [home.k8s.wlkr.ch](<https://home.k8s.wlkr.ch>) | A PVC for `/config` | CloudNativePG, for the recorder | Authentik proxy, in front of its own login |
