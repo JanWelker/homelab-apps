@@ -76,6 +76,9 @@ spec:
               # renovate: datasource=docker depName=docker.io/dependencytrack/frontend
               tag: 5.2.2@sha256:fd15b6cdc38692518a703eab0ed2867fa34e1276034cbe00773c61a9975cf719
             revisionHistoryLimit: 2
+            resources:
+              requests:
+                memory: 16Mi
             extraEnv:
               - name: OIDC_ISSUER
                 value: https://auth.k8s.wlkr.ch/application/o/dependency-track/

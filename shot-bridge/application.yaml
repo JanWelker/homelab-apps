@@ -24,6 +24,9 @@ spec:
             bundleId: ch.wlkr.shottimer
             env: sandbox
           existingSecret: shot-bridge
+          resources:
+            requests:
+              memory: 32Mi
           database:
             existingSecret: shot-bridge-db-app
           admin:
