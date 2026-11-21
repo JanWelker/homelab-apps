@@ -26,7 +26,7 @@ whether a policy holds across the portfolio.
 | | |
 | --- | --- |
 | URL | [sbom.k8s.wlkr.ch](https://sbom.k8s.wlkr.ch) |
-| Authentication | Authentik OIDC, code flow with PKCE; `admin` kept as break-glass |
+| Authentication | Authentik OIDC, code flow with PKCE; `admin` suspended, kept as break-glass |
 | Storage | A PVC for uploaded BOM files and the mirrored feeds |
 | Database | CloudNativePG `Cluster` `dependency-track-db` |
 | Secrets | `kv/dependency-track/config` and `kv/dependency-track/sbom-upload` in OpenBao |
@@ -163,7 +163,8 @@ a key. The database password is not here; CloudNativePG generates it.
 ### First login
 
 The first start seeds `admin` with the password `admin` and asks for a new
-one. Keep the account as break-glass; everything after is Authentik.
+one. The account stays as break-glass, suspended once OIDC works; everything
+after is Authentik.
 
 1. Add yourself to `dependency-track-admins` in Authentik. The blueprint
    creates the group and the mapping to the `Administrators` team is under
@@ -210,6 +211,21 @@ one. Keep the account as break-glass; everything after is Authentik.
 5. Administration → Repositories: disable the repositories the
    [egress policy](#network-policy) does not allow, or every analysis logs a
    failed lookup for them.
+6. Log in through Authentik as a member of `dependency-track-admins`, then
+   Administration → Access Management → Managed Users → `admin`: tick
+   Suspended. The route is public and Dependency-Track has no second factor
+   for managed users, so an active `admin` is an Internet-facing
+   administrator login with a password alone.
+
+    With Authentik down there is no UI to lift the suspension, so the
+    break-glass login starts in the database; tick Suspended again once OIDC
+    is back:
+
+    ```bash
+    kubectl -n dependency-track exec -c postgres "$(kubectl -n dependency-track get pod \
+      -l cnpg.io/cluster=dependency-track-db,cnpg.io/instanceRole=primary -o name)" -- \
+      psql -d dtrack -c "UPDATE \"USER\" SET \"SUSPENDED\" = false WHERE \"USERNAME\" = 'admin'"
+    ```
 
 ### Reading it
 
