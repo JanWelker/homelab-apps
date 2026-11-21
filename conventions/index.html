@@ -1337,9 +1337,9 @@ that runs at <code>privileged</code>. Set <code>enforce</code> to what the appli
 <code>audit</code>/<code>warn</code> stricter, so the violations a tighter level would catch stay
 visible.</p>
 <p>Annotate it <code>Prune=false</code>: pruning a <code>Namespace</code> deletes every PVC inside it.</p>
-<p>Exception: the <code>claude-*</code> sessions ship no namespace and share the one
-<code>claude-agents/</code> owns, so removing a session cannot prune the others' volumes;
-see <a href="../claude-agents/#configuration">Claude agents</a>.</p>
+<p>Exception: the <code>claude-*</code> sessions ship no namespace: the platform declares
+each <code>claude-&lt;session&gt;</code> and refuses it from here; see
+<a href="../claude-agents/#configuration">Claude agents</a>.</p>
 <h3 id="5-ship-a-ciliumnetworkpolicy">5. Ship a <code>CiliumNetworkPolicy</code><a class="headerlink" href="#5-ship-a-ciliumnetworkpolicy" title="Permanent link">&para;</a></h3>
 <p>Not a plain <code>NetworkPolicy</code>, which blocks the kubelet's health probes. Every
 policy needs <code>fromEntities: [host, remote-node]</code> for those probes, one rule
@@ -1425,10 +1425,8 @@ it. Database passwords are neither, because CloudNativePG generates them
 <p>OIDC client credentials go in the application's own <code>kv/&lt;app&gt;/config</code>, never
 under <code>kv/authentik/config</code>: a <code>bao kv put</code> replaces a path wholesale, so
 sharing it would make adding an application an Authentik outage.</p>
-<p>Exception: the <code>claude-*</code> sessions read <code>kv/claude-&lt;session&gt;/</code> through the
-<code>openbao-claude-agents</code> store, whose login identity is in
-<code>claude-agents/serviceaccounts.yaml</code>, because the sessions share a namespace
-and the paths sit outside its prefix; see
+<p>Exception: the <code>claude-*</code> sessions' <code>ExternalSecret</code>s come from the chart and
+read <code>kv/claude-&lt;session&gt;/github</code>, the prefix of their own namespace; see
 <a href="../claude-agents/#secrets">Claude agents → Secrets</a>.</p>
 <h3 id="8-the-shared-syncpolicy">8. The shared <code>syncPolicy</code><a class="headerlink" href="#8-the-shared-syncpolicy" title="Permanent link">&para;</a></h3>
 <p><code>automated</code> with <code>prune</code> and <code>selfHeal</code>, plus <code>retry</code> with a limit of 10 and
