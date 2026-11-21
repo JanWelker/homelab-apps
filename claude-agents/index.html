@@ -727,17 +727,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#moving-a-session-out-of-claude-agents" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Moving a session out of claude-agents
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#sessions-without-a-repository" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1245,17 +1234,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#moving-a-session-out-of-claude-agents" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Moving a session out of claude-agents
-      </span>
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#sessions-without-a-repository" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1707,80 +1685,6 @@ changes there like in its own repositories.</p>
    entry, then run <code>make bao-policies</code>; the namespace goes only after step 3,
    because deleting a namespace deletes its volume.</li>
 </ol>
-<h3 id="moving-a-session-out-of-claude-agents">Moving a session out of claude-agents<a class="headerlink" href="#moving-a-session-out-of-claude-agents" title="Permanent link">&para;</a></h3>
-<p>For a session whose volume is in <code>claude-agents</code>; delete this section with the
-last one. The merge cannot delete the old volume: the chart annotates the PVC
-<code>Prune=false</code>, no workload owns it, and the namespace is <code>Prune=false</code> too, so
-only a hand-run <code>kubectl delete</code> removes it. The session is down from the merge
-until step 5. <code>homelab</code> moves last, once the chart release that reads
-<code>kv/claude-homelab/argocd</code> is in its <code>targetRevision</code>.</p>
-<ol>
-<li>
-<p>Before the merge, the platform pull request is in and <code>make bao-policies</code>
-   has run (<a href="#adding-a-session">Adding a session</a>); <code>kv/claude-&lt;session&gt;/github</code>
-   already exists. Take a backup, the fallback if the volume is lost, and wait
-   until it is <code>Completed</code> (<a href="https://homelab.wlkr.ch/operations/backups/#velero">Backups &amp; Recovery</a>):</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>velero<span class="w"> </span>-n<span class="w"> </span>backup<span class="w"> </span>backup<span class="w"> </span>create<span class="w"> </span>claude-move-<span class="k">$(</span>date<span class="w"> </span>+%s<span class="k">)</span><span class="w"> </span>--include-namespaces<span class="w"> </span>claude-agents
-</span></code></pre></div>
-</li>
-<li>
-<p>Merge. Argo CD prunes the session's objects in <code>claude-agents</code> except the
-   volume and creates the new namespace's, with an empty PVC. The new pod waits
-   for its <code>Certificate</code>. If the old pod or <code>TLSRoute</code> is still there, which
-   would keep the new route from being accepted, delete them; the PVC is not
-   theirs:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>claude-agents<span class="w"> </span>delete<span class="w"> </span>statefulset,tlsroute<span class="w"> </span>claude-&lt;session&gt;<span class="w"> </span>--ignore-not-found
-</span></code></pre></div>
-</li>
-<li>
-<p>Mount the old volume read-only in a pod of its own, in the new pod's image:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nv">image</span><span class="o">=</span><span class="k">$(</span>kubectl<span class="w"> </span>-n<span class="w"> </span>claude-&lt;session&gt;<span class="w"> </span>get<span class="w"> </span>pod<span class="w"> </span>claude-&lt;session&gt;-0<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">'{.spec.containers[?(@.name=="agent")].image}'</span><span class="k">)</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>claude-agents<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>-<span class="w"> </span><span class="s">&lt;&lt;EOF</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="s">apiVersion: v1</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="s">kind: Pod</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="s">metadata: {name: copy-&lt;session&gt;}</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="s">spec:</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="s">  restartPolicy: Never</span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="s">  securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, fsGroup: 1000, seccompProfile: {type: RuntimeDefault}}</span>
-</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="s">  containers:</span>
-</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="s">    - name: copy</span>
-</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="s">      image: $image</span>
-</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="s">      command: [sleep, "3600"]</span>
-</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="s">      securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}</span>
-</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="s">      volumeMounts: [{name: home, mountPath: /home/agent, readOnly: true}]</span>
-</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="s">  volumes: [{name: home, persistentVolumeClaim: {claimName: claude-&lt;session&gt;, readOnly: true}}]</span>
-</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="s">EOF</span>
-</span></code></pre></div>
-</li>
-<li>
-<p>Once the new pod is <code>Ready</code>, stream the home directory across. The
-   volumes sit in different namespaces, so the stream goes through your
-   terminal; the image also has <code>rsync</code> if <code>tar</code> fails:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>claude-agents<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>copy-&lt;session&gt;<span class="w"> </span>--<span class="w"> </span>tar<span class="w"> </span>-C<span class="w"> </span>/home/agent<span class="w"> </span>-cf<span class="w"> </span>-<span class="w"> </span>.<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="p">|</span><span class="w"> </span>kubectl<span class="w"> </span>-n<span class="w"> </span>claude-&lt;session&gt;<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-i<span class="w"> </span>claude-&lt;session&gt;-0<span class="w"> </span>-c<span class="w"> </span>agent<span class="w"> </span>--<span class="w"> </span>tar<span class="w"> </span>-C<span class="w"> </span>/home/agent<span class="w"> </span>-xf<span class="w"> </span>-
-</span></code></pre></div>
-</li>
-<li>
-<p>Restart the pod so <code>sshd</code> and Claude Code read the copied keys and login,
-   then remove the copy pod:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>claude-&lt;session&gt;<span class="w"> </span>delete<span class="w"> </span>pod<span class="w"> </span>claude-&lt;session&gt;-0
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>claude-agents<span class="w"> </span>delete<span class="w"> </span>pod<span class="w"> </span>copy-&lt;session&gt;
-</span></code></pre></div>
-</li>
-<li>
-<p>Verify: the pod is <code>Ready</code>, the SSH banner answers
-   (<a href="#health-check">Health check</a>), and <code>ssh &lt;session&gt;.ssh.wlkr.ch</code> resumes the
-   old conversation without a login.</p>
-</li>
-<li>
-<p>After the last session, delete <code>claude-agents/</code> and the platform's
-   <code>claude-agents</code> entries in two pull requests, the platform one second. Then
-   remove the old volumes and the namespace, which deletes them, and
-   <code>kv/claude-agents/argocd</code>:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>kubectl<span class="w"> </span>delete<span class="w"> </span>namespace<span class="w"> </span>claude-agents
-</span></code></pre></div>
-</li>
-</ol>
 <p>Every session shares one <code>targetRevision</code> in practice: Renovate groups them
 into one pull request.</p>
 <h3 id="sessions-without-a-repository">Sessions without a repository<a class="headerlink" href="#sessions-without-a-repository" title="Permanent link">&para;</a></h3>
@@ -1802,8 +1706,8 @@ which works because a command bypasses tmux.</p>
       requests and merge conflicts.</li>
 </ul>
 <h2 id="health-check">Health check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>pods,statefulsets,tlsroute<span class="w"> </span>-A<span class="w"> </span>-l<span class="w"> </span>app.kubernetes.io/name<span class="o">=</span>agent-mooring
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>openssl<span class="w"> </span>s_client<span class="w"> </span>-quiet<span class="w"> </span>-servername<span class="w"> </span>homelab.ssh.wlkr.ch<span class="w"> </span>-connect<span class="w"> </span>homelab.ssh.wlkr.ch:443<span class="w"> </span>&lt;/dev/null<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-1
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>pods,statefulsets,tlsroute<span class="w"> </span>-A<span class="w"> </span>-l<span class="w"> </span>app.kubernetes.io/name<span class="o">=</span>agent-mooring
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>openssl<span class="w"> </span>s_client<span class="w"> </span>-quiet<span class="w"> </span>-servername<span class="w"> </span>homelab.ssh.wlkr.ch<span class="w"> </span>-connect<span class="w"> </span>homelab.ssh.wlkr.ch:443<span class="w"> </span>&lt;/dev/null<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>head<span class="w"> </span>-1
 </span></code></pre></div>
 <p>The last command prints the SSH banner (<code>SSH-2.0-OpenSSH_...</code>) when the whole
 path works: DNS, certificate, Gateway, policy and <code>sshd</code>.</p>
