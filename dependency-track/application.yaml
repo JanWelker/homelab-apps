@@ -6,7 +6,7 @@ metadata:
   namespace: argocd
   annotations:
     argocd.argoproj.io/manifest-generate-paths: .
-    link.argocd.argoproj.io/external-link: https://sbom.k8s.wlkr.ch
+    link.argocd.argoproj.io/external-link: https://sbom.infra.k8s.wlkr.ch
 spec:
   project: apps
   sources:
@@ -90,11 +90,12 @@ spec:
           httpRoute:
             enabled: true
             hostnames:
-              - sbom.k8s.wlkr.ch
+              - sbom.infra.k8s.wlkr.ch
+            # infra-gateway, not apps-gateway: LAN and VPN only. docs/dependency-track.md#configuration
             parentRefs:
               - group: gateway.networking.k8s.io
                 kind: Gateway
-                name: apps-gateway
+                name: infra-gateway
                 namespace: kube-system
                 sectionName: https
     - repoURL: https://github.com/JanWelker/homelab-apps.git
