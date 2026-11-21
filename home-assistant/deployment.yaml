@@ -60,12 +60,11 @@ spec:
       containers:
         - name: home-assistant
           image: ghcr.io/home-assistant/home-assistant:2026.11.2@sha256:493a07e8f6530fc640223f4a0a5248f20a61ca2f718bb1d31efbf08a2c5ea28f
-          # Root under s6; NET_BIND_SERVICE is kept although no port needs it: docs/home-assistant.md#configuration
+          # Root under s6 with every capability dropped: docs/home-assistant.md#configuration
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
-              add: ["NET_BIND_SERVICE"]
             seccompProfile:
               type: RuntimeDefault
           ports:
