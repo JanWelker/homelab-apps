@@ -1173,6 +1173,10 @@ the chart is published to <code>ghcr.io/somuch-cloud/charts</code>, per
 <td>No request can skip the outpost. Egress is the bridge's pods on <code>bridge.port</code>, plus a DNS rule the chart renders itself, which repeats the platform's cluster-wide one (<a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → rule 5</a>) and cannot be switched off</td>
 </tr>
 <tr>
+<td><code>default-ingress</code> and <code>default-egress</code> beside the chart's policy</td>
+<td>A pod the chart's policy does not select, such as a Job or a debug pod, would otherwise reach the LAN and the Internet; the defaults allow the namespace and the node's probes only</td>
+</tr>
+<tr>
 <td>The bridge's <code>admin.enabled: true</code></td>
 <td>Passes <code>BRIDGE_ADMIN_READ_KEY</code> to the bridge and lets this namespace's pods in on 8080</td>
 </tr>
