@@ -702,7 +702,7 @@ spec:
             memory: 4Gi
         ssh:
           authorizedKeys:
-            - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAID3ZpwI02mjSUaGfrNWgFn9L6bBfzdTcZOtgkyfi6DLD
+            - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBmLB6cYu1Ts99VDJunSvJ6Cp6XR3MIcrC/ciia+uZOJ
   destination:
     server: https://kubernetes.default.svc
     namespace: claude-agents
