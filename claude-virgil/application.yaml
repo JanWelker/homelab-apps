@@ -6,41 +6,47 @@ metadata:
   namespace: argocd
 spec:
   project: apps
-  source:
-    # An OCI chart, so there is no directory to exclude application.yaml from.
+  sources:
+    # An OCI chart, so its source has no directory to exclude application.yaml from.
     # Why each value is what it is: docs/claude-agents.md#configuration
-    repoURL: ghcr.io/janwelker/charts
-    chart: agent-mooring
-    targetRevision: 0.5.79
-    helm:
-      valuesObject:
-        session: virgil
-        repos:
-          - JanWelker/virgil
-        # The same skills as the laptop; see docs/claude-agents.md#configuration
-        skills:
-          repo: JanWelker/claude-skills
-        kubernetes:
-          access: none
-        argocd:
-          enabled: false
-        # The session tokens live at kv/claude-<session>/; see docs/claude-agents.md#secrets
-        secretStore:
-          name: openbao-claude-agents
-          kind: ClusterSecretStore
-        # Idle most of the time; see docs/claude-agents.md#configuration
-        resources:
-          requests:
-            cpu: 100m
-            memory: 768Mi
-          limits:
-            memory: 4Gi
-        ssh:
-          authorizedKeys:
-            - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIETuZF0g6gNIFXZbpaTokh3fm3MqqA68DjO+gSOMTDOW
+    - repoURL: ghcr.io/janwelker/charts
+      chart: agent-mooring
+      targetRevision: 0.5.79
+      helm:
+        valuesObject:
+          session: virgil
+          repos:
+            - JanWelker/virgil
+          # The same skills as the laptop; see docs/claude-agents.md#configuration
+          skills:
+            repo: JanWelker/claude-skills
+          kubernetes:
+            access: none
+          argocd:
+            enabled: false
+          # The session token lives at kv/claude-<session>/github; see docs/claude-agents.md#secrets
+          secretStore:
+            name: openbao-apps
+            kind: ClusterSecretStore
+          # Idle most of the time; see docs/claude-agents.md#configuration
+          resources:
+            requests:
+              cpu: 100m
+              memory: 768Mi
+            limits:
+              memory: 4Gi
+          ssh:
+            authorizedKeys:
+              - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIETuZF0g6gNIFXZbpaTokh3fm3MqqA68DjO+gSOMTDOW
+    # The namespace's objects the chart does not render; see docs/claude-agents.md#configuration
+    - repoURL: https://github.com/JanWelker/homelab-apps.git
+      targetRevision: HEAD
+      path: claude-virgil
+      directory:
+        exclude: "application.yaml"
   destination:
     server: https://kubernetes.default.svc
-    namespace: claude-agents
+    namespace: claude-virgil
   syncPolicy:
     automated:
       prune: true
