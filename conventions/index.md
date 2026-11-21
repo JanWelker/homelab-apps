@@ -134,6 +134,8 @@ The API server fills in defaults for what a route leaves out, and ArgoCD reports
 
 A route that leaves either out reports `OutOfSync` forever while working fine. `sectionName` on the `parentRefs` entry picks the listener, and a listener pins one hostname pattern, so the wollbi sites name their own; the table is [Gateway API → Configuration](<https://homelab.wlkr.ch/platform/gateway-api/#configuration>).
 
+A route on `apps-gateway` also carries a `ResponseHeaderModifier` that sets `Strict-Transport-Security`, `X-Content-Type-Options: nosniff` and `X-Frame-Options: SAMEORIGIN`; copy it from [`flowscape/httproute.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/flowscape/httproute.yaml>). It `set`s rather than `add`s, since the Authentik outpost already sends them and a duplicated frame header is invalid. HSTS names no `includeSubDomains` or `preload`, because other names under these domains are not served from here. A route rendered by a chart that has no `filters` value (shot bridge, Extractor admin UI) cannot carry it until the chart does.
+
 ## Behind the Gateway
 
 Traffic arrives from Cilium's Envoy inside the [pod subnet](<https://homelab.wlkr.ch/architecture/#cluster-layout>), not from the client, and TLS is terminated at the Gateway. An application that trusts `REMOTE_ADDR` sees the proxy, and one that builds absolute URLs from the request scheme produces `http://` links on an `https://` site. Look for a trusted-proxies setting and an overwrite-protocol setting; if the login redirect loops, this is why.
