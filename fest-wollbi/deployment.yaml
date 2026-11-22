@@ -28,7 +28,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: fest-wollbi
-          image: ghcr.io/janwelker/fest-wollbi-ch:0.1.31@sha256:921e730bb5a3f755be43f895c581485d57690e4811d674acfcc89b9d7c1063c3
+          image: ghcr.io/janwelker/fest-wollbi-ch:0.1.32@sha256:11d6981ed3198daea088a9b1eb1ac1bed2129478d70d863818ee6ce7372edfb5
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
