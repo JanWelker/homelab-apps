@@ -5,11 +5,12 @@ description: "The applications running on the homelab cluster, how they get depl
 # Homelab Applications
 
 The applications the [homelab cluster](https://homelab.wlkr.ch/) exists to
-run. The cluster itself — Flatcar, Kubeadm, Cilium, Rook-Ceph, ArgoCD and
-everything under them — is a
+run. The cluster itself is a
 [separate repository](https://github.com/JanWelker/homelab) with
 [its own documentation](https://homelab.wlkr.ch/); this site covers only what
-runs on top.
+runs on top. New to these terms: read
+[Core Concepts](https://homelab.wlkr.ch/concepts/) first, then
+[Conventions](conventions.md).
 
 ## Applications
 
@@ -22,10 +23,14 @@ runs on top.
 | [Home Assistant](home-assistant.md) | [home.k8s.wlkr.ch](https://home.k8s.wlkr.ch) | A PVC for `/config` | CloudNativePG, for the recorder | Authentik proxy, in front of its own login |
 | [Knead Time](kneadtime.md) | [kneadtime.k8s.wlkr.ch](https://kneadtime.k8s.wlkr.ch/v1/vapid) | None | CloudNativePG | None; CORS admits kneadtime.pizza only |
 | [OpenCloud](opencloud.md) | [cloud.infra.k8s.wlkr.ch](https://cloud.infra.k8s.wlkr.ch) | A PVC for the files, metadata and index | None | Authentik OIDC, web and native clients |
-| [Shot Timer bridge](shot-bridge.md) | [shot.k8s.wlkr.ch](https://shot.k8s.wlkr.ch/healthz) | A PVC for SQLite and the installation key | CloudNativePG | The bridge's own bearer key |
+| [Shot Timer bridge](shot-bridge.md) | [shot.k8s.wlkr.ch](https://shot.k8s.wlkr.ch/healthz) | A PVC for the La Marzocco installation key | CloudNativePG | The bridge's own bearer key |
 | [Umami](umami.md) | [analytics.k8s.wlkr.ch](https://analytics.k8s.wlkr.ch) | None | CloudNativePG | Authentik proxy, in front of its own login; the tracker paths are public |
-| [Wollbi Adventsfenster](advent-wollbi.md) | [advent.wollbi.ch](https://advent.wollbi.ch) | A PVC for uploads | CloudNativePG | Public; Authentik proxy on `/admin` only |
-| [Wollbi-Fescht](fest-wollbi.md) | [fest.wollbi.ch](https://fest.wollbi.ch) | A PVC for uploads | CloudNativePG | Public; Authentik proxy on `/admin` only |
+| [Wollbi Adventsfenster](advent-wollbi.md) | [advent.wollbi.ch](https://advent.wollbi.ch) | A PVC for uploads | CloudNativePG | Public; editors sign in on `/admin` over Authentik OIDC |
+| [Wollbi-Fescht](fest-wollbi.md) | [fest.wollbi.ch](https://fest.wollbi.ch) | A PVC for uploads | CloudNativePG | Public; editors sign in on `/admin` over Authentik OIDC |
+
+Dependency-Track, Home Assistant, OpenCloud and Umami are upstream software a
+fork can copy; the rest run the repository owner's own images, some built
+from private repositories.
 
 ## How a directory becomes an application
 
@@ -43,35 +48,27 @@ homelab (platform)                    homelab-apps (this repository)
 
 The platform names this repository in two places, the ApplicationSet's
 `repoURL` and the `apps` project's `sourceRepos`, and never reads what is in
-it. Nothing orders a workload after the platform it
+it; it does list workload namespaces by name for secrets, sign-in, the
+outpost and `infra-gateway`, which a fork changes too (rules
+[6](conventions.md#6-authentication-is-authentiks-not-the-applications) and
+[7](conventions.md#7-real-secrets-come-from-openbao)). Nothing orders a workload after the platform it
 uses: each Application syncs as soon as it exists and retries until the
 Gateway, StorageClass or `ClusterSecretStore` it names is there — the
 [sync policy](conventions.md#8-the-shared-syncpolicy) is the same one every
 platform Application carries. Why the split exists is in
 [GitOps Strategy](https://homelab.wlkr.ch/architecture/gitops/#workloads-live-in-a-second-repository).
 
-## What they have in common
-
-Every directory follows the same eight rules, each with one sentence of why:
-[Conventions](conventions.md).
-
 ## Authentication
 
-Every application with a browser login goes through
-[Authentik](https://homelab.wlkr.ch/platform/authentik/), in the shape each one
-supports. [Dependency-Track](dependency-track.md) and [OpenCloud](opencloud.md) speak
-OIDC, so they are real single sign-on. [Home Assistant](home-assistant.md) and
-[Umami](umami.md) ship no OIDC provider, so the Authentik outpost sits in
-front of their own logins and browser users authenticate twice;
-[Flowscape](flowscape.md) and the [Extractor admin UI](extractor-admin.md)
-have no login, so the outpost is the only one. All use `auth.k8s.wlkr.ch`,
-Authentik's only hostname; see
-[One hostname](https://homelab.wlkr.ch/platform/authentik/#one-hostname).
-The three APIs without a browser session carry their own credential, the
-exception in [Conventions → rule 6](conventions.md#6-authentication-is-authentiks-not-the-applications).
+Every browser login goes through
+[Authentik](https://homelab.wlkr.ch/platform/authentik/): over OIDC where the
+application speaks it, otherwise through the outpost, which in front of an
+application's own login means signing in twice. The shapes, the API exception
+and the one hostname are
+[Conventions → rule 6](conventions.md#6-authentication-is-authentiks-not-the-applications).
 
 ## Adding one
 
-Read [Conventions](conventions.md) first; it is short. The step-by-step version
+Read [Conventions](conventions.md) first. The step-by-step version
 is [Adding a Workload](https://homelab.wlkr.ch/development/add-workload/) in the
 platform documentation.

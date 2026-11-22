@@ -6,10 +6,7 @@ description: "Home Assistant on the cluster: plain manifests around the official
 
 [Home Assistant](https://www.home-assistant.io/) runs the house. Upstream
 publishes no Helm chart and the community ones are repackagers, so
-`home-assistant/` is plain manifests around the official image:
-`deployment.yaml`, `service.yaml`, `pvc.yaml`, `configmap.yaml`,
-`httproute.yaml`, `database.yaml` with `backup.yaml`, `networkpolicy.yaml` and
-`namespace.yaml`, per
+`home-assistant/` is plain manifests around the official image, per
 [Conventions → Official upstream sources only](conventions.md#2-official-upstream-sources-only).
 
 ## At a glance
@@ -21,14 +18,6 @@ publishes no Helm chart and the community ones are repackagers, so
 | Storage | `rook-ceph-block` PVC for `/config` |
 | Database | CloudNativePG `Cluster` `home-assistant-db`, for the recorder |
 | Files | [`home-assistant/`](https://github.com/JanWelker/homelab-apps/tree/main/home-assistant) |
-
-## State
-
-| State | Where | Rebuildable? |
-| --- | --- | --- |
-| Registries, users, tokens, integration config (`/config/.storage`) | The `home-assistant-config` PVC | **No.** Losing it means re-pairing every device; the nightly [Velero snapshot](https://homelab.wlkr.ch/operations/backups/) is the only copy |
-| History and long-term statistics | PostgreSQL, via CloudNativePG | From its WAL archive, to any point inside its retention window |
-| `configuration.yaml` | A ConfigMap, in Git | Yes |
 
 ## Configuration
 
@@ -43,8 +32,16 @@ publishes no Helm chart and the community ones are repackagers, so
 | Recorder on CloudNativePG, not SQLite | SQLite's locking on a network block device is the usual cause of a Home Assistant that feels slow. `purge_keep_days` is raised because the default of 10 is shorter than the moment you look for a graph. See [the contract](https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract) |
 | `secrets.yaml` written by the init container on every start | Home Assistant has no `!env_var` tag, so the database URL reaches `configuration.yaml` through `!secret`, from CloudNativePG's Secret, which the operator rotates. The value is written through `json.dumps` so it is valid YAML whatever the generated password contains. Anything added to that file by hand is lost at the next restart; secrets belong in [OpenBao](https://homelab.wlkr.ch/platform/openbao/) |
 | `use_x_forwarded_for` with the pod CIDR in `trusted_proxies` | Requests arrive from Cilium's Envoy and the outpost. Without it every request has one source address, so the ban list and rate limiting count the household as one user |
-| `HTTPRoute` targets `authentik-server`, not the app | The outpost authenticates and forwards to `home-assistant.home-assistant.svc:8123`. Home Assistant is the one proxied app with a login of its own, so browser users log in twice: defence in depth, not SSO. The cross-namespace `backendRef` works only because the platform's `referencegrant.yaml` names this namespace. Pointing the route at the Home Assistant Service instead silently removes the whole authentication layer, so it deserves a second look in review |
+| `HTTPRoute` targets `authentik-server`, not the app | The outpost authenticates and forwards to `home-assistant.home-assistant.svc:8123`. Home Assistant and [Umami](umami.md) are the proxied apps with a login of their own, so browser users log in twice: defence in depth, not SSO. The cross-namespace `backendRef` works only because the platform's `referencegrant.yaml` names this namespace. Pointing the route at the Home Assistant Service instead silently removes the whole authentication layer, so it deserves a second look in review |
 | `frontend.extra_module_url`, with `umami.js` from the ConfigMap mounted under `/config/www` | The Umami snippet. The frontend loads the URL through `import()`, and the tracker reads its website ID off its own `<script>` tag, so the module appends that tag rather than being it. See [Umami → Usage](umami.md#usage) |
+
+### State
+
+| State | Where | Rebuildable? |
+| --- | --- | --- |
+| Registries, users, tokens, integration config (`/config/.storage`) | The `home-assistant-config` PVC | **No.** Losing it means re-pairing every device; the nightly [Velero snapshot](https://homelab.wlkr.ch/operations/backups/) is the only copy |
+| History and long-term statistics | PostgreSQL, via CloudNativePG | From its WAL archive, to any point inside its retention window |
+| `configuration.yaml` | A ConfigMap, in Git | Yes |
 
 ### Network policy
 
@@ -57,7 +54,7 @@ rollout and debugging are in
 | --- | --- |
 | Ingress from the namespace, from `host` and `remote-node`; egress to the namespace | The rules every policy carries: [What every policy contains](https://homelab.wlkr.ch/platform/security-policies/#what-every-policy-contains) |
 | Ingress on 8123 from the Authentik server pods only | The outpost is the only path to the UI. No `fromEntities: ingress`, so a request straight from the Gateway cannot skip it. Nothing else in the cluster has a reason to connect: this namespace holds a long-lived token for every device in the house. With the rule missing, the hostname answers with a gateway error after a successful Authentik login |
-| Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics; a week of Hubble records showed no other request |
+| Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics |
 | Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](conventions.md#sync-stuck-on-the-database) |
 | Egress to `*.home-assistant.io` and `data-v2.hacs.xyz` | The alerts feed and version data; the HACS store index, which HACS polls for its repository list. An integration that talks to a device or a cloud is a line here first |
 | Egress to the multicast and limited-broadcast ranges on 5353 and 1900 | The mDNS and SSDP discovery sockets keep sending, and the overlay carries it nowhere. Allowed only so it does not fill the drop log |
