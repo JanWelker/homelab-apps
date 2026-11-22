@@ -703,17 +703,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#state" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        State
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -724,6 +713,17 @@
   
     <nav class="md-nav" aria-label="Configuration">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#state" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        State
+      </span>
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#network-policy" class="md-nav__link">
@@ -990,17 +990,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#state" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        State
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1011,6 +1000,17 @@
   
     <nav class="md-nav" aria-label="Configuration">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#state" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        State
+      </span>
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#network-policy" class="md-nav__link">
@@ -1102,10 +1102,7 @@
 <h1 id="home-assistant">Home Assistant<a class="headerlink" href="#home-assistant" title="Permanent link">&para;</a></h1>
 <p><a href="https://www.home-assistant.io/">Home Assistant</a> runs the house. Upstream
 publishes no Helm chart and the community ones are repackagers, so
-<code>home-assistant/</code> is plain manifests around the official image:
-<code>deployment.yaml</code>, <code>service.yaml</code>, <code>pvc.yaml</code>, <code>configmap.yaml</code>,
-<code>httproute.yaml</code>, <code>database.yaml</code> with <code>backup.yaml</code>, <code>networkpolicy.yaml</code> and
-<code>namespace.yaml</code>, per
+<code>home-assistant/</code> is plain manifests around the official image, per
 <a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>.</p>
 <h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
 <table>
@@ -1135,33 +1132,6 @@ publishes no Helm chart and the community ones are repackagers, so
 <tr>
 <td>Files</td>
 <td><a href="https://github.com/JanWelker/homelab-apps/tree/main/home-assistant"><code>home-assistant/</code></a></td>
-</tr>
-</tbody>
-</table>
-<h2 id="state">State<a class="headerlink" href="#state" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>State</th>
-<th>Where</th>
-<th>Rebuildable?</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Registries, users, tokens, integration config (<code>/config/.storage</code>)</td>
-<td>The <code>home-assistant-config</code> PVC</td>
-<td><strong>No.</strong> Losing it means re-pairing every device; the nightly <a href="https://homelab.wlkr.ch/operations/backups/">Velero snapshot</a> is the only copy</td>
-</tr>
-<tr>
-<td>History and long-term statistics</td>
-<td>PostgreSQL, via CloudNativePG</td>
-<td>From its WAL archive, to any point inside its retention window</td>
-</tr>
-<tr>
-<td><code>configuration.yaml</code></td>
-<td>A ConfigMap, in Git</td>
-<td>Yes</td>
 </tr>
 </tbody>
 </table>
@@ -1212,11 +1182,38 @@ publishes no Helm chart and the community ones are repackagers, so
 </tr>
 <tr>
 <td><code>HTTPRoute</code> targets <code>authentik-server</code>, not the app</td>
-<td>The outpost authenticates and forwards to <code>home-assistant.home-assistant.svc:8123</code>. Home Assistant is the one proxied app with a login of its own, so browser users log in twice: defence in depth, not SSO. The cross-namespace <code>backendRef</code> works only because the platform's <code>referencegrant.yaml</code> names this namespace. Pointing the route at the Home Assistant Service instead silently removes the whole authentication layer, so it deserves a second look in review</td>
+<td>The outpost authenticates and forwards to <code>home-assistant.home-assistant.svc:8123</code>. Home Assistant and <a href="../umami/">Umami</a> are the proxied apps with a login of their own, so browser users log in twice: defence in depth, not SSO. The cross-namespace <code>backendRef</code> works only because the platform's <code>referencegrant.yaml</code> names this namespace. Pointing the route at the Home Assistant Service instead silently removes the whole authentication layer, so it deserves a second look in review</td>
 </tr>
 <tr>
 <td><code>frontend.extra_module_url</code>, with <code>umami.js</code> from the ConfigMap mounted under <code>/config/www</code></td>
 <td>The Umami snippet. The frontend loads the URL through <code>import()</code>, and the tracker reads its website ID off its own <code>&lt;script&gt;</code> tag, so the module appends that tag rather than being it. See <a href="../umami/#usage">Umami → Usage</a></td>
+</tr>
+</tbody>
+</table>
+<h3 id="state">State<a class="headerlink" href="#state" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Where</th>
+<th>Rebuildable?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Registries, users, tokens, integration config (<code>/config/.storage</code>)</td>
+<td>The <code>home-assistant-config</code> PVC</td>
+<td><strong>No.</strong> Losing it means re-pairing every device; the nightly <a href="https://homelab.wlkr.ch/operations/backups/">Velero snapshot</a> is the only copy</td>
+</tr>
+<tr>
+<td>History and long-term statistics</td>
+<td>PostgreSQL, via CloudNativePG</td>
+<td>From its WAL archive, to any point inside its retention window</td>
+</tr>
+<tr>
+<td><code>configuration.yaml</code></td>
+<td>A ConfigMap, in Git</td>
+<td>Yes</td>
 </tr>
 </tbody>
 </table>
@@ -1243,7 +1240,7 @@ rollout and debugging are in
 </tr>
 <tr>
 <td>Ingress from Prometheus on 9187, <code>GET /metrics</code> only</td>
-<td>The database's metrics; a week of Hubble records showed no other request</td>
+<td>The database's metrics</td>
 </tr>
 <tr>
 <td>Ingress from <code>cnpg-system</code> on 8000</td>

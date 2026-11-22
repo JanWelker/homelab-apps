@@ -1,6 +1,6 @@
 # Conventions
 
-Rules every directory in this repository follows. They are short because the platform does most of the work; [Adding a Workload](<https://homelab.wlkr.ch/development/add-workload/>) in the platform documentation is the long version.
+Rules every directory in this repository follows, each with its reason. [Adding a Workload](<https://homelab.wlkr.ch/development/add-workload/>) in the platform documentation has the templates.
 
 ## Structure
 
@@ -13,7 +13,7 @@ Everything beside `application.yaml` is what that Application deploys, which is 
       exclude: "application.yaml"
 ```
 
-Exception: the `claude-*` sessions have no `exclude`, because an OCI chart source has no directory for it to act on; see [Claude agents](<https://homelab-apps.wlkr.ch/claude-agents/index.md#configuration>).
+Exception: in the `claude-*` sessions only the directory source carries it, because their OCI chart source has no directory to act on; see [Claude agents](<https://homelab-apps.wlkr.ch/claude-agents/index.md#configuration>).
 
 ## The rules
 
@@ -23,11 +23,11 @@ The ApplicationSet fails the whole set rather than generate a workload in the `i
 
 ### 2\. Official upstream sources only
 
-The vendor's own Helm chart, or the vendor's own container image, never a repackager's. Dependency-Track publishes its own chart; Home Assistant publishes none, so it is plain manifests around the official `ghcr.io/home-assistant/home-assistant` image.
+The vendor's own Helm chart, or the vendor's own container image, never a repackager's. Dependency-Track publishes its own chart; Home Assistant publishes none, so it is plain manifests around the official `ghcr.io/home-assistant/home-assistant` image. A chart from a new repository needs the `apps` project's `sourceRepos` and the repo-server's egress policy extended in the platform first, or the Application reads `ComparisonError` ([Projects](<https://homelab.wlkr.ch/platform/argocd/#projects>)).
 
-The user's own chart wrapping the user's own image is allowed, as with the Flowscape images and the `agent-mooring` chart.
+The repository owner's own chart wrapping their own image is allowed, as with the Flowscape images and the `agent-mooring` chart.
 
-Pin every version. No `latest`, no floating tags. Renovate moves them; the release age and schedule are set per package in `renovate.json`, and the user's own images move at once, since the wait guards against an upstream tag being pulled. The `image-scan.yaml` workflow fails a pull request whose new image carries a fixable CRITICAL the old one did not — the [same gate as the platform](<https://homelab.wlkr.ch/development/maintenance/#ci-workflows>).
+Pin every version. No `latest`, no floating tags. Renovate moves them; release age and schedule come from the shared preset `renovate.json` extends (`github>JanWelker/renovate-config`), which a fork inherits unless it replaces that line, and the owner's own images move at once. `image-scan.yaml` is the [platform's image gate](<https://homelab.wlkr.ch/development/maintenance/#ci-workflows>).
 
 > [!WARNING]
 >
@@ -56,11 +56,9 @@ Give the `Cluster` an earlier sync wave than the application. ArgoCD has a healt
 
 Annotate it `Prune=false`, as the PVC and the namespace are: deleting a `Cluster` deletes the volumes it owns. A chart-rendered PVC needs the same annotation through the chart's values; `helm.sh/resource-policy: keep` only survives deleting the Application, not a prune.
 
-The reasoning is in [CloudNativePG → The contract](<https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract>).
-
 ### 4\. Own your namespace
 
-Ship a `namespace.yaml` at sync wave `-2` carrying the three Pod Security Admission labels; `CreateNamespace=true` alone leaves an unlabelled namespace that runs at `privileged`. Set `enforce` to what the application needs and `audit`/`warn` stricter, so the violations a tighter level would catch stay visible.
+Ship a `namespace.yaml` at sync wave `-2` carrying the three [Pod Security Admission](<https://homelab.wlkr.ch/platform/security-policies/#pod-security-admission>) labels; `CreateNamespace=true` alone leaves an unlabelled namespace that runs at `privileged`. Set `enforce` to what the application needs and `audit`/`warn` stricter, so the violations a tighter level would catch stay visible.
 
 Annotate it `Prune=false`: pruning a `Namespace` deletes every PVC inside it.
 
@@ -68,7 +66,7 @@ Exception: the `claude-*` sessions ship no namespace: the platform declares each
 
 ### 5\. Ship a `CiliumNetworkPolicy`
 
-Not a plain `NetworkPolicy`, which blocks the kubelet's health probes. Every policy needs `fromEntities: [host, remote-node]` for those probes, one rule for the way users arrive, the namespace itself on both halves (`fromEndpoints: [{}]`, `toEndpoints: [{}]`), and every outside name as `toFQDNs`. No DNS rule: the platform grants every pod its lookups through the proxy in one cluster-wide policy, so a copy here only hides what the namespace adds — see [Security Policies → Cluster-wide rules](<https://homelab.wlkr.ch/platform/security-policies/#cluster-wide-rules>). The arrival rule depends on rule 6: `fromEntities: [ingress]` where the Gateway reaches the pod directly, or the Authentik server pods and nothing else where the outpost sits in front, so a request cannot skip it. The template and the reasons are in the platform's [Adding a Workload](<https://homelab.wlkr.ch/development/add-workload/#the-network-policy>).
+Not a plain `NetworkPolicy`, which blocks the kubelet's health probes. Every policy needs `fromEntities: [host, remote-node]` for those probes, one rule for the way users arrive, the namespace itself on both halves (`fromEndpoints: [{}]`, `toEndpoints: [{}]`), and every outside name as `toFQDNs`. No DNS rule: the platform grants every pod its lookups through the proxy in one cluster-wide policy, so a copy here only hides what the namespace adds — see [Security Policies → Cluster-wide rules](<https://homelab.wlkr.ch/platform/security-policies/#cluster-wide-rules>). The arrival rule depends on rule 6: `fromEntities: [ingress]` where the Gateway reaches the pod directly, or the Authentik server pods and nothing else where the outpost sits in front, so a request cannot skip it.
 
 Put it at sync wave `-2`, with the namespace:
 
@@ -99,9 +97,9 @@ Because blueprint discovery is asynchronous, anything that configures itself aga
 
 ### 7\. Real secrets come from OpenBao
 
-An `ExternalSecret` reading `kv/<app>/config`, with a comment at the top of the file naming what writes it. It and any `PushSecret` name the `openbao-apps` store, and `secrets.yaml` starts with an `external-secrets-vault` ServiceAccount at sync wave `-2`: the store logs in as it and reaches `kv/<namespace>/` only, so `<app>` is the namespace — see [Kubernetes auth](<https://homelab.wlkr.ch/platform/openbao/#kubernetes-auth>). Random values — session keys, admin passwords, OIDC client pairs — come from a `Password` generator and a `PushSecret` at the end of the same `secrets.yaml`, at sync wave `-2` so they land before the `ExternalSecret` at `-1` — see [Generated secrets](<https://homelab.wlkr.ch/platform/openbao/#generated-secrets>). A value from an account outside the cluster, such as a model API key, is typed in with `make bao-secrets` in the platform repository, into a path of its own: a `bao kv put` replaces a path wholesale and would take the generated keys with it. Database passwords are neither, because CloudNativePG generates them (rule 3).
+An `ExternalSecret` reading `kv/<app>/config`, with a comment at the top of the file naming what writes it. It and any `PushSecret` name the `openbao-apps` store, and `secrets.yaml` starts with an `external-secrets-vault` ServiceAccount at sync wave `-2`: the store logs in as it and reaches `kv/<namespace>/` only, so `<app>` is the namespace — see [Kubernetes auth](<https://homelab.wlkr.ch/platform/openbao/#kubernetes-auth>). The store admits only the namespaces listed in the platform's `cluster-secret-store.yaml`, so a new application's `ExternalSecret` and `PushSecret` fail until a platform pull request adds the namespace and `make bao-policies` runs. Random values — session keys, admin passwords, OIDC client pairs — come from a `Password` generator and a `PushSecret` at the end of the same `secrets.yaml`, at sync wave `-2` so they land before the `ExternalSecret` at `-1` — see [Generated secrets](<https://homelab.wlkr.ch/platform/openbao/#generated-secrets>). A value from an account outside the cluster, such as a model API key, is typed in with `make bao-secrets` in the platform repository, into a path of its own: a `bao kv put` replaces a path wholesale and would take the generated keys with it. Database passwords are neither, because CloudNativePG generates them (rule 3).
 
-OIDC client credentials go in the application's own `kv/<app>/config`, never under `kv/authentik/config`: a `bao kv put` replaces a path wholesale, so sharing it would make adding an application an Authentik outage.
+OIDC client credentials go in the application's own `kv/<app>/config`, never under `kv/authentik/config`, where that wholesale replace would make adding an application an Authentik outage.
 
 Exception: the `claude-*` sessions' `ExternalSecret`s come from the chart and read `kv/claude-<session>/github`, the prefix of their own namespace; see [Claude agents → Secrets](<https://homelab-apps.wlkr.ch/claude-agents/index.md#secrets>).
 
@@ -115,8 +113,8 @@ The platform handles all of this; adding your own is the usual mistake:
 
 | You want | You write | The platform does |
 | --- | --- | --- |
-| A hostname | An `HTTPRoute` on `apps-gateway` | external-dns publishes the Route53 record |
-| HTTPS | Nothing | The Gateway holds a `*.k8s.wlkr.ch` wildcard |
+| A hostname | An `HTTPRoute` on `apps-gateway`, or on `infra-gateway` for LAN and VPN only, which admits named namespaces, so a platform pull request first | external-dns publishes the `apps-gateway` record to Route53 |
+| HTTPS | Nothing | Each listener holds a wildcard certificate; see [Gateway API](<https://homelab.wlkr.ch/platform/gateway-api/#configuration>) |
 | Storage | `storageClassName: rook-ceph-block` | Rook-Ceph replicates it three ways |
 | Logs | Nothing | Alloy ships stdout to Loki |
 | Backups of a PVC | Nothing | Velero snapshots it nightly; restoring is in [Backups &amp; Recovery](<https://homelab.wlkr.ch/operations/backups/>) |
@@ -125,7 +123,7 @@ The platform handles all of this; adding your own is the usual mistake:
 
 ## Writing an `HTTPRoute`
 
-The API server fills in defaults for what a route leaves out, and ArgoCD reports every filled-in field as drift unless the platform tells it to look away. It looks away for less than you might expect:
+The API server fills in defaults for what a route leaves out, and ArgoCD reports every filled-in field as drift unless the platform tells it to look away, which covers less than you might expect:
 
 | Write out | Because ArgoCD |
 | --- | --- |
@@ -138,7 +136,7 @@ A route on `apps-gateway` also carries a `ResponseHeaderModifier` that sets `Str
 
 ## Behind the Gateway
 
-Traffic arrives from Cilium's Envoy inside the [pod subnet](<https://homelab.wlkr.ch/architecture/#cluster-layout>), not from the client, and TLS is terminated at the Gateway. An application that trusts `REMOTE_ADDR` sees the proxy, and one that builds absolute URLs from the request scheme produces `http://` links on an `https://` site. Look for a trusted-proxies setting and an overwrite-protocol setting; if the login redirect loops, this is why.
+Traffic arrives from Cilium's Envoy, not the client, and TLS ends at the Gateway. Set the application's trusted-proxies and overwrite-protocol settings, or it sees the proxy's address, builds `http://` links and loops on the login redirect.
 
 ## Sync stuck on the database
 

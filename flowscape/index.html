@@ -1261,7 +1261,7 @@ port-forward.</p>
 <p><code>status.relay</code> should read <code>connected</code> with an empty <code>unavailable</code> list. In
 Grafana, <code>flowscape_relay_connected</code> and <code>flowscape_relay_unavailable_nodes</code>
 say the same over time, and <code>rate(flowscape_flows_received_total[5m])</code> should
-sit in the hundreds per second.</p>
+stay above zero.</p>
 <h2 id="pitfalls">Pitfalls<a class="headerlink" href="#pitfalls" title="Permanent link">&para;</a></h2>
 <div class="admonition warning">
 <p class="admonition-title">Amber means audited, not blocked</p>

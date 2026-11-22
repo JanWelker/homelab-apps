@@ -1326,11 +1326,11 @@ whether a policy holds across the portfolio.</p>
 </tr>
 <tr>
 <td><code>apiServer.web.resources</code>, below upstream's advice</td>
-<td>The JVM sizes its heap from the limit. Upstream recommends 8Gi for production; the portfolio here is a few hundred small images</td>
+<td>The JVM sizes its heap from the limit, and upstream's production advice is for a far larger portfolio than this cluster's</td>
 </tr>
 <tr>
 <td><code>dependency-track-db</code> resources</td>
-<td>The largest database here, a few GB of vulnerability data, and its working set sits above half a gigabyte; the request is the measured median and the limit 2.5x the peak, per the <a href="https://homelab.wlkr.ch/platform/#components">platform rule</a></td>
+<td>The largest database here, holding the vulnerability data; the request is the measured median and the limit 2.5x the peak, per the <a href="https://homelab.wlkr.ch/platform/#components">platform rule</a></td>
 </tr>
 <tr>
 <td><code>serviceMonitor.namespace: dependency-track</code></td>
@@ -1378,11 +1378,11 @@ shape is <a href="../conventions/#5-ship-a-ciliumnetworkpolicy">Conventions → 
 <td>Discovery, the signing keys and the userinfo endpoint, on the public name, because the <code>iss</code> claim is that name</td>
 </tr>
 <tr>
-<td>Egress from the API server to <code>nvd.nist.gov</code>, <code>storage.googleapis.com</code>, <code>api.github.com</code>, <code>epss.empiricalsecurity.com</code>, <code>www.cisa.gov</code>, <code>raw.githubusercontent.com</code></td>
+<td>Egress from the API server to the feeds' names</td>
 <td>The feeds the internal analyzer mirrors: NVD, OSV, GitHub Advisories, EPSS, and the CISA and ENISA known-exploited lists (ENISA publishes on GitHub). GitHub stays off until a token is entered in the UI; the rule is there so entering one is the only step</td>
 </tr>
 <tr>
-<td>Egress from the API server to <code>proxy.golang.org</code>, <code>registry.npmjs.org</code>, <code>pypi.org</code>, <code>repo1.maven.org</code>, <code>api.nuget.org</code>, <code>crates.io</code>, <code>index.crates.io</code>, <code>rubygems.org</code></td>
+<td>Egress from the API server to the package registries' names</td>
 <td>The registries Dependency-Track asks for the latest version of a component, for the ecosystems the images here contain. The other default repositories are disabled at <a href="#first-login">first login</a> rather than allowed</td>
 </tr>
 <tr>

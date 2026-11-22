@@ -1117,7 +1117,7 @@ recorded with the app's diagnostics switch on, their curves, merged timelines
 and stop legs, the uploaded logs, and the calibration runs. It has no login of
 its own and reads the bridge server side with the bridge's read-only token,
 which never reaches a browser. The source, the image and the chart live in
-<a href="https://github.com/somuch-cloud/extractor.cafe/tree/main/admin">somuch-cloud/extractor.cafe</a>;
+<a href="https://github.com/somuch-cloud/extractor.cafe/tree/main/admin">somuch-cloud/extractor.cafe</a> (private);
 the chart is published to <code>ghcr.io/somuch-cloud/charts</code>, per
 <a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>.</p>
 <h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
@@ -1139,7 +1139,7 @@ the chart is published to <code>ghcr.io/somuch-cloud/charts</code>, per
 </tr>
 <tr>
 <td>Storage</td>
-<td>None; everything is read from the bridge on each request</td>
+<td>None; every request reads the bridge</td>
 </tr>
 <tr>
 <td>Dials</td>

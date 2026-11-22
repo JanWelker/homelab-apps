@@ -10,7 +10,7 @@ platform underneath is documented at https://homelab.wlkr.ch/.
 
 # Homelab Applications
 
-The applications the [homelab cluster](<https://homelab.wlkr.ch/>) exists to run. The cluster itself — Flatcar, Kubeadm, Cilium, Rook-Ceph, ArgoCD and everything under them — is a [separate repository](<https://github.com/JanWelker/homelab>) with [its own documentation](<https://homelab.wlkr.ch/>); this site covers only what runs on top.
+The applications the [homelab cluster](<https://homelab.wlkr.ch/>) exists to run. The cluster itself is a [separate repository](<https://github.com/JanWelker/homelab>) with [its own documentation](<https://homelab.wlkr.ch/>); this site covers only what runs on top. New to these terms: read [Core Concepts](<https://homelab.wlkr.ch/concepts/>) first, then [Conventions](<https://homelab-apps.wlkr.ch/conventions/index.md>).
 
 ## Applications
 
@@ -23,10 +23,12 @@ The applications the [homelab cluster](<https://homelab.wlkr.ch/>) exists to run
 | [Home Assistant](<https://homelab-apps.wlkr.ch/home-assistant/index.md>) | [home.k8s.wlkr.ch](<https://home.k8s.wlkr.ch>) | A PVC for `/config` | CloudNativePG, for the recorder | Authentik proxy, in front of its own login |
 | [Knead Time](<https://homelab-apps.wlkr.ch/kneadtime/index.md>) | [kneadtime.k8s.wlkr.ch](<https://kneadtime.k8s.wlkr.ch/v1/vapid>) | None | CloudNativePG | None; CORS admits kneadtime.pizza only |
 | [OpenCloud](<https://homelab-apps.wlkr.ch/opencloud/index.md>) | [cloud.infra.k8s.wlkr.ch](<https://cloud.infra.k8s.wlkr.ch>) | A PVC for the files, metadata and index | None | Authentik OIDC, web and native clients |
-| [Shot Timer bridge](<https://homelab-apps.wlkr.ch/shot-bridge/index.md>) | [shot.k8s.wlkr.ch](<https://shot.k8s.wlkr.ch/healthz>) | A PVC for SQLite and the installation key | CloudNativePG | The bridge's own bearer key |
+| [Shot Timer bridge](<https://homelab-apps.wlkr.ch/shot-bridge/index.md>) | [shot.k8s.wlkr.ch](<https://shot.k8s.wlkr.ch/healthz>) | A PVC for the La Marzocco installation key | CloudNativePG | The bridge's own bearer key |
 | [Umami](<https://homelab-apps.wlkr.ch/umami/index.md>) | [analytics.k8s.wlkr.ch](<https://analytics.k8s.wlkr.ch>) | None | CloudNativePG | Authentik proxy, in front of its own login; the tracker paths are public |
-| [Wollbi Adventsfenster](<https://homelab-apps.wlkr.ch/advent-wollbi/index.md>) | [advent.wollbi.ch](<https://advent.wollbi.ch>) | A PVC for uploads | CloudNativePG | Public; Authentik proxy on `/admin` only |
-| [Wollbi-Fescht](<https://homelab-apps.wlkr.ch/fest-wollbi/index.md>) | [fest.wollbi.ch](<https://fest.wollbi.ch>) | A PVC for uploads | CloudNativePG | Public; Authentik proxy on `/admin` only |
+| [Wollbi Adventsfenster](<https://homelab-apps.wlkr.ch/advent-wollbi/index.md>) | [advent.wollbi.ch](<https://advent.wollbi.ch>) | A PVC for uploads | CloudNativePG | Public; editors sign in on `/admin` over Authentik OIDC |
+| [Wollbi-Fescht](<https://homelab-apps.wlkr.ch/fest-wollbi/index.md>) | [fest.wollbi.ch](<https://fest.wollbi.ch>) | A PVC for uploads | CloudNativePG | Public; editors sign in on `/admin` over Authentik OIDC |
+
+Dependency-Track, Home Assistant, OpenCloud and Umami are upstream software a fork can copy; the rest run the repository owner's own images, some built from private repositories.
 
 ## How a directory becomes an application
 
@@ -40,23 +42,19 @@ homelab (platform)                    homelab-apps (this repository)
                                                 └── one Application per directory
 ```
 
-The platform names this repository in two places, the ApplicationSet's `repoURL` and the `apps` project's `sourceRepos`, and never reads what is in it. Nothing orders a workload after the platform it uses: each Application syncs as soon as it exists and retries until the Gateway, StorageClass or `ClusterSecretStore` it names is there — the [sync policy](<https://homelab-apps.wlkr.ch/conventions/index.md#8-the-shared-syncpolicy>) is the same one every platform Application carries. Why the split exists is in [GitOps Strategy](<https://homelab.wlkr.ch/architecture/gitops/#workloads-live-in-a-second-repository>).
-
-## What they have in common
-
-Every directory follows the same eight rules, each with one sentence of why: [Conventions](<https://homelab-apps.wlkr.ch/conventions/index.md>).
+The platform names this repository in two places, the ApplicationSet's `repoURL` and the `apps` project's `sourceRepos`, and never reads what is in it; it does list workload namespaces by name for secrets, sign-in, the outpost and `infra-gateway`, which a fork changes too (rules [6](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>) and [7](<https://homelab-apps.wlkr.ch/conventions/index.md#7-real-secrets-come-from-openbao>)). Nothing orders a workload after the platform it uses: each Application syncs as soon as it exists and retries until the Gateway, StorageClass or `ClusterSecretStore` it names is there — the [sync policy](<https://homelab-apps.wlkr.ch/conventions/index.md#8-the-shared-syncpolicy>) is the same one every platform Application carries. Why the split exists is in [GitOps Strategy](<https://homelab.wlkr.ch/architecture/gitops/#workloads-live-in-a-second-repository>).
 
 ## Authentication
 
-Every application with a browser login goes through [Authentik](<https://homelab.wlkr.ch/platform/authentik/>), in the shape each one supports. [Dependency-Track](<https://homelab-apps.wlkr.ch/dependency-track/index.md>) and [OpenCloud](<https://homelab-apps.wlkr.ch/opencloud/index.md>) speak OIDC, so they are real single sign-on. [Home Assistant](<https://homelab-apps.wlkr.ch/home-assistant/index.md>) and [Umami](<https://homelab-apps.wlkr.ch/umami/index.md>) ship no OIDC provider, so the Authentik outpost sits in front of their own logins and browser users authenticate twice; [Flowscape](<https://homelab-apps.wlkr.ch/flowscape/index.md>) and the [Extractor admin UI](<https://homelab-apps.wlkr.ch/extractor-admin/index.md>) have no login, so the outpost is the only one. All use `auth.k8s.wlkr.ch`, Authentik's only hostname; see [One hostname](<https://homelab.wlkr.ch/platform/authentik/#one-hostname>). The three APIs without a browser session carry their own credential, the exception in [Conventions → rule 6](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>).
+Every browser login goes through [Authentik](<https://homelab.wlkr.ch/platform/authentik/>): over OIDC where the application speaks it, otherwise through the outpost, which in front of an application's own login means signing in twice. The shapes, the API exception and the one hostname are [Conventions → rule 6](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>).
 
 ## Adding one
 
-Read [Conventions](<https://homelab-apps.wlkr.ch/conventions/index.md>) first; it is short. The step-by-step version is [Adding a Workload](<https://homelab.wlkr.ch/development/add-workload/>) in the platform documentation.
+Read [Conventions](<https://homelab-apps.wlkr.ch/conventions/index.md>) first. The step-by-step version is [Adding a Workload](<https://homelab.wlkr.ch/development/add-workload/>) in the platform documentation.
 
 # Conventions
 
-Rules every directory in this repository follows. They are short because the platform does most of the work; [Adding a Workload](<https://homelab.wlkr.ch/development/add-workload/>) in the platform documentation is the long version.
+Rules every directory in this repository follows, each with its reason. [Adding a Workload](<https://homelab.wlkr.ch/development/add-workload/>) in the platform documentation has the templates.
 
 ## Structure
 
@@ -69,7 +67,7 @@ Everything beside `application.yaml` is what that Application deploys, which is 
       exclude: "application.yaml"
 ```
 
-Exception: the `claude-*` sessions have no `exclude`, because an OCI chart source has no directory for it to act on; see [Claude agents](<https://homelab-apps.wlkr.ch/claude-agents/index.md#configuration>).
+Exception: in the `claude-*` sessions only the directory source carries it, because their OCI chart source has no directory to act on; see [Claude agents](<https://homelab-apps.wlkr.ch/claude-agents/index.md#configuration>).
 
 ## The rules
 
@@ -79,11 +77,11 @@ The ApplicationSet fails the whole set rather than generate a workload in the `i
 
 ### 2\. Official upstream sources only
 
-The vendor's own Helm chart, or the vendor's own container image, never a repackager's. Dependency-Track publishes its own chart; Home Assistant publishes none, so it is plain manifests around the official `ghcr.io/home-assistant/home-assistant` image.
+The vendor's own Helm chart, or the vendor's own container image, never a repackager's. Dependency-Track publishes its own chart; Home Assistant publishes none, so it is plain manifests around the official `ghcr.io/home-assistant/home-assistant` image. A chart from a new repository needs the `apps` project's `sourceRepos` and the repo-server's egress policy extended in the platform first, or the Application reads `ComparisonError` ([Projects](<https://homelab.wlkr.ch/platform/argocd/#projects>)).
 
-The user's own chart wrapping the user's own image is allowed, as with the Flowscape images and the `agent-mooring` chart.
+The repository owner's own chart wrapping their own image is allowed, as with the Flowscape images and the `agent-mooring` chart.
 
-Pin every version. No `latest`, no floating tags. Renovate moves them; the release age and schedule are set per package in `renovate.json`, and the user's own images move at once, since the wait guards against an upstream tag being pulled. The `image-scan.yaml` workflow fails a pull request whose new image carries a fixable CRITICAL the old one did not — the [same gate as the platform](<https://homelab.wlkr.ch/development/maintenance/#ci-workflows>).
+Pin every version. No `latest`, no floating tags. Renovate moves them; release age and schedule come from the shared preset `renovate.json` extends (`github>JanWelker/renovate-config`), which a fork inherits unless it replaces that line, and the owner's own images move at once. `image-scan.yaml` is the [platform's image gate](<https://homelab.wlkr.ch/development/maintenance/#ci-workflows>).
 
 > [!WARNING]
 >
@@ -112,11 +110,9 @@ Give the `Cluster` an earlier sync wave than the application. ArgoCD has a healt
 
 Annotate it `Prune=false`, as the PVC and the namespace are: deleting a `Cluster` deletes the volumes it owns. A chart-rendered PVC needs the same annotation through the chart's values; `helm.sh/resource-policy: keep` only survives deleting the Application, not a prune.
 
-The reasoning is in [CloudNativePG → The contract](<https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract>).
-
 ### 4\. Own your namespace
 
-Ship a `namespace.yaml` at sync wave `-2` carrying the three Pod Security Admission labels; `CreateNamespace=true` alone leaves an unlabelled namespace that runs at `privileged`. Set `enforce` to what the application needs and `audit`/`warn` stricter, so the violations a tighter level would catch stay visible.
+Ship a `namespace.yaml` at sync wave `-2` carrying the three [Pod Security Admission](<https://homelab.wlkr.ch/platform/security-policies/#pod-security-admission>) labels; `CreateNamespace=true` alone leaves an unlabelled namespace that runs at `privileged`. Set `enforce` to what the application needs and `audit`/`warn` stricter, so the violations a tighter level would catch stay visible.
 
 Annotate it `Prune=false`: pruning a `Namespace` deletes every PVC inside it.
 
@@ -124,7 +120,7 @@ Exception: the `claude-*` sessions ship no namespace: the platform declares each
 
 ### 5\. Ship a `CiliumNetworkPolicy`
 
-Not a plain `NetworkPolicy`, which blocks the kubelet's health probes. Every policy needs `fromEntities: [host, remote-node]` for those probes, one rule for the way users arrive, the namespace itself on both halves (`fromEndpoints: [{}]`, `toEndpoints: [{}]`), and every outside name as `toFQDNs`. No DNS rule: the platform grants every pod its lookups through the proxy in one cluster-wide policy, so a copy here only hides what the namespace adds — see [Security Policies → Cluster-wide rules](<https://homelab.wlkr.ch/platform/security-policies/#cluster-wide-rules>). The arrival rule depends on rule 6: `fromEntities: [ingress]` where the Gateway reaches the pod directly, or the Authentik server pods and nothing else where the outpost sits in front, so a request cannot skip it. The template and the reasons are in the platform's [Adding a Workload](<https://homelab.wlkr.ch/development/add-workload/#the-network-policy>).
+Not a plain `NetworkPolicy`, which blocks the kubelet's health probes. Every policy needs `fromEntities: [host, remote-node]` for those probes, one rule for the way users arrive, the namespace itself on both halves (`fromEndpoints: [{}]`, `toEndpoints: [{}]`), and every outside name as `toFQDNs`. No DNS rule: the platform grants every pod its lookups through the proxy in one cluster-wide policy, so a copy here only hides what the namespace adds — see [Security Policies → Cluster-wide rules](<https://homelab.wlkr.ch/platform/security-policies/#cluster-wide-rules>). The arrival rule depends on rule 6: `fromEntities: [ingress]` where the Gateway reaches the pod directly, or the Authentik server pods and nothing else where the outpost sits in front, so a request cannot skip it.
 
 Put it at sync wave `-2`, with the namespace:
 
@@ -155,9 +151,9 @@ Because blueprint discovery is asynchronous, anything that configures itself aga
 
 ### 7\. Real secrets come from OpenBao
 
-An `ExternalSecret` reading `kv/<app>/config`, with a comment at the top of the file naming what writes it. It and any `PushSecret` name the `openbao-apps` store, and `secrets.yaml` starts with an `external-secrets-vault` ServiceAccount at sync wave `-2`: the store logs in as it and reaches `kv/<namespace>/` only, so `<app>` is the namespace — see [Kubernetes auth](<https://homelab.wlkr.ch/platform/openbao/#kubernetes-auth>). Random values — session keys, admin passwords, OIDC client pairs — come from a `Password` generator and a `PushSecret` at the end of the same `secrets.yaml`, at sync wave `-2` so they land before the `ExternalSecret` at `-1` — see [Generated secrets](<https://homelab.wlkr.ch/platform/openbao/#generated-secrets>). A value from an account outside the cluster, such as a model API key, is typed in with `make bao-secrets` in the platform repository, into a path of its own: a `bao kv put` replaces a path wholesale and would take the generated keys with it. Database passwords are neither, because CloudNativePG generates them (rule 3).
+An `ExternalSecret` reading `kv/<app>/config`, with a comment at the top of the file naming what writes it. It and any `PushSecret` name the `openbao-apps` store, and `secrets.yaml` starts with an `external-secrets-vault` ServiceAccount at sync wave `-2`: the store logs in as it and reaches `kv/<namespace>/` only, so `<app>` is the namespace — see [Kubernetes auth](<https://homelab.wlkr.ch/platform/openbao/#kubernetes-auth>). The store admits only the namespaces listed in the platform's `cluster-secret-store.yaml`, so a new application's `ExternalSecret` and `PushSecret` fail until a platform pull request adds the namespace and `make bao-policies` runs. Random values — session keys, admin passwords, OIDC client pairs — come from a `Password` generator and a `PushSecret` at the end of the same `secrets.yaml`, at sync wave `-2` so they land before the `ExternalSecret` at `-1` — see [Generated secrets](<https://homelab.wlkr.ch/platform/openbao/#generated-secrets>). A value from an account outside the cluster, such as a model API key, is typed in with `make bao-secrets` in the platform repository, into a path of its own: a `bao kv put` replaces a path wholesale and would take the generated keys with it. Database passwords are neither, because CloudNativePG generates them (rule 3).
 
-OIDC client credentials go in the application's own `kv/<app>/config`, never under `kv/authentik/config`: a `bao kv put` replaces a path wholesale, so sharing it would make adding an application an Authentik outage.
+OIDC client credentials go in the application's own `kv/<app>/config`, never under `kv/authentik/config`, where that wholesale replace would make adding an application an Authentik outage.
 
 Exception: the `claude-*` sessions' `ExternalSecret`s come from the chart and read `kv/claude-<session>/github`, the prefix of their own namespace; see [Claude agents → Secrets](<https://homelab-apps.wlkr.ch/claude-agents/index.md#secrets>).
 
@@ -171,8 +167,8 @@ The platform handles all of this; adding your own is the usual mistake:
 
 | You want | You write | The platform does |
 | --- | --- | --- |
-| A hostname | An `HTTPRoute` on `apps-gateway` | external-dns publishes the Route53 record |
-| HTTPS | Nothing | The Gateway holds a `*.k8s.wlkr.ch` wildcard |
+| A hostname | An `HTTPRoute` on `apps-gateway`, or on `infra-gateway` for LAN and VPN only, which admits named namespaces, so a platform pull request first | external-dns publishes the `apps-gateway` record to Route53 |
+| HTTPS | Nothing | Each listener holds a wildcard certificate; see [Gateway API](<https://homelab.wlkr.ch/platform/gateway-api/#configuration>) |
 | Storage | `storageClassName: rook-ceph-block` | Rook-Ceph replicates it three ways |
 | Logs | Nothing | Alloy ships stdout to Loki |
 | Backups of a PVC | Nothing | Velero snapshots it nightly; restoring is in [Backups &amp; Recovery](<https://homelab.wlkr.ch/operations/backups/>) |
@@ -181,7 +177,7 @@ The platform handles all of this; adding your own is the usual mistake:
 
 ## Writing an `HTTPRoute`
 
-The API server fills in defaults for what a route leaves out, and ArgoCD reports every filled-in field as drift unless the platform tells it to look away. It looks away for less than you might expect:
+The API server fills in defaults for what a route leaves out, and ArgoCD reports every filled-in field as drift unless the platform tells it to look away, which covers less than you might expect:
 
 | Write out | Because ArgoCD |
 | --- | --- |
@@ -194,7 +190,7 @@ A route on `apps-gateway` also carries a `ResponseHeaderModifier` that sets `Str
 
 ## Behind the Gateway
 
-Traffic arrives from Cilium's Envoy inside the [pod subnet](<https://homelab.wlkr.ch/architecture/#cluster-layout>), not from the client, and TLS is terminated at the Gateway. An application that trusts `REMOTE_ADDR` sees the proxy, and one that builds absolute URLs from the request scheme produces `http://` links on an `https://` site. Look for a trusted-proxies setting and an overwrite-protocol setting; if the login redirect loops, this is why.
+Traffic arrives from Cilium's Envoy, not the client, and TLS ends at the Gateway. Set the application's trusted-proxies and overwrite-protocol settings, or it sees the proxy's address, builds `http://` links and loops on the login redirect.
 
 ## Sync stuck on the database
 
@@ -231,7 +227,7 @@ The default-deny policy must allow the `cnpg-system` namespace to reach the data
 
 # Wollbi Adventsfenster
 
-[advent.wollbi.ch](<https://advent.wollbi.ch>) is the invitation to the street's advent windows: the flyer, the dates and the calendar file to import. It was a Pelican site until the pages became rows in a database: the content is now edited at `/admin` and the repository holds the application, not the text. The image is built in [JanWelker/advent.wollbi.ch](<https://github.com/JanWelker/advent.wollbi.ch>), so its upstream is our own — per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
+[advent.wollbi.ch](<https://advent.wollbi.ch>) is the invitation to the street's advent windows: the flyer, the dates and the calendar file to import. The content is edited at `/admin`; the repository holds the application, not the text. The image is built in [JanWelker/advent.wollbi.ch](<https://github.com/JanWelker/advent.wollbi.ch>), so its upstream is our own — per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -252,12 +248,12 @@ The default-deny policy must allow the `cnpg-system` namespace to reach the data
 | Plain manifests around our own image | One Next.js process with one port and one database; the site repository's README is the whole deployment contract |
 | The namespace enforces `restricted` | The image is distroless and runs as uid 65532, its `nonroot` user, with a read-only root filesystem; the two things it writes, the uploads and Next.js' render cache, are volumes. There is no shell in it, so `kubectl exec` is for `node -e`, not for poking around |
 | `DATABASE_URL` from `advent-wollbi-db-app`, key `uri` | Payload wants one connection string and CloudNativePG assembles it; see [the contract](<https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract>) |
-| `PAYLOAD_SECRET` from OpenBao | It signs every editor session. The `PushSecret` in `secrets.yaml` writes it once, `IfNotExists`, so a rebuilt cluster reads the same value back and nobody is logged out; see [Conventions → Real secrets come from OpenBao](<https://homelab-apps.wlkr.ch/conventions/index.md#7-real-secrets-come-from-openbao>) |
+| `PAYLOAD_SECRET` from OpenBao | It signs every editor session and encrypts what Payload keeps encrypted. The `PushSecret` in `secrets.yaml` writes it once, `IfNotExists`, so a rebuilt cluster reads the same value back and nobody is logged out; see [Conventions → Real secrets come from OpenBao](<https://homelab-apps.wlkr.ch/conventions/index.md#7-real-secrets-come-from-openbao>) |
 | `NEXT_PUBLIC_SERVER_URL` | The origin Payload trusts for CSRF and builds absolute URLs from. TLS ends at the Gateway, so the pod's own address is the wrong answer — see [Behind the Gateway](<https://homelab-apps.wlkr.ch/conventions/index.md#behind-the-gateway>) |
 | An `emptyDir` on `/app/.next/cache` | Next.js writes its render cache at runtime and the root filesystem is read-only. It is a cache: losing it on a restart costs one slow first request |
 | Two rules on one `HTTPRoute` | Every path reaches the app, `/admin` and `/api` included: Payload checks the editor's session itself, so the Gateway has nothing to gate. `/seed` redirects to `/`: the seed hook calls the Service, so nothing outside the namespace has a reason to reach it, and Gateway API has no rule that refuses a request |
-| The media collection accepts PDFs and `text/calendar` | The flyer and the `.ics` are content here, not attachments; as uploads the CMS knows about them, where the Pelican site had them as links in prose that outlive the file |
-| `advent-wollbi-db` with two instances and a topology spread | The site is public and editors work in it through December; with one instance every node drain took it down for the move, about four minutes. A replica on another node turns a drain into a switchover of seconds, and the operator's PodDisruptionBudgets stay on so the drain waits for it, see [Conventions](<https://homelab-apps.wlkr.ch/conventions/index.md>) |
+| The media collection accepts PDFs and `text/calendar` | The flyer and the `.ics` are content here, not attachments; as uploads the CMS knows about them |
+| `advent-wollbi-db` with a replica and a topology spread ([`database.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/advent-wollbi/database.yaml>)) | The site is public and editors work in it through December; a replica on another node turns a drain into a switchover instead of downtime, and the operator's PodDisruptionBudgets stay on so the drain waits for it, see [Conventions → rule 3](<https://homelab-apps.wlkr.ch/conventions/index.md#3-postgresql-is-always-a-cloudnativepg-cluster>) |
 | `/healthz` answers without the database | A database outage should show as an empty page, not as a pod the kubelet restarts in a loop |
 
 ### Seeding
@@ -266,7 +262,7 @@ The Pelican content is imported once, by a `PostSync` hook that `curl`s a route 
 
 What it does, in order, and only on an empty database:
 
-1. Imports every file in the site repository's `public/seed/images/` as media — ten of them, including the flyers of 2023 and 2024 and the 2024 calendar, which the current site no longer links but which are the record of those years.
+1. Imports every file in the site repository's `public/seed/images/` as media, including past flyers and calendars the current site no longer links, which are the record of those years.
 2. Writes the two pages: Willkommen and Info.
 
 Afterwards the database is the source of truth and the seed is a no-op. The Job's `activeDeadlineSeconds` is the backstop: a site that never answers fails the sync instead of holding the Application in Syncing, and the curl's own retries fit inside it.
@@ -281,6 +277,8 @@ The provider, the `wollbi-editors` group and the binding are a blueprint in the 
 | The `payload-oauth2` plugin, local strategy off | Payload has no built-in OIDC; with the local strategy off there are no passwords to leak or reset |
 | The group checked twice | Authentik's binding refuses everyone else; the app also refuses a `groups` claim without `wollbi-editors`, so an unbound application does not open the site to every Authentik account |
 | Users matched by email | An editor created before the switch keeps their pages when they first sign in with the same email |
+
+### Network policy
 
 The rules in [`advent-wollbi/networkpolicy.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/advent-wollbi/networkpolicy.yaml>), and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
 
@@ -308,7 +306,7 @@ The rules in [`advent-wollbi/networkpolicy.yaml`](<https://github.com/JanWelker/
 
 ### Editing
 
-`https://advent.wollbi.ch/admin`, then **Mit Authentik anmelden**. Members of `wollbi-editors` get a Payload editor on their first sign-in, matched by email; add someone to the group in Authentik to make them an editor. Pages are made of three blocks, which are the three shapes the Pelican pages had: prose, a run of images under a heading, and a download.
+`https://advent.wollbi.ch/admin`, then **Mit Authentik anmelden**. Members of `wollbi-editors` get a Payload editor on their first sign-in, matched by email; add someone to the group in Authentik to make them an editor. Pages are made of three blocks: prose, a run of images under a heading, and a download.
 
 ## Health check
 
@@ -331,7 +329,7 @@ The seed Job's log is the whole migration report: `{"seeded":true,...}` on the f
 
 - **A new field needs a migration.** The Postgres adapter ignores schema push in production, so a collection change that works on a laptop does nothing here until `payload migrate:create` has been run and committed in the site repository.
 - **The uploads volume and the database restore together.** The uploads come back from a Velero night, the database from its WAL archive; restore the database to that night's backup time ([Point-in-time restore](<https://homelab.wlkr.ch/platform/cloudnative-pg/#point-in-time-restore>)), or records point at files that are gone.
-- **The site is seasonal and the cluster is not.** Nothing scales it down in January; it is one small pod and one small database all year, which is cheaper than remembering to turn it back on in November.
+- **The site is seasonal and the cluster is not.** Nothing scales it down in January; it runs all year, which is cheaper than remembering to turn it back on in November.
 
 # Claude agents
 
@@ -349,14 +347,6 @@ Each session is a Claude Code instance that keeps running when the laptop is clo
 | Secrets | `kv/claude-<session>/github`, and `kv/claude-<session>/argocd` where `argocd.enabled`, in OpenBao |
 | Files | One `claude-<session>/` per session, see [Sessions](<#sessions>) |
 
-## Sessions
-
-| Session | Repositories | Cluster access | Why it is its own session |
-| --- | --- | --- | --- |
-| [`homelab`](<https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab>) | `homelab`, `homelab-apps`, `agent-mooring`, `flowscape`, `knead-time`, `fest.wollbi.ch`, `advent.wollbi.ch`, `renovate-config` | read, Argo CD, Prometheus, Hubble, OpenBao; the Internet but not the LAN | Everything that runs on or ships to the cluster, so one agent sees both halves of a rollout |
-| [`sitzplan`](<https://github.com/JanWelker/homelab-apps/tree/main/claude-sitzplan>) | `sitzplan.schlumpf.me` | none | Hosted outside the cluster; needs only npm besides GitHub |
-| [`virgil`](<https://github.com/JanWelker/homelab-apps/tree/main/claude-virgil>) | `virgil` | none | An iOS app: the agent edits and opens pull requests, CI builds, because there is no Xcode on Linux |
-
 ## Configuration
 
 | Setting | Why |
@@ -365,7 +355,7 @@ Each session is a Claude Code instance that keeps running when the laptop is clo
 | Only the directory source has a `directory.exclude` | `exclude` filters a Git directory source. An OCI chart has none, so there is nothing for `application.yaml` to be excluded from |
 | The namespace enforces `restricted` | The image runs as uid 1000 with every capability dropped and a read-only root filesystem |
 | `secrets.yaml` holds `external-secrets-vault`, the identity the `openbao-apps` store logs in as | The store then reaches `kv/claude-<session>/` and no other prefix; it grants create, read and update there, so a session's own pod could rewrite its token |
-| `claude-reader` and `claude-writer` are created in `claude-homelab` with `automountServiceAccountToken: false` | The platform binds them to the read and write ClusterRoles, and only for that namespace. A pod gets a token only by setting `kubernetes.access`, which keeps the choice visible in the session's own file |
+| `claude-reader` and `claude-writer` are created in `claude-homelab` with `automountServiceAccountToken: false` | The platform binds both to the read ClusterRole cluster-wide and the write role nowhere ([Agent RBAC](<https://homelab.wlkr.ch/platform/security-policies/#agent-rbac>)). A pod gets a token only by setting `kubernetes.access`, which keeps the choice visible in the session's own file |
 | `kubernetes.access`, per session | Only the cluster session has a token, and a read-only one: it investigates and opens pull requests; the cluster changes through Git and ArgoCD, not through the agent. The sessions hosted elsewhere set no access |
 | `argocd.enabled`, per session | On for the cluster session only. Lets the agent read applications with the `claude` account's token instead of guessing from the Git side. The platform binds that account to `role:readonly`, so it cannot sync. Through `argo-grpc` it also needs the `homelab-session` rule to the server pod; the chart's name rule alone gets a 403 ([agent-mooring\#3](<https://github.com/JanWelker/agent-mooring/issues/3>)) |
 | `repos` set per session | Clones each repository once into `$HOME` and creates the GitHub token `ExternalSecret`; one token covers the list. Without repositories or `skills.repo` there is no clone, no token and no GitHub egress |
@@ -374,8 +364,16 @@ Each session is a Claude Code instance that keeps running when the laptop is clo
 | `extraEgressFQDNs` per session | A session reaches the package registries its own build needs, and no others |
 | `targetRevision` is the only version | The chart's `appVersion` is the Claude Code version and its packaged values pin the image by digest, so a Claude Code or base-image release is a chart release and a re-pushed tag cannot change a running session |
 | TLS ends in a proxy sidecar from the same image, with a per-session `Certificate` | Cilium's Gateway only passes `TLSRoute` traffic through, it cannot terminate it; sshd itself listens on loopback only |
-| `resources` in each session's values | An agent idles between prompts at a few hundred MiB; the chart's default request does not fit beside the rest of the workers. The limit leaves room for builds and subagents |
+| `resources` in each session's values | An agent idles between prompts; the chart's default request does not fit beside the rest of the workers. The limit leaves room for builds and subagents |
 | `ssh.authorizedKeys` holds one key per session, used for nothing else | The listener is on the public Gateway, so a key is a login from the Internet; a leaked key opens its own session only, not the one with the homelab write token. Public keys are not secret; the private ones are guarded like the laptop itself |
+
+### Sessions
+
+| Session | Repositories | Cluster access | Why it is its own session |
+| --- | --- | --- | --- |
+| [`homelab`](<https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab>) | `homelab`, `homelab-apps`, `agent-mooring`, `flowscape`, `knead-time`, `fest.wollbi.ch`, `advent.wollbi.ch`, `renovate-config` | read, Argo CD, Prometheus, Hubble, OpenBao; the Internet but not the LAN | Everything that runs on or ships to the cluster, so one agent sees both halves of a rollout |
+| [`sitzplan`](<https://github.com/JanWelker/homelab-apps/tree/main/claude-sitzplan>) | `sitzplan.schlumpf.me` | none | Hosted outside the cluster; needs only npm besides GitHub |
+| [`virgil`](<https://github.com/JanWelker/homelab-apps/tree/main/claude-virgil>) | `virgil` (private) | none | An iOS app: the agent edits and opens pull requests, CI builds, because there is no Xcode on Linux |
 
 ### Network policy
 
@@ -539,8 +537,8 @@ The chart values in `application.yaml` that are not defaults:
 | `fileStorage.local.existingClaim` | The chart's own PVC carries only `helm.sh/resource-policy: keep`, which a prune ignores; `pvc.yaml` carries `Prune=false` like every other volume here |
 | `DT_TELEMETRY_SUBMISSION_DEFAULT_ENABLED: "false"` | No phone-home. The property seeds the setting once, so it has to be off before the first start; the egress policy would drop the request anyway |
 | `DT_OIDC_*` and the frontend's `OIDC_*` | Both halves must name the same issuer and client ID; the API server validates the ID token the browser obtained. `preferred_username` is Authentik's username claim, which is safe only while users cannot change it (see [Conventions → Authentication](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>)); Dependency-Track also stores each account's first `sub` and refuses a later login under another, so a rename could only claim an account that has never logged in. `groups` arrives with the `profile` scope, so team membership follows Authentik's groups. See [OIDC](<#oidc>) |
-| `apiServer.web.resources`, below upstream's advice | The JVM sizes its heap from the limit. Upstream recommends 8Gi for production; the portfolio here is a few hundred small images |
-| `dependency-track-db` resources | The largest database here, a few GB of vulnerability data, and its working set sits above half a gigabyte; the request is the measured median and the limit 2.5x the peak, per the [platform rule](<https://homelab.wlkr.ch/platform/#components>) |
+| `apiServer.web.resources`, below upstream's advice | The JVM sizes its heap from the limit, and upstream's production advice is for a far larger portfolio than this cluster's |
+| `dependency-track-db` resources | The largest database here, holding the vulnerability data; the request is the measured median and the limit 2.5x the peak, per the [platform rule](<https://homelab.wlkr.ch/platform/#components>) |
 | `serviceMonitor.namespace: dependency-track` | The chart defaults to the `monitoring` namespace, which the `apps` project may not write to. Prometheus reads it from here like every other application's |
 | `httpRoute` on `infra-gateway`, not `apps-gateway` | The whole vulnerability portfolio sits behind one login, so it is not on the Internet; the upload job uses the Service, and only `apps-gateway` gets a public DNS record. The chart's route sends `/api` to the API server and everything else to the frontend on one hostname, so the frontend's `API_BASE_URL` stays empty and the browser uses relative URLs |
 | `apiServer.image.tag` and `frontend.image.tag` pinned by digest, though the chart derives both from its `appVersion` | A tag re-pushed upstream would otherwise change what runs without a commit, and Renovate sees a rebuild only through a digest. The chart and the two pins are one Renovate group, so a chart bump cannot leave a pod on the previous release. |
@@ -556,8 +554,8 @@ Every rule in `dependency-track/networkpolicy.yaml`, and why it is there. The sh
 | Ingress from Prometheus on 9000 and 9187, `GET /metrics` only | The API server's management port and the database's exporter |
 | Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>) |
 | Egress from the API server to Authentik | Discovery, the signing keys and the userinfo endpoint, on the public name, because the `iss` claim is that name |
-| Egress from the API server to `nvd.nist.gov`, `storage.googleapis.com`, `api.github.com`, `epss.empiricalsecurity.com`, `www.cisa.gov`, `raw.githubusercontent.com` | The feeds the internal analyzer mirrors: NVD, OSV, GitHub Advisories, EPSS, and the CISA and ENISA known-exploited lists (ENISA publishes on GitHub). GitHub stays off until a token is entered in the UI; the rule is there so entering one is the only step |
-| Egress from the API server to `proxy.golang.org`, `registry.npmjs.org`, `pypi.org`, `repo1.maven.org`, `api.nuget.org`, `crates.io`, `index.crates.io`, `rubygems.org` | The registries Dependency-Track asks for the latest version of a component, for the ecosystems the images here contain. The other default repositories are disabled at [first login](<#first-login>) rather than allowed |
+| Egress from the API server to the feeds' names | The feeds the internal analyzer mirrors: NVD, OSV, GitHub Advisories, EPSS, and the CISA and ENISA known-exploited lists (ENISA publishes on GitHub). GitHub stays off until a token is entered in the UI; the rule is there so entering one is the only step |
+| Egress from the API server to the package registries' names | The registries Dependency-Track asks for the latest version of a component, for the ecosystems the images here contain. The other default repositories are disabled at [first login](<#first-login>) rather than allowed |
 | Egress from the upload job to `kube-apiserver` | It lists the `SbomReport` objects; the API it posts to is in the namespace |
 | Egress from the database's pods to `kube-apiserver` | The instance manager reports its status there, and its liveness check fails otherwise; the operator's join and initdb Jobs read the `Cluster` before they start, see [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>) |
 
@@ -717,7 +715,7 @@ The database should report `Cluster in healthy state`, the version endpoint answ
 
 # Extractor admin UI
 
-Read-only pages over the [shot bridge](<https://homelab-apps.wlkr.ch/shot-bridge/index.md>)'s diagnostics: the shots recorded with the app's diagnostics switch on, their curves, merged timelines and stop legs, the uploaded logs, and the calibration runs. It has no login of its own and reads the bridge server side with the bridge's read-only token, which never reaches a browser. The source, the image and the chart live in [somuch-cloud/extractor.cafe](<https://github.com/somuch-cloud/extractor.cafe/tree/main/admin>); the chart is published to `ghcr.io/somuch-cloud/charts`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
+Read-only pages over the [shot bridge](<https://homelab-apps.wlkr.ch/shot-bridge/index.md>)'s diagnostics: the shots recorded with the app's diagnostics switch on, their curves, merged timelines and stop legs, the uploaded logs, and the calibration runs. It has no login of its own and reads the bridge server side with the bridge's read-only token, which never reaches a browser. The source, the image and the chart live in [somuch-cloud/extractor.cafe](<https://github.com/somuch-cloud/extractor.cafe/tree/main/admin>) (private); the chart is published to `ghcr.io/somuch-cloud/charts`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -725,7 +723,7 @@ Read-only pages over the [shot bridge](<https://homelab-apps.wlkr.ch/shot-bridge
 | --- | --- |
 | URL | [extractor-admin.k8s.wlkr.ch](<https://extractor-admin.k8s.wlkr.ch>) |
 | Authentication | The Authentik outpost in front, per [Conventions → Authentication is Authentik's](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>) |
-| Storage | None; everything is read from the bridge on each request |
+| Storage | None; every request reads the bridge |
 | Dials | The bridge's pods in `shot-bridge`, nothing outside the cluster |
 | Files | [`extractor-admin/`](<https://github.com/JanWelker/homelab-apps/tree/main/extractor-admin>) |
 
@@ -790,7 +788,7 @@ The hostname answers with Authentik's login first, then the shot list.
 
 # Wollbi-Fescht
 
-[fest.wollbi.ch](<https://fest.wollbi.ch>) is the invitation to the street's summer party, and the archive of every invitation since 1987. It was a Pelican site until the pages became rows in a database: the content is now edited at `/admin` and the repository holds the application, not the text. The image is built in [JanWelker/fest.wollbi.ch](<https://github.com/JanWelker/fest.wollbi.ch>), so its upstream is our own — per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
+[fest.wollbi.ch](<https://fest.wollbi.ch>) is the invitation to the street's summer party, and the archive of every invitation since 1987. It is the same application as [Wollbi Adventsfenster](<https://homelab-apps.wlkr.ch/advent-wollbi/index.md>), with its own content, built in [JanWelker/fest.wollbi.ch](<https://github.com/JanWelker/fest.wollbi.ch>) (private), so its upstream is our own — per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>). This page holds what differs; every other row is on the advent page.
 
 ## At a glance
 
@@ -802,70 +800,30 @@ The hostname answers with Authentik's login first, then the shot list.
 | Database | CloudNativePG `Cluster` `fest-wollbi-db` |
 | Secrets | `kv/fest-wollbi/config`, `kv/fest-wollbi/seed` and `kv/fest-wollbi/oidc` in OpenBao |
 | Files | [`fest-wollbi/`](<https://github.com/JanWelker/homelab-apps/tree/main/fest-wollbi>) |
-| Source | [JanWelker/fest.wollbi.ch](<https://github.com/JanWelker/fest.wollbi.ch>) |
 
 ## Configuration
 
-| Setting | Why |
-| --- | --- |
-| Plain manifests around our own image | One Next.js process with one port and one database; the site repository's README is the whole deployment contract |
-| The namespace enforces `restricted` | The image is distroless and runs as uid 65532, its `nonroot` user, with a read-only root filesystem; the two things it writes, the uploads and Next.js' render cache, are volumes. There is no shell in it, so `kubectl exec` is for `node -e`, not for poking around |
-| `DATABASE_URL` from `fest-wollbi-db-app`, key `uri` | Payload wants one connection string and CloudNativePG assembles it; see [the contract](<https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract>) |
-| `PAYLOAD_SECRET` from OpenBao | It signs every editor session and encrypts what Payload keeps encrypted. The `PushSecret` in `secrets.yaml` writes it once, `IfNotExists`, so a rebuilt cluster reads the same value back and nobody is logged out; see [Conventions → Real secrets come from OpenBao](<https://homelab-apps.wlkr.ch/conventions/index.md#7-real-secrets-come-from-openbao>) |
-| `NEXT_PUBLIC_SERVER_URL` | The origin Payload trusts for CSRF and builds absolute URLs from. TLS ends at the Gateway, so the pod's own address is the wrong answer — see [Behind the Gateway](<https://homelab-apps.wlkr.ch/conventions/index.md#behind-the-gateway>) |
-| An `emptyDir` on `/app/.next/cache` | Next.js writes its render cache at runtime and the root filesystem is read-only. It is a cache: losing it on a restart costs one slow first request |
-| Two rules on one `HTTPRoute` | Every path reaches the app, `/admin` and `/api` included: Payload checks the editor's session itself, so the Gateway has nothing to gate. `/seed` redirects to `/`: the seed hook calls the Service, so nothing outside the namespace has a reason to reach it, and Gateway API has no rule that refuses a request |
-| `/healthz` answers without the database | A database outage should show as an empty page, not as a pod the kubelet restarts in a loop |
+[Wollbi Adventsfenster → Configuration](<https://homelab-apps.wlkr.ch/advent-wollbi/index.md#configuration>) applies with `fest-wollbi` for `advent-wollbi`, except two rows: the media row is the advent site's alone, and `fest-wollbi-db` runs without a replica ([`database.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/fest-wollbi/database.yaml>)), so the single-instance case of [Conventions → rule 3](<https://homelab-apps.wlkr.ch/conventions/index.md#3-postgresql-is-always-a-cloudnativepg-cluster>) applies and a drain takes the site down for the move.
 
 ### Seeding
 
-The Pelican content is imported once, by a `PostSync` hook that `curl`s a route inside the image. The route is part of the build, so there is no second image to keep in step; it refuses without the secret the pod already holds, and does nothing once a page exists. That is what makes it safe to run after every sync rather than once by hand.
-
-What it does, in order, and only on an empty database:
-
-1. Imports every file in the site repository's `public/seed/images/` as media — including the ones no page references, because the archive is the reason the site exists.
-2. Writes the three pages: Willkommen, Info and the Einladungsarchiv.
-
-Afterwards the database is the source of truth and the seed is a no-op. The Job's `activeDeadlineSeconds` is the backstop: a site that never answers fails the sync instead of holding the Application in Syncing, and the curl's own retries fit inside it.
+The same `PostSync` hook as [Wollbi Adventsfenster → Seeding](<https://homelab-apps.wlkr.ch/advent-wollbi/index.md#seeding>). On an empty database it imports every file in the site repository's `public/seed/images/` as media, including the ones no page references, because the archive is the reason the site exists, then writes three pages: Willkommen, Info and the Einladungsarchiv.
 
 ### OIDC
 
-The provider, the `wollbi-editors` group and the binding are a blueprint in the platform repository, which also reads the client secret; see [Authentik → Adding an application](<https://homelab.wlkr.ch/platform/authentik/#adding-an-application>).
+As [Wollbi Adventsfenster → OIDC](<https://homelab-apps.wlkr.ch/advent-wollbi/index.md#oidc>), with `client_id` `fest-wollbi`.
 
-| Setting | Why |
-| --- | --- |
-| A confidential client, `client_id` `fest-wollbi` in clear | Payload exchanges the code on the server, where a secret can live; the ID is not a secret |
-| The `payload-oauth2` plugin, local strategy off | Payload has no built-in OIDC; with the local strategy off there are no passwords to leak or reset |
-| The group checked twice | Authentik's binding refuses everyone else; the app also refuses a `groups` claim without `wollbi-editors`, so an unbound application does not open the site to every Authentik account |
-| Users matched by email | An editor created before the switch keeps their pages when they first sign in with the same email |
+### Network policy
 
-The rules in [`fest-wollbi/networkpolicy.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/fest-wollbi/networkpolicy.yaml>), and why each is there. The shape is [Conventions → Ship a `CiliumNetworkPolicy`](<https://homelab-apps.wlkr.ch/conventions/index.md#5-ship-a-ciliumnetworkpolicy>); rollout and debugging are in [Security Policies](<https://homelab.wlkr.ch/platform/security-policies/#network-policies>).
-
-| Rule | Why |
-| --- | --- |
-| Ingress from the namespace, from `host` and `remote-node`; egress to the namespace | The rules every policy carries: [What every policy contains](<https://homelab.wlkr.ch/platform/security-policies/#what-every-policy-contains>) |
-| Ingress on 3000 from `ingress` | The public site and `/admin`; the site is meant to be read by people Authentik has never heard of |
-| Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics. Payload exposes none |
-| Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>) |
-| Egress to the namespace | The site renders from its own database and serves its own uploads |
-| Egress from the app to `auth.k8s.wlkr.ch` on 443 and to the Authentik server pods on 9000 | The token and userinfo calls of a sign-in. The name resolves to the Gateway, `world` to Cilium, and the Gateway's Envoy then checks the pod it picks, so both halves are needed, as for [OpenCloud](<https://homelab-apps.wlkr.ch/opencloud/index.md#network-policy>) |
-| Egress from the database's pods to `kube-apiserver` | The instance manager reports its status there, and its liveness check fails otherwise; the operator's join and initdb Jobs read the `Cluster` before they start, see [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>). The object store for WAL and base backups is the platform's `cnpg-backups` policy, see [CloudNativePG → Backups](<https://homelab.wlkr.ch/platform/cloudnative-pg/#backups>) |
+[`fest-wollbi/networkpolicy.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/fest-wollbi/networkpolicy.yaml>) carries the same rules as the advent site's; the reasons are in [Wollbi Adventsfenster → Network policy](<https://homelab-apps.wlkr.ch/advent-wollbi/index.md#network-policy>).
 
 ### Secrets
 
-`kv/fest-wollbi/config`, `kv/fest-wollbi/seed` and `kv/fest-wollbi/oidc` hold one value each, each written once by a `PushSecret` in `secrets.yaml` and never overwritten — see [Generated secrets](<https://homelab.wlkr.ch/platform/openbao/#generated-secrets>).
-
-| Key | Read as |
-| --- | --- |
-| `payload-secret` | `PAYLOAD_SECRET`: signs the editor sessions |
-| `seed-token` | `SEED_TOKEN`: what the seed hook authenticates with, so the hook never holds the key that signs sessions |
-| `client-secret` in `kv/fest-wollbi/oidc` | `OIDC_CLIENT_SECRET`, and Authentik's copy for the provider through the platform store |
+The three paths in [At a glance](<#at-a-glance>) hold the same keys as [Wollbi Adventsfenster → Secrets](<https://homelab-apps.wlkr.ch/advent-wollbi/index.md#secrets>).
 
 ## Usage
 
-### Editing
-
-`https://fest.wollbi.ch/admin`, then **Mit Authentik anmelden**. Members of `wollbi-editors` get a Payload editor on their first sign-in, matched by email; add someone to the group in Authentik to make them an editor. Pages are made of three blocks, which are the three shapes the Pelican pages had: prose, a run of images under a heading, and a download.
+`https://fest.wollbi.ch/admin`, then as [Wollbi Adventsfenster → Editing](<https://homelab-apps.wlkr.ch/advent-wollbi/index.md#editing>).
 
 ## Health check
 
@@ -876,18 +834,12 @@ kubectl -n fest-wollbi logs job/fest-wollbi-seed
 curl -sI https://fest.wollbi.ch/ | head -1
 ```
 
-The seed Job's log is the whole migration report: `{"seeded":true,...}` on the first run and `{"seeded":false,"reason":"pages already exist"}` on every one after it. The Job lives for `ttlSecondsAfterFinished` in `seed-job.yaml`; after that the report is in [Loki](<https://homelab.wlkr.ch/platform/logging/#usage>) as `{namespace="fest-wollbi", container="seed"}`.
+The seed log reads as on [Wollbi Adventsfenster → Health check](<https://homelab-apps.wlkr.ch/advent-wollbi/index.md#health-check>); in [Loki](<https://homelab.wlkr.ch/platform/logging/#usage>) it is `{namespace="fest-wollbi", container="seed"}`.
 
 ## Pitfalls
 
-> [!WARNING]
->
-> **The hostname is not `k8s.wlkr.ch`**
->
-> This site is on a second domain. It needs the `wollbi.ch` listener and certificate on the apps Gateway and `wollbi.ch` in external-dns' `domainFilters`, all in the platform repository. Without them the route exists, resolves to nothing and serves no certificate.
+The [Wollbi Adventsfenster pitfalls](<https://homelab-apps.wlkr.ch/advent-wollbi/index.md#pitfalls>) on the second domain, migrations and restores apply here too. One more:
 
-- **A new field needs a migration.** The Postgres adapter ignores schema push in production, so a collection change that works on a laptop does nothing here until `payload migrate:create` has been run and committed in the site repository.
-- **The uploads volume and the database restore together.** The uploads come back from a Velero night, the database from its WAL archive; restore the database to that night's backup time ([Point-in-time restore](<https://homelab.wlkr.ch/platform/cloudnative-pg/#point-in-time-restore>)), or records point at files that are gone.
 - **Deleting `kv/fest-wollbi/config` logs the editors out.**
 
 # Flowscape
@@ -958,7 +910,7 @@ curl -s localhost:8080/api/status
 
 The image is distroless, so there is no shell to `exec` into, and the route answers with Authentik's login, so the status endpoint is read through a port-forward.
 
-`status.relay` should read `connected` with an empty `unavailable` list. In Grafana, `flowscape_relay_connected` and `flowscape_relay_unavailable_nodes` say the same over time, and `rate(flowscape_flows_received_total[5m])` should sit in the hundreds per second.
+`status.relay` should read `connected` with an empty `unavailable` list. In Grafana, `flowscape_relay_connected` and `flowscape_relay_unavailable_nodes` say the same over time, and `rate(flowscape_flows_received_total[5m])` should stay above zero.
 
 ## Pitfalls
 
@@ -974,7 +926,7 @@ The image is distroless, so there is no shell to `exec` into, and the route answ
 
 # Home Assistant
 
-[Home Assistant](<https://www.home-assistant.io/>) runs the house. Upstream publishes no Helm chart and the community ones are repackagers, so `home-assistant/` is plain manifests around the official image: `deployment.yaml`, `service.yaml`, `pvc.yaml`, `configmap.yaml`, `httproute.yaml`, `database.yaml` with `backup.yaml`, `networkpolicy.yaml` and `namespace.yaml`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
+[Home Assistant](<https://www.home-assistant.io/>) runs the house. Upstream publishes no Helm chart and the community ones are repackagers, so `home-assistant/` is plain manifests around the official image, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -985,14 +937,6 @@ The image is distroless, so there is no shell to `exec` into, and the route answ
 | Storage | `rook-ceph-block` PVC for `/config` |
 | Database | CloudNativePG `Cluster` `home-assistant-db`, for the recorder |
 | Files | [`home-assistant/`](<https://github.com/JanWelker/homelab-apps/tree/main/home-assistant>) |
-
-## State
-
-| State | Where | Rebuildable? |
-| --- | --- | --- |
-| Registries, users, tokens, integration config (`/config/.storage`) | The `home-assistant-config` PVC | **No.** Losing it means re-pairing every device; the nightly [Velero snapshot](<https://homelab.wlkr.ch/operations/backups/>) is the only copy |
-| History and long-term statistics | PostgreSQL, via CloudNativePG | From its WAL archive, to any point inside its retention window |
-| `configuration.yaml` | A ConfigMap, in Git | Yes |
 
 ## Configuration
 
@@ -1007,8 +951,16 @@ The image is distroless, so there is no shell to `exec` into, and the route answ
 | Recorder on CloudNativePG, not SQLite | SQLite's locking on a network block device is the usual cause of a Home Assistant that feels slow. `purge_keep_days` is raised because the default of 10 is shorter than the moment you look for a graph. See [the contract](<https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract>) |
 | `secrets.yaml` written by the init container on every start | Home Assistant has no `!env_var` tag, so the database URL reaches `configuration.yaml` through `!secret`, from CloudNativePG's Secret, which the operator rotates. The value is written through `json.dumps` so it is valid YAML whatever the generated password contains. Anything added to that file by hand is lost at the next restart; secrets belong in [OpenBao](<https://homelab.wlkr.ch/platform/openbao/>) |
 | `use_x_forwarded_for` with the pod CIDR in `trusted_proxies` | Requests arrive from Cilium's Envoy and the outpost. Without it every request has one source address, so the ban list and rate limiting count the household as one user |
-| `HTTPRoute` targets `authentik-server`, not the app | The outpost authenticates and forwards to `home-assistant.home-assistant.svc:8123`. Home Assistant is the one proxied app with a login of its own, so browser users log in twice: defence in depth, not SSO. The cross-namespace `backendRef` works only because the platform's `referencegrant.yaml` names this namespace. Pointing the route at the Home Assistant Service instead silently removes the whole authentication layer, so it deserves a second look in review |
+| `HTTPRoute` targets `authentik-server`, not the app | The outpost authenticates and forwards to `home-assistant.home-assistant.svc:8123`. Home Assistant and [Umami](<https://homelab-apps.wlkr.ch/umami/index.md>) are the proxied apps with a login of their own, so browser users log in twice: defence in depth, not SSO. The cross-namespace `backendRef` works only because the platform's `referencegrant.yaml` names this namespace. Pointing the route at the Home Assistant Service instead silently removes the whole authentication layer, so it deserves a second look in review |
 | `frontend.extra_module_url`, with `umami.js` from the ConfigMap mounted under `/config/www` | The Umami snippet. The frontend loads the URL through `import()`, and the tracker reads its website ID off its own `<script>` tag, so the module appends that tag rather than being it. See [Umami → Usage](<https://homelab-apps.wlkr.ch/umami/index.md#usage>) |
+
+### State
+
+| State | Where | Rebuildable? |
+| --- | --- | --- |
+| Registries, users, tokens, integration config (`/config/.storage`) | The `home-assistant-config` PVC | **No.** Losing it means re-pairing every device; the nightly [Velero snapshot](<https://homelab.wlkr.ch/operations/backups/>) is the only copy |
+| History and long-term statistics | PostgreSQL, via CloudNativePG | From its WAL archive, to any point inside its retention window |
+| `configuration.yaml` | A ConfigMap, in Git | Yes |
 
 ### Network policy
 
@@ -1018,7 +970,7 @@ The rules in `home-assistant/networkpolicy.yaml`, and why each is there. The sha
 | --- | --- |
 | Ingress from the namespace, from `host` and `remote-node`; egress to the namespace | The rules every policy carries: [What every policy contains](<https://homelab.wlkr.ch/platform/security-policies/#what-every-policy-contains>) |
 | Ingress on 8123 from the Authentik server pods only | The outpost is the only path to the UI. No `fromEntities: ingress`, so a request straight from the Gateway cannot skip it. Nothing else in the cluster has a reason to connect: this namespace holds a long-lived token for every device in the house. With the rule missing, the hostname answers with a gateway error after a successful Authentik login |
-| Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics; a week of Hubble records showed no other request |
+| Ingress from Prometheus on 9187, `GET /metrics` only | The database's metrics |
 | Ingress from `cnpg-system` on 8000 | The operator polls the instance manager there; without the rule the `Cluster` never goes Healthy and the sync deadlocks. See [Sync stuck on the database](<https://homelab-apps.wlkr.ch/conventions/index.md#sync-stuck-on-the-database>) |
 | Egress to `*.home-assistant.io` and `data-v2.hacs.xyz` | The alerts feed and version data; the HACS store index, which HACS polls for its repository list. An integration that talks to a device or a cloud is a line here first |
 | Egress to the multicast and limited-broadcast ranges on 5353 and 1900 | The mDNS and SSDP discovery sockets keep sending, and the overlay carries it nowhere. Allowed only so it does not fill the drop log |
@@ -1070,13 +1022,6 @@ The database should report `Cluster in healthy state`. A pod stuck in `Init` is 
 | Dials | The browsers' push services, over HTTPS |
 | Files | [`kneadtime/`](<https://github.com/JanWelker/homelab-apps/tree/main/kneadtime>) |
 
-## State
-
-| State | Where | Rebuildable? |
-| --- | --- | --- |
-| Push subscriptions and the reminders queued for them | PostgreSQL, via CloudNativePG | Only by every phone tapping **Remind me** again; a lost database means one missed bake, not a lost account |
-| The VAPID private key | OpenBao `kv/kneadtime/config`, through an ExternalSecret | No — rotating it retires every subscription taken with the old key |
-
 ## Configuration
 
 | Setting | Why |
@@ -1092,6 +1037,13 @@ The database should report `Cluster in healthy state`. A pod stuck in `Init` is 
 | `HTTPRoute` targets the app's own Service | Nobody logs in — browsers call the API on behalf of a phone that already gave its subscription. The Dependency-Track shape, not the Flowscape one |
 | `HTTPRoute` matches `/v1` only | The app serves its API, its probes and `/metrics` on one port; the browser calls only `/v1/vapid` and `/v1/schedules` (`src/lib/push/api.ts` in the app repository), and the counters describe usage that is nobody else's business |
 | `revisionHistoryLimit: 2` | Superseded ReplicaSets keep their Trivy config-audit reports until garbage collection; the default keeps ten |
+
+### State
+
+| State | Where | Rebuildable? |
+| --- | --- | --- |
+| Push subscriptions and the reminders queued for them | PostgreSQL, via CloudNativePG | Only by every phone tapping **Remind me** again; a lost database means one missed bake, not a lost account |
+| The VAPID private key | OpenBao `kv/kneadtime/config`, through an ExternalSecret | No — rotating it retires every subscription taken with the old key |
 
 ### Network policy
 
@@ -1136,7 +1088,7 @@ curl -s localhost:8080/metrics | grep kneadtime_push
 
 # OpenCloud
 
-[OpenCloud](<https://opencloud.eu/>) is the household's file sync and share: one Go binary, no database, with desktop, iOS and Android clients. Upstream publishes no open Helm chart, so `opencloud/` is plain manifests around the official image: `deployment.yaml`, `service.yaml`, `pvc.yaml`, `httproute.yaml`, `servicemonitor.yaml`, `secrets.yaml`, `networkpolicy.yaml`, `namespace.yaml` and the `csp.yaml` ConfigMap, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
+[OpenCloud](<https://opencloud.eu/>) is the household's file sync and share: one Go binary, no database, with desktop, iOS and Android clients. Upstream publishes no open Helm chart, so `opencloud/` is plain manifests around the official image, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -1148,14 +1100,6 @@ curl -s localhost:8080/metrics | grep kneadtime_push
 | Database | None; metadata lives in extended attributes and the embedded NATS store |
 | Secrets | `kv/opencloud/config` in OpenBao, generated once |
 | Files | [`opencloud/`](<https://github.com/JanWelker/homelab-apps/tree/main/opencloud>) |
-
-## Storage
-
-PosixFS keeps the files on the volume in the tree the user sees, with the metadata in xattrs, which ext4 provides, and versions, trash and the search index beside them. One volume holds the whole instance, so the nightly [Velero snapshot](<https://homelab.wlkr.ch/operations/backups/>) is a complete copy, and a restore is readable with `ls`. The driver's non-collaborative mode requires that nothing else writes to the tree, which a single Deployment on a `ReadWriteOnce` volume guarantees.
-
-The alternative, blobs in an S3 bucket with metadata on a volume, splits one instance across two backup mechanisms, one of which does not exist for buckets here, and upstream documents no migration into or out of it.
-
-Upstream's backup guidance is to stop the instance first. The RBD snapshot is crash-consistent instead: metadata is written per operation on the same filesystem, and the nightly [Velero](<https://homelab.wlkr.ch/platform/velero/>) run sees no sync traffic. The search index is rebuilt if it disagrees after a restore; nothing is lost.
 
 ## Configuration
 
@@ -1181,6 +1125,14 @@ The values in `opencloud/deployment.yaml` that are not self-explanatory:
 | `FRONTEND_CHECK_FOR_UPDATES=false` | The web frontend's version check is the one outbound call the server makes on its own. Nothing phones home, the same rule as every platform component |
 | `PROXY_DEBUG_ADDR=0.0.0.0:9205` | Every service in the binary has a debug port; the proxy's carries the request metrics, the health endpoints and the one `ServiceMonitor` |
 | `HTTPRoute` on `infra-gateway`, not `apps-gateway` | Only `apps-gateway` gets a public DNS record. Phones sync on the LAN and the VPN; moving to the public gateway is one route change |
+
+### Storage
+
+PosixFS keeps the files on the volume in the tree the user sees, with the metadata in xattrs, which ext4 provides, and versions, trash and the search index beside them. One volume holds the whole instance, so the nightly [Velero snapshot](<https://homelab.wlkr.ch/operations/backups/>) is a complete copy, and a restore is readable with `ls`. The driver's non-collaborative mode requires that nothing else writes to the tree, which a single Deployment on a `ReadWriteOnce` volume guarantees.
+
+The alternative, blobs in an S3 bucket with metadata on a volume, splits one instance across two backup mechanisms, one of which does not exist for buckets here, and upstream documents no migration into or out of it.
+
+Upstream's backup guidance is to stop the instance first. The RBD snapshot is crash-consistent instead: metadata is written per operation on the same filesystem, and the nightly [Velero](<https://homelab.wlkr.ch/platform/velero/>) run sees no sync traffic. The search index is rebuilt if it disagrees after a restore; nothing is lost.
 
 ### OIDC
 
@@ -1305,7 +1257,7 @@ For the two first-start failures above. The volume is `ReadWriteOnce` and stays 
 
 # Shot Timer bridge
 
-The bridge is the always-on half of the Shot Timer iPhone app. iOS will not let an app hold the La Marzocco cloud websocket open in the background, so this one process watches the machine, tracks each shot, looks up the machine's exact extraction time afterwards, keeps the shot history in SQLite, and starts and updates the phone's Live Activity through APNs. The phone and watch apps call its small HTTP API. The source, the image and the chart live in [somuch-cloud/extractor.cafe](<https://github.com/somuch-cloud/extractor.cafe/tree/main/deploy>); the chart is published to `ghcr.io/somuch-cloud/charts`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
+The bridge is the always-on half of the Shot Timer iPhone app. iOS will not let an app hold the La Marzocco cloud websocket open in the background, so this one process watches the machine, tracks each shot, looks up the machine's exact extraction time afterwards, keeps the shot history in PostgreSQL, and starts and updates the phone's Live Activity through APNs. The phone and watch apps call its small HTTP API. The source, the image and the chart live in [somuch-cloud/extractor.cafe](<https://github.com/somuch-cloud/extractor.cafe/tree/main/deploy>) (private); the chart is published to `ghcr.io/somuch-cloud/charts`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -1313,19 +1265,10 @@ The bridge is the always-on half of the Shot Timer iPhone app. iOS will not let 
 | --- | --- |
 | URL | [shot.k8s.wlkr.ch](<https://shot.k8s.wlkr.ch/healthz>), an API for the iPhone and watch apps |
 | Authentication | The bridge's own bearer key; the apps cannot go through Authentik |
-| Storage | PVC `shot-bridge`, SQLite and the La Marzocco installation key |
+| Storage | PVC `shot-bridge`, the La Marzocco installation key |
 | Database | CloudNativePG `Cluster` `shot-bridge-db`, a primary and a streaming replica |
 | Dials | `lion.lamarzocco.io`, APNs |
 | Files | [`shot-bridge/`](<https://github.com/JanWelker/homelab-apps/tree/main/shot-bridge>) |
-
-## State
-
-| State | Where | Rebuildable? |
-| --- | --- | --- |
-| Shot history, registered phones, default dose, coffees, reference shots | PostgreSQL, the CloudNativePG `Cluster` `shot-bridge-db` (`database.yaml`) | History from its WAL archive, to any point inside its retention window; phones re-register on their next launch |
-| La Marzocco installation key | `installation_key.json` on the PVC | Yes, the bridge registers a new one on start |
-| Account credentials and the APNs key | OpenBao `kv/shot-bridge/accounts` | Re-typed from the accounts |
-| API key | OpenBao `kv/shot-bridge/config`, generated | Yes, then entered again in the iPhone app |
 
 ## Configuration
 
@@ -1334,7 +1277,7 @@ The bridge is the always-on half of the Shot Timer iPhone app. iOS will not let 
 | Own chart, values in `application.yaml` | The chart ships the Deployment, PVC, Service, `HTTPRoute` and the bridge's `CiliumNetworkPolicy`; this directory adds the namespace, the secrets and the namespace's default-deny policies in `networkpolicy.yaml`, which are what police the database pods |
 | One replica, `Recreate` | One cloud websocket; two copies would double every push |
 | `database.existingSecret: shot-bridge-db-app` | The bridge reads `DATABASE_URL` from the Secret CloudNativePG writes for `shot-bridge-db` (`uri` key); without it the chart falls back to the SQLite file on the PVC. The PVC stays for the La Marzocco installation key |
-| `Cluster` `shot-bridge-db`, two instances | A few rows a day, but the phones log every shot as it happens; a replica turns a drain into a switchover of seconds and a node loss into a failover instead of a restart. The volume is sized for `pg_wal`, which holds about 600 MiB whatever the data, not for the few MiB of rows. The operator's PodDisruptionBudgets stay on, so a drain waits for the switchover; `enablePDB: false` is for single-instance clusters only, see [Conventions](<https://homelab-apps.wlkr.ch/conventions/index.md>). A topology spread keeps the two on different nodes. WAL and a nightly base backup through `backup.yaml` |
+| `Cluster` `shot-bridge-db` with a replica ([`database.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/shot-bridge/database.yaml>)) | The phones log every shot as it happens; a replica turns a drain into a switchover and a node loss into a failover instead of a restart. The volume is sized for `pg_wal`, not for the rows. The operator's PodDisruptionBudgets stay on, so a drain waits for the switchover, see [Conventions → rule 3](<https://homelab-apps.wlkr.ch/conventions/index.md#3-postgresql-is-always-a-cloudnativepg-cluster>). A topology spread keeps the two on different nodes. WAL and a nightly base backup through `backup.yaml` |
 | `HTTPRoute` targets the bridge's Service | The phone sends `Authorization: Bearer`; an Authentik outpost in front would answer the app with a login page |
 | Probes are TCP | `/healthz` returns 503 whenever the machine is off, and the apps still need the history then |
 | `apns.env: sandbox` | The iPhone app is installed from Xcode with development signing; TestFlight builds need `production` |
@@ -1342,6 +1285,15 @@ The bridge is the always-on half of the Shot Timer iPhone app. iOS will not let 
 | `lm.serial` | The machine to watch; the chart requires it |
 | `admin.enabled: true` | The [admin UI](<https://homelab-apps.wlkr.ch/extractor-admin/index.md>)'s read-only token, and its pods let in on 8080 |
 | `timeZone: Europe/Zurich` | The bridge dates a bag's opening by the day of its first shot; the image runs in UTC otherwise, so a shot before 01:00 or 02:00 would land on the day before |
+
+### State
+
+| State | Where | Rebuildable? |
+| --- | --- | --- |
+| Shot history, registered phones, default dose, coffees, reference shots | PostgreSQL, the CloudNativePG `Cluster` `shot-bridge-db` (`database.yaml`) | History from its WAL archive, to any point inside its retention window; phones re-register on their next launch |
+| La Marzocco installation key | `installation_key.json` on the PVC | Yes, the bridge registers a new one on start |
+| Account credentials and the APNs key | OpenBao `kv/shot-bridge/accounts` | Re-typed from the accounts |
+| API key | OpenBao `kv/shot-bridge/config`, generated | Yes, then entered again in the iPhone app |
 
 ### Network policy
 
@@ -1395,7 +1347,7 @@ kubectl -n shot-bridge logs deploy/shot-bridge
 
 # Umami
 
-[Umami](<https://umami.is/>) counts the visits to every site: the two documentation sites, the GitHub Pages projects and Home Assistant. It sets no cookie and stores no address, so the sites need no consent banner. Upstream publishes an image and no chart, so `umami/` is plain manifests around the official image: `deployment.yaml`, `service.yaml`, `pdb.yaml`, `httproute.yaml`, `database.yaml` with `backup.yaml`, `secrets.yaml`, `networkpolicy.yaml` and `namespace.yaml`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
+[Umami](<https://umami.is/>) counts the visits to every site: the two documentation sites, the GitHub Pages projects and Home Assistant. It sets no cookie and stores no address, so the sites need no consent banner. Upstream publishes an image and no chart, so `umami/` is plain manifests around the official image, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 

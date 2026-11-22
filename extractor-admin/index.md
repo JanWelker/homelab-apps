@@ -1,6 +1,6 @@
 # Extractor admin UI
 
-Read-only pages over the [shot bridge](<https://homelab-apps.wlkr.ch/shot-bridge/index.md>)'s diagnostics: the shots recorded with the app's diagnostics switch on, their curves, merged timelines and stop legs, the uploaded logs, and the calibration runs. It has no login of its own and reads the bridge server side with the bridge's read-only token, which never reaches a browser. The source, the image and the chart live in [somuch-cloud/extractor.cafe](<https://github.com/somuch-cloud/extractor.cafe/tree/main/admin>); the chart is published to `ghcr.io/somuch-cloud/charts`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
+Read-only pages over the [shot bridge](<https://homelab-apps.wlkr.ch/shot-bridge/index.md>)'s diagnostics: the shots recorded with the app's diagnostics switch on, their curves, merged timelines and stop legs, the uploaded logs, and the calibration runs. It has no login of its own and reads the bridge server side with the bridge's read-only token, which never reaches a browser. The source, the image and the chart live in [somuch-cloud/extractor.cafe](<https://github.com/somuch-cloud/extractor.cafe/tree/main/admin>) (private); the chart is published to `ghcr.io/somuch-cloud/charts`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -8,7 +8,7 @@ Read-only pages over the [shot bridge](<https://homelab-apps.wlkr.ch/shot-bridge
 | --- | --- |
 | URL | [extractor-admin.k8s.wlkr.ch](<https://extractor-admin.k8s.wlkr.ch>) |
 | Authentication | The Authentik outpost in front, per [Conventions → Authentication is Authentik's](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>) |
-| Storage | None; everything is read from the bridge on each request |
+| Storage | None; every request reads the bridge |
 | Dials | The bridge's pods in `shot-bridge`, nothing outside the cluster |
 | Files | [`extractor-admin/`](<https://github.com/JanWelker/homelab-apps/tree/main/extractor-admin>) |
 

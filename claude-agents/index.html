@@ -599,17 +599,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#sessions" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Sessions
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -620,6 +609,17 @@
   
     <nav class="md-nav" aria-label="Configuration">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sessions
+      </span>
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#network-policy" class="md-nav__link">
@@ -1106,17 +1106,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#sessions" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Sessions
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1127,6 +1116,17 @@
   
     <nav class="md-nav" aria-label="Configuration">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#sessions" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Sessions
+      </span>
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#network-policy" class="md-nav__link">
@@ -1380,37 +1380,6 @@ platform's.</p>
 </tr>
 </tbody>
 </table>
-<h2 id="sessions">Sessions<a class="headerlink" href="#sessions" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>Session</th>
-<th>Repositories</th>
-<th>Cluster access</th>
-<th>Why it is its own session</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab"><code>homelab</code></a></td>
-<td><code>homelab</code>, <code>homelab-apps</code>, <code>agent-mooring</code>, <code>flowscape</code>, <code>knead-time</code>, <code>fest.wollbi.ch</code>, <code>advent.wollbi.ch</code>, <code>renovate-config</code></td>
-<td>read, Argo CD, Prometheus, Hubble, OpenBao; the Internet but not the LAN</td>
-<td>Everything that runs on or ships to the cluster, so one agent sees both halves of a rollout</td>
-</tr>
-<tr>
-<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-sitzplan"><code>sitzplan</code></a></td>
-<td><code>sitzplan.schlumpf.me</code></td>
-<td>none</td>
-<td>Hosted outside the cluster; needs only npm besides GitHub</td>
-</tr>
-<tr>
-<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-virgil"><code>virgil</code></a></td>
-<td><code>virgil</code></td>
-<td>none</td>
-<td>An iOS app: the agent edits and opens pull requests, CI builds, because there is no Xcode on Linux</td>
-</tr>
-</tbody>
-</table>
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
@@ -1438,7 +1407,7 @@ platform's.</p>
 </tr>
 <tr>
 <td><code>claude-reader</code> and <code>claude-writer</code> are created in <code>claude-homelab</code> with <code>automountServiceAccountToken: false</code></td>
-<td>The platform binds them to the read and write ClusterRoles, and only for that namespace. A pod gets a token only by setting <code>kubernetes.access</code>, which keeps the choice visible in the session's own file</td>
+<td>The platform binds both to the read ClusterRole cluster-wide and the write role nowhere (<a href="https://homelab.wlkr.ch/platform/security-policies/#agent-rbac">Agent RBAC</a>). A pod gets a token only by setting <code>kubernetes.access</code>, which keeps the choice visible in the session's own file</td>
 </tr>
 <tr>
 <td><code>kubernetes.access</code>, per session</td>
@@ -1474,11 +1443,42 @@ platform's.</p>
 </tr>
 <tr>
 <td><code>resources</code> in each session's values</td>
-<td>An agent idles between prompts at a few hundred MiB; the chart's default request does not fit beside the rest of the workers. The limit leaves room for builds and subagents</td>
+<td>An agent idles between prompts; the chart's default request does not fit beside the rest of the workers. The limit leaves room for builds and subagents</td>
 </tr>
 <tr>
 <td><code>ssh.authorizedKeys</code> holds one key per session, used for nothing else</td>
 <td>The listener is on the public Gateway, so a key is a login from the Internet; a leaked key opens its own session only, not the one with the homelab write token. Public keys are not secret; the private ones are guarded like the laptop itself</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sessions">Sessions<a class="headerlink" href="#sessions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Session</th>
+<th>Repositories</th>
+<th>Cluster access</th>
+<th>Why it is its own session</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab"><code>homelab</code></a></td>
+<td><code>homelab</code>, <code>homelab-apps</code>, <code>agent-mooring</code>, <code>flowscape</code>, <code>knead-time</code>, <code>fest.wollbi.ch</code>, <code>advent.wollbi.ch</code>, <code>renovate-config</code></td>
+<td>read, Argo CD, Prometheus, Hubble, OpenBao; the Internet but not the LAN</td>
+<td>Everything that runs on or ships to the cluster, so one agent sees both halves of a rollout</td>
+</tr>
+<tr>
+<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-sitzplan"><code>sitzplan</code></a></td>
+<td><code>sitzplan.schlumpf.me</code></td>
+<td>none</td>
+<td>Hosted outside the cluster; needs only npm besides GitHub</td>
+</tr>
+<tr>
+<td><a href="https://github.com/JanWelker/homelab-apps/tree/main/claude-virgil"><code>virgil</code></a></td>
+<td><code>virgil</code> (private)</td>
+<td>none</td>
+<td>An iOS app: the agent edits and opens pull requests, CI builds, because there is no Xcode on Linux</td>
 </tr>
 </tbody>
 </table>

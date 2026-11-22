@@ -755,17 +755,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Storage
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -776,6 +765,17 @@
   
     <nav class="md-nav" aria-label="Configuration">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Storage
+      </span>
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#oidc" class="md-nav__link">
@@ -1040,17 +1040,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#storage" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        Storage
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1061,6 +1050,17 @@
   
     <nav class="md-nav" aria-label="Configuration">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        Storage
+      </span>
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#oidc" class="md-nav__link">
@@ -1203,9 +1203,7 @@
 <p><a href="https://opencloud.eu/">OpenCloud</a> is the household's file sync and share:
 one Go binary, no database, with desktop, iOS and Android clients. Upstream
 publishes no open Helm chart, so <code>opencloud/</code> is plain manifests around the
-official image: <code>deployment.yaml</code>, <code>service.yaml</code>, <code>pvc.yaml</code>,
-<code>httproute.yaml</code>, <code>servicemonitor.yaml</code>, <code>secrets.yaml</code>, <code>networkpolicy.yaml</code>,
-<code>namespace.yaml</code> and the <code>csp.yaml</code> ConfigMap, per
+official image, per
 <a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>.</p>
 <h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
 <table>
@@ -1242,21 +1240,6 @@ official image: <code>deployment.yaml</code>, <code>service.yaml</code>, <code>p
 </tr>
 </tbody>
 </table>
-<h2 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">&para;</a></h2>
-<p>PosixFS keeps the files on the volume in the tree the user sees, with the
-metadata in xattrs, which ext4 provides, and versions, trash and the search
-index beside them. One volume holds the whole instance, so the nightly
-<a href="https://homelab.wlkr.ch/operations/backups/">Velero snapshot</a> is a complete
-copy, and a restore is readable with <code>ls</code>. The driver's non-collaborative
-mode requires that nothing else writes to the tree, which a single
-Deployment on a <code>ReadWriteOnce</code> volume guarantees.</p>
-<p>The alternative, blobs in an S3 bucket with metadata on a volume, splits
-one instance across two backup mechanisms, one of which does not exist for
-buckets here, and upstream documents no migration into or out of it.</p>
-<p>Upstream's backup guidance is to stop the instance first. The RBD snapshot
-is crash-consistent instead: metadata is written per operation on the same
-filesystem, and the nightly <a href="https://homelab.wlkr.ch/platform/velero/">Velero</a> run sees no sync traffic. The search index
-is rebuilt if it disagrees after a restore; nothing is lost.</p>
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
 <p>The values in <code>opencloud/deployment.yaml</code> that are not self-explanatory:</p>
 <table>
@@ -1341,6 +1324,21 @@ is rebuilt if it disagrees after a restore; nothing is lost.</p>
 </tr>
 </tbody>
 </table>
+<h3 id="storage">Storage<a class="headerlink" href="#storage" title="Permanent link">&para;</a></h3>
+<p>PosixFS keeps the files on the volume in the tree the user sees, with the
+metadata in xattrs, which ext4 provides, and versions, trash and the search
+index beside them. One volume holds the whole instance, so the nightly
+<a href="https://homelab.wlkr.ch/operations/backups/">Velero snapshot</a> is a complete
+copy, and a restore is readable with <code>ls</code>. The driver's non-collaborative
+mode requires that nothing else writes to the tree, which a single
+Deployment on a <code>ReadWriteOnce</code> volume guarantees.</p>
+<p>The alternative, blobs in an S3 bucket with metadata on a volume, splits
+one instance across two backup mechanisms, one of which does not exist for
+buckets here, and upstream documents no migration into or out of it.</p>
+<p>Upstream's backup guidance is to stop the instance first. The RBD snapshot
+is crash-consistent instead: metadata is written per operation on the same
+filesystem, and the nightly <a href="https://homelab.wlkr.ch/platform/velero/">Velero</a> run sees no sync traffic. The search index
+is rebuilt if it disagrees after a restore; nothing is lost.</p>
 <h3 id="oidc">OIDC<a class="headerlink" href="#oidc" title="Permanent link">&para;</a></h3>
 <p>OpenCloud's web, desktop, iOS and Android clients are four OIDC clients with
 IDs fixed by the clients (<code>web</code>, <code>OpenCloudDesktop</code>, <code>OpenCloudIOS</code>,

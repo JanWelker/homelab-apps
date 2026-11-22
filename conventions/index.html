@@ -1254,10 +1254,9 @@
 
 
 <h1 id="conventions">Conventions<a class="headerlink" href="#conventions" title="Permanent link">&para;</a></h1>
-<p>Rules every directory in this repository follows. They are short because the
-platform does most of the work; <a href="https://homelab.wlkr.ch/development/add-workload/">Adding a
-Workload</a> in the platform
-documentation is the long version.</p>
+<p>Rules every directory in this repository follows, each with its reason.
+<a href="https://homelab.wlkr.ch/development/add-workload/">Adding a Workload</a> in the
+platform documentation has the templates.</p>
 <h2 id="structure">Structure<a class="headerlink" href="#structure" title="Permanent link">&para;</a></h2>
 <p>One directory per application, named after it, containing exactly one
 <code>application.yaml</code> — a complete ArgoCD <code>Application</code>, not a fragment. The <code>apps</code>
@@ -1269,8 +1268,8 @@ why every Application excludes it from its own source:</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="w">    </span><span class="nt">directory</span><span class="p">:</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">      </span><span class="nt">exclude</span><span class="p">:</span><span class="w"> </span><span class="s">"application.yaml"</span>
 </span></code></pre></div>
-<p>Exception: the <code>claude-*</code> sessions have no <code>exclude</code>, because an OCI chart
-source has no directory for it to act on; see
+<p>Exception: in the <code>claude-*</code> sessions only the directory source carries it,
+because their OCI chart source has no directory to act on; see
 <a href="../claude-agents/#configuration">Claude agents</a>.</p>
 <h2 id="the-rules">The rules<a class="headerlink" href="#the-rules" title="Permanent link">&para;</a></h2>
 <h3 id="1-project-apps">1. <code>project: apps</code><a class="headerlink" href="#1-project-apps" title="Permanent link">&para;</a></h3>
@@ -1281,14 +1280,16 @@ workload has no business reaching.</p>
 <p>The vendor's own Helm chart, or the vendor's own container image, never a
 repackager's. Dependency-Track publishes its own chart; Home Assistant publishes
 none, so it is plain manifests around the official
-<code>ghcr.io/home-assistant/home-assistant</code> image.</p>
-<p>The user's own chart wrapping the user's own image is allowed, as with the Flowscape images and the <code>agent-mooring</code> chart.</p>
-<p>Pin every version. No <code>latest</code>, no floating tags. Renovate moves them; the
-release age and schedule are set per package in <code>renovate.json</code>, and the
-user's own images move at once, since the wait guards against an upstream
-tag being pulled. The <code>image-scan.yaml</code> workflow fails a pull request
-whose new image carries a fixable CRITICAL the old one did not — the
-<a href="https://homelab.wlkr.ch/development/maintenance/#ci-workflows">same gate as the platform</a>.</p>
+<code>ghcr.io/home-assistant/home-assistant</code> image. A chart from a new repository
+needs the <code>apps</code> project's <code>sourceRepos</code> and the repo-server's egress policy
+extended in the platform first, or the Application reads <code>ComparisonError</code>
+(<a href="https://homelab.wlkr.ch/platform/argocd/#projects">Projects</a>).</p>
+<p>The repository owner's own chart wrapping their own image is allowed, as with the Flowscape images and the <code>agent-mooring</code> chart.</p>
+<p>Pin every version. No <code>latest</code>, no floating tags. Renovate moves them; release
+age and schedule come from the shared preset <code>renovate.json</code> extends
+(<code>github&gt;JanWelker/renovate-config</code>), which a fork inherits unless it replaces
+that line, and the owner's own images move at once. <code>image-scan.yaml</code> is the
+<a href="https://homelab.wlkr.ch/development/maintenance/#ci-workflows">platform's image gate</a>.</p>
 <div class="admonition warning">
 <p class="admonition-title">Renovate and image fields</p>
 <p>A custom regex manager for an image field needs <code>autoReplaceStringTemplate</code>, or digest pinning fails with <code>update failure</code> and takes the shared <code>renovate/pin-dependencies</code> branch down with it. A field holding a bare tag has no room for a digest and needs <code>pinDigests: false</code> instead. See <a href="https://homelab.wlkr.ch/development/maintenance/#manager-rules">Manager rules</a> and <a href="https://github.com/renovatebot/renovate/issues/24942">renovate#24942</a>.</p>
@@ -1328,11 +1329,9 @@ database, not merely a created one:</p>
 <code>Cluster</code> deletes the volumes it owns. A chart-rendered PVC needs the same
 annotation through the chart's values; <code>helm.sh/resource-policy: keep</code> only
 survives deleting the Application, not a prune.</p>
-<p>The reasoning is in <a href="https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract">CloudNativePG &rarr; The
-contract</a>.</p>
 <h3 id="4-own-your-namespace">4. Own your namespace<a class="headerlink" href="#4-own-your-namespace" title="Permanent link">&para;</a></h3>
-<p>Ship a <code>namespace.yaml</code> at sync wave <code>-2</code> carrying the three Pod Security
-Admission labels; <code>CreateNamespace=true</code> alone leaves an unlabelled namespace
+<p>Ship a <code>namespace.yaml</code> at sync wave <code>-2</code> carrying the three <a href="https://homelab.wlkr.ch/platform/security-policies/#pod-security-admission">Pod Security
+Admission</a> labels; <code>CreateNamespace=true</code> alone leaves an unlabelled namespace
 that runs at <code>privileged</code>. Set <code>enforce</code> to what the application needs and
 <code>audit</code>/<code>warn</code> stricter, so the violations a tighter level would catch stay
 visible.</p>
@@ -1352,9 +1351,7 @@ hides what the namespace adds — see
 The arrival rule depends on rule
 6: <code>fromEntities: [ingress]</code> where the Gateway reaches the pod directly, or
 the Authentik server pods and nothing else where the outpost sits in front,
-so a request cannot skip it. The template and the reasons are in the
-platform's
-<a href="https://homelab.wlkr.ch/development/add-workload/#the-network-policy">Adding a Workload</a>.</p>
+so a request cannot skip it.</p>
 <p>Put it at sync wave <code>-2</code>, with the namespace:</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="w">  </span><span class="nt">annotations</span><span class="p">:</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="nt">argocd.argoproj.io/sync-wave</span><span class="p">:</span><span class="w"> </span><span class="s">"-2"</span>
@@ -1413,7 +1410,10 @@ the file naming what writes it. It and any <code>PushSecret</code> name the
 <code>openbao-apps</code> store, and <code>secrets.yaml</code> starts with an
 <code>external-secrets-vault</code> ServiceAccount at sync wave <code>-2</code>: the store logs in
 as it and reaches <code>kv/&lt;namespace&gt;/</code> only, so <code>&lt;app&gt;</code> is the namespace — see
-<a href="https://homelab.wlkr.ch/platform/openbao/#kubernetes-auth">Kubernetes auth</a>. Random values — session keys, admin
+<a href="https://homelab.wlkr.ch/platform/openbao/#kubernetes-auth">Kubernetes auth</a>. The store admits only the
+namespaces listed in the platform's <code>cluster-secret-store.yaml</code>, so a new
+application's <code>ExternalSecret</code> and <code>PushSecret</code> fail until a platform pull
+request adds the namespace and <code>make bao-policies</code> runs. Random values — session keys, admin
 passwords, OIDC client pairs — come from a <code>Password</code> generator and a
 <code>PushSecret</code> at the end of the same <code>secrets.yaml</code>, at sync wave <code>-2</code> so they
 land before the <code>ExternalSecret</code> at <code>-1</code> — see <a href="https://homelab.wlkr.ch/platform/openbao/#generated-secrets">Generated secrets</a>. A value from an
@@ -1423,8 +1423,8 @@ account outside the cluster, such as a model API key, is typed in with
 it. Database passwords are neither, because CloudNativePG generates them
 (rule 3).</p>
 <p>OIDC client credentials go in the application's own <code>kv/&lt;app&gt;/config</code>, never
-under <code>kv/authentik/config</code>: a <code>bao kv put</code> replaces a path wholesale, so
-sharing it would make adding an application an Authentik outage.</p>
+under <code>kv/authentik/config</code>, where that wholesale replace would make adding an
+application an Authentik outage.</p>
 <p>Exception: the <code>claude-*</code> sessions' <code>ExternalSecret</code>s come from the chart and
 read <code>kv/claude-&lt;session&gt;/github</code>, the prefix of their own namespace; see
 <a href="../claude-agents/#secrets">Claude agents → Secrets</a>.</p>
@@ -1450,13 +1450,13 @@ repositories diff and apply the same way.</p>
 <tbody>
 <tr>
 <td>A hostname</td>
-<td>An <code>HTTPRoute</code> on <code>apps-gateway</code></td>
-<td>external-dns publishes the Route53 record</td>
+<td>An <code>HTTPRoute</code> on <code>apps-gateway</code>, or on <code>infra-gateway</code> for LAN and VPN only, which admits named namespaces, so a platform pull request first</td>
+<td>external-dns publishes the <code>apps-gateway</code> record to Route53</td>
 </tr>
 <tr>
 <td>HTTPS</td>
 <td>Nothing</td>
-<td>The Gateway holds a <code>*.k8s.wlkr.ch</code> wildcard</td>
+<td>Each listener holds a wildcard certificate; see <a href="https://homelab.wlkr.ch/platform/gateway-api/#configuration">Gateway API</a></td>
 </tr>
 <tr>
 <td>Storage</td>
@@ -1488,7 +1488,7 @@ repositories diff and apply the same way.</p>
 <h2 id="writing-an-httproute">Writing an <code>HTTPRoute</code><a class="headerlink" href="#writing-an-httproute" title="Permanent link">&para;</a></h2>
 <p>The API server fills in defaults for what a route leaves out, and ArgoCD
 reports every filled-in field as drift unless the platform tells it to look
-away. It looks away for less than you might expect:</p>
+away, which covers less than you might expect:</p>
 <table>
 <thead>
 <tr>
@@ -1521,13 +1521,10 @@ duplicated frame header is invalid. HSTS names no
 not served from here. A route rendered by a chart that has no <code>filters</code> value
 (shot bridge, Extractor admin UI) cannot carry it until the chart does.</p>
 <h2 id="behind-the-gateway">Behind the Gateway<a class="headerlink" href="#behind-the-gateway" title="Permanent link">&para;</a></h2>
-<p>Traffic arrives from Cilium's Envoy inside the
-<a href="https://homelab.wlkr.ch/architecture/#cluster-layout">pod subnet</a>, not
-from the client, and TLS is terminated at the Gateway. An application that
-trusts <code>REMOTE_ADDR</code> sees the proxy, and one that builds absolute URLs from the
-request scheme produces <code>http://</code> links on an <code>https://</code> site. Look for a
-trusted-proxies setting and an overwrite-protocol setting; if the login
-redirect loops, this is why.</p>
+<p>Traffic arrives from Cilium's Envoy, not the client, and TLS ends at the
+Gateway. Set the application's trusted-proxies and overwrite-protocol
+settings, or it sees the proxy's address, builds <code>http://</code> links and loops
+on the login redirect.</p>
 <h2 id="sync-stuck-on-the-database">Sync stuck on the database<a class="headerlink" href="#sync-stuck-on-the-database" title="Permanent link">&para;</a></h2>
 <p>The default-deny policy must allow the <code>cnpg-system</code> namespace to reach the
 database pod on port 8000, the instance manager's status endpoint the operator

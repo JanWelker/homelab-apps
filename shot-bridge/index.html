@@ -781,17 +781,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#state" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        State
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -802,6 +791,17 @@
   
     <nav class="md-nav" aria-label="Configuration">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#state" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        State
+      </span>
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#network-policy" class="md-nav__link">
@@ -1001,17 +1001,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#state" class="md-nav__link">
-    <span class="md-ellipsis">
-      <span class="md-typeset">
-        State
-      </span>
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       <span class="md-typeset">
@@ -1022,6 +1011,17 @@
   
     <nav class="md-nav" aria-label="Configuration">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#state" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        State
+      </span>
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#network-policy" class="md-nav__link">
@@ -1125,10 +1125,10 @@
 <p>The bridge is the always-on half of the Shot Timer iPhone app. iOS will not
 let an app hold the La Marzocco cloud websocket open in the background, so
 this one process watches the machine, tracks each shot, looks up the
-machine's exact extraction time afterwards, keeps the shot history in SQLite,
+machine's exact extraction time afterwards, keeps the shot history in PostgreSQL,
 and starts and updates the phone's Live Activity through APNs. The phone and
 watch apps call its small HTTP API. The source, the image and the chart live
-in <a href="https://github.com/somuch-cloud/extractor.cafe/tree/main/deploy">somuch-cloud/extractor.cafe</a>; the
+in <a href="https://github.com/somuch-cloud/extractor.cafe/tree/main/deploy">somuch-cloud/extractor.cafe</a> (private); the
 chart is published to <code>ghcr.io/somuch-cloud/charts</code>, per
 <a href="../conventions/#2-official-upstream-sources-only">Conventions → Official upstream sources only</a>.</p>
 <h2 id="at-a-glance">At a glance<a class="headerlink" href="#at-a-glance" title="Permanent link">&para;</a></h2>
@@ -1150,7 +1150,7 @@ chart is published to <code>ghcr.io/somuch-cloud/charts</code>, per
 </tr>
 <tr>
 <td>Storage</td>
-<td>PVC <code>shot-bridge</code>, SQLite and the La Marzocco installation key</td>
+<td>PVC <code>shot-bridge</code>, the La Marzocco installation key</td>
 </tr>
 <tr>
 <td>Database</td>
@@ -1163,38 +1163,6 @@ chart is published to <code>ghcr.io/somuch-cloud/charts</code>, per
 <tr>
 <td>Files</td>
 <td><a href="https://github.com/JanWelker/homelab-apps/tree/main/shot-bridge"><code>shot-bridge/</code></a></td>
-</tr>
-</tbody>
-</table>
-<h2 id="state">State<a class="headerlink" href="#state" title="Permanent link">&para;</a></h2>
-<table>
-<thead>
-<tr>
-<th>State</th>
-<th>Where</th>
-<th>Rebuildable?</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Shot history, registered phones, default dose, coffees, reference shots</td>
-<td>PostgreSQL, the CloudNativePG <code>Cluster</code> <code>shot-bridge-db</code> (<code>database.yaml</code>)</td>
-<td>History from its WAL archive, to any point inside its retention window; phones re-register on their next launch</td>
-</tr>
-<tr>
-<td>La Marzocco installation key</td>
-<td><code>installation_key.json</code> on the PVC</td>
-<td>Yes, the bridge registers a new one on start</td>
-</tr>
-<tr>
-<td>Account credentials and the APNs key</td>
-<td>OpenBao <code>kv/shot-bridge/accounts</code></td>
-<td>Re-typed from the accounts</td>
-</tr>
-<tr>
-<td>API key</td>
-<td>OpenBao <code>kv/shot-bridge/config</code>, generated</td>
-<td>Yes, then entered again in the iPhone app</td>
 </tr>
 </tbody>
 </table>
@@ -1220,8 +1188,8 @@ chart is published to <code>ghcr.io/somuch-cloud/charts</code>, per
 <td>The bridge reads <code>DATABASE_URL</code> from the Secret CloudNativePG writes for <code>shot-bridge-db</code> (<code>uri</code> key); without it the chart falls back to the SQLite file on the PVC. The PVC stays for the La Marzocco installation key</td>
 </tr>
 <tr>
-<td><code>Cluster</code> <code>shot-bridge-db</code>, two instances</td>
-<td>A few rows a day, but the phones log every shot as it happens; a replica turns a drain into a switchover of seconds and a node loss into a failover instead of a restart. The volume is sized for <code>pg_wal</code>, which holds about 600 MiB whatever the data, not for the few MiB of rows. The operator's PodDisruptionBudgets stay on, so a drain waits for the switchover; <code>enablePDB: false</code> is for single-instance clusters only, see <a href="../conventions/">Conventions</a>. A topology spread keeps the two on different nodes. WAL and a nightly base backup through <code>backup.yaml</code></td>
+<td><code>Cluster</code> <code>shot-bridge-db</code> with a replica (<a href="https://github.com/JanWelker/homelab-apps/blob/main/shot-bridge/database.yaml"><code>database.yaml</code></a>)</td>
+<td>The phones log every shot as it happens; a replica turns a drain into a switchover and a node loss into a failover instead of a restart. The volume is sized for <code>pg_wal</code>, not for the rows. The operator's PodDisruptionBudgets stay on, so a drain waits for the switchover, see <a href="../conventions/#3-postgresql-is-always-a-cloudnativepg-cluster">Conventions → rule 3</a>. A topology spread keeps the two on different nodes. WAL and a nightly base backup through <code>backup.yaml</code></td>
 </tr>
 <tr>
 <td><code>HTTPRoute</code> targets the bridge's Service</td>
@@ -1250,6 +1218,38 @@ chart is published to <code>ghcr.io/somuch-cloud/charts</code>, per
 <tr>
 <td><code>timeZone: Europe/Zurich</code></td>
 <td>The bridge dates a bag's opening by the day of its first shot; the image runs in UTC otherwise, so a shot before 01:00 or 02:00 would land on the day before</td>
+</tr>
+</tbody>
+</table>
+<h3 id="state">State<a class="headerlink" href="#state" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Where</th>
+<th>Rebuildable?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Shot history, registered phones, default dose, coffees, reference shots</td>
+<td>PostgreSQL, the CloudNativePG <code>Cluster</code> <code>shot-bridge-db</code> (<code>database.yaml</code>)</td>
+<td>History from its WAL archive, to any point inside its retention window; phones re-register on their next launch</td>
+</tr>
+<tr>
+<td>La Marzocco installation key</td>
+<td><code>installation_key.json</code> on the PVC</td>
+<td>Yes, the bridge registers a new one on start</td>
+</tr>
+<tr>
+<td>Account credentials and the APNs key</td>
+<td>OpenBao <code>kv/shot-bridge/accounts</code></td>
+<td>Re-typed from the accounts</td>
+</tr>
+<tr>
+<td>API key</td>
+<td>OpenBao <code>kv/shot-bridge/config</code>, generated</td>
+<td>Yes, then entered again in the iPhone app</td>
 </tr>
 </tbody>
 </table>

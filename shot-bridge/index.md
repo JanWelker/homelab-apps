@@ -1,6 +1,6 @@
 # Shot Timer bridge
 
-The bridge is the always-on half of the Shot Timer iPhone app. iOS will not let an app hold the La Marzocco cloud websocket open in the background, so this one process watches the machine, tracks each shot, looks up the machine's exact extraction time afterwards, keeps the shot history in SQLite, and starts and updates the phone's Live Activity through APNs. The phone and watch apps call its small HTTP API. The source, the image and the chart live in [somuch-cloud/extractor.cafe](<https://github.com/somuch-cloud/extractor.cafe/tree/main/deploy>); the chart is published to `ghcr.io/somuch-cloud/charts`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
+The bridge is the always-on half of the Shot Timer iPhone app. iOS will not let an app hold the La Marzocco cloud websocket open in the background, so this one process watches the machine, tracks each shot, looks up the machine's exact extraction time afterwards, keeps the shot history in PostgreSQL, and starts and updates the phone's Live Activity through APNs. The phone and watch apps call its small HTTP API. The source, the image and the chart live in [somuch-cloud/extractor.cafe](<https://github.com/somuch-cloud/extractor.cafe/tree/main/deploy>) (private); the chart is published to `ghcr.io/somuch-cloud/charts`, per [Conventions → Official upstream sources only](<https://homelab-apps.wlkr.ch/conventions/index.md#2-official-upstream-sources-only>).
 
 ## At a glance
 
@@ -8,19 +8,10 @@ The bridge is the always-on half of the Shot Timer iPhone app. iOS will not let 
 | --- | --- |
 | URL | [shot.k8s.wlkr.ch](<https://shot.k8s.wlkr.ch/healthz>), an API for the iPhone and watch apps |
 | Authentication | The bridge's own bearer key; the apps cannot go through Authentik |
-| Storage | PVC `shot-bridge`, SQLite and the La Marzocco installation key |
+| Storage | PVC `shot-bridge`, the La Marzocco installation key |
 | Database | CloudNativePG `Cluster` `shot-bridge-db`, a primary and a streaming replica |
 | Dials | `lion.lamarzocco.io`, APNs |
 | Files | [`shot-bridge/`](<https://github.com/JanWelker/homelab-apps/tree/main/shot-bridge>) |
-
-## State
-
-| State | Where | Rebuildable? |
-| --- | --- | --- |
-| Shot history, registered phones, default dose, coffees, reference shots | PostgreSQL, the CloudNativePG `Cluster` `shot-bridge-db` (`database.yaml`) | History from its WAL archive, to any point inside its retention window; phones re-register on their next launch |
-| La Marzocco installation key | `installation_key.json` on the PVC | Yes, the bridge registers a new one on start |
-| Account credentials and the APNs key | OpenBao `kv/shot-bridge/accounts` | Re-typed from the accounts |
-| API key | OpenBao `kv/shot-bridge/config`, generated | Yes, then entered again in the iPhone app |
 
 ## Configuration
 
@@ -29,7 +20,7 @@ The bridge is the always-on half of the Shot Timer iPhone app. iOS will not let 
 | Own chart, values in `application.yaml` | The chart ships the Deployment, PVC, Service, `HTTPRoute` and the bridge's `CiliumNetworkPolicy`; this directory adds the namespace, the secrets and the namespace's default-deny policies in `networkpolicy.yaml`, which are what police the database pods |
 | One replica, `Recreate` | One cloud websocket; two copies would double every push |
 | `database.existingSecret: shot-bridge-db-app` | The bridge reads `DATABASE_URL` from the Secret CloudNativePG writes for `shot-bridge-db` (`uri` key); without it the chart falls back to the SQLite file on the PVC. The PVC stays for the La Marzocco installation key |
-| `Cluster` `shot-bridge-db`, two instances | A few rows a day, but the phones log every shot as it happens; a replica turns a drain into a switchover of seconds and a node loss into a failover instead of a restart. The volume is sized for `pg_wal`, which holds about 600 MiB whatever the data, not for the few MiB of rows. The operator's PodDisruptionBudgets stay on, so a drain waits for the switchover; `enablePDB: false` is for single-instance clusters only, see [Conventions](<https://homelab-apps.wlkr.ch/conventions/index.md>). A topology spread keeps the two on different nodes. WAL and a nightly base backup through `backup.yaml` |
+| `Cluster` `shot-bridge-db` with a replica ([`database.yaml`](<https://github.com/JanWelker/homelab-apps/blob/main/shot-bridge/database.yaml>)) | The phones log every shot as it happens; a replica turns a drain into a switchover and a node loss into a failover instead of a restart. The volume is sized for `pg_wal`, not for the rows. The operator's PodDisruptionBudgets stay on, so a drain waits for the switchover, see [Conventions → rule 3](<https://homelab-apps.wlkr.ch/conventions/index.md#3-postgresql-is-always-a-cloudnativepg-cluster>). A topology spread keeps the two on different nodes. WAL and a nightly base backup through `backup.yaml` |
 | `HTTPRoute` targets the bridge's Service | The phone sends `Authorization: Bearer`; an Authentik outpost in front would answer the app with a login page |
 | Probes are TCP | `/healthz` returns 503 whenever the machine is off, and the apps still need the history then |
 | `apns.env: sandbox` | The iPhone app is installed from Xcode with development signing; TestFlight builds need `production` |
@@ -37,6 +28,15 @@ The bridge is the always-on half of the Shot Timer iPhone app. iOS will not let 
 | `lm.serial` | The machine to watch; the chart requires it |
 | `admin.enabled: true` | The [admin UI](<https://homelab-apps.wlkr.ch/extractor-admin/index.md>)'s read-only token, and its pods let in on 8080 |
 | `timeZone: Europe/Zurich` | The bridge dates a bag's opening by the day of its first shot; the image runs in UTC otherwise, so a shot before 01:00 or 02:00 would land on the day before |
+
+### State
+
+| State | Where | Rebuildable? |
+| --- | --- | --- |
+| Shot history, registered phones, default dose, coffees, reference shots | PostgreSQL, the CloudNativePG `Cluster` `shot-bridge-db` (`database.yaml`) | History from its WAL archive, to any point inside its retention window; phones re-register on their next launch |
+| La Marzocco installation key | `installation_key.json` on the PVC | Yes, the bridge registers a new one on start |
+| Account credentials and the APNs key | OpenBao `kv/shot-bridge/accounts` | Re-typed from the accounts |
+| API key | OpenBao `kv/shot-bridge/config`, generated | Yes, then entered again in the iPhone app |
 
 ### Network policy
 
