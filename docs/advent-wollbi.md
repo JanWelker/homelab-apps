@@ -5,10 +5,9 @@ description: "advent.wollbi.ch on the cluster: the Adventsfenster site as Payloa
 # Wollbi Adventsfenster
 
 [advent.wollbi.ch](https://advent.wollbi.ch) is the invitation to the street's
-advent windows: the flyer, the dates and the calendar file to import. It was a
-Pelican site until the pages became rows in a database: the content is now
-edited at `/admin` and the repository holds the application, not the text. The
-image is built in
+advent windows: the flyer, the dates and the calendar file to import. The
+content is edited at `/admin`; the repository holds the application, not the
+text. The image is built in
 [JanWelker/advent.wollbi.ch](https://github.com/JanWelker/advent.wollbi.ch),
 so its upstream is our own — per
 [Conventions → Official upstream sources only](conventions.md#2-official-upstream-sources-only).
@@ -32,12 +31,12 @@ so its upstream is our own — per
 | Plain manifests around our own image | One Next.js process with one port and one database; the site repository's README is the whole deployment contract |
 | The namespace enforces `restricted` | The image is distroless and runs as uid 65532, its `nonroot` user, with a read-only root filesystem; the two things it writes, the uploads and Next.js' render cache, are volumes. There is no shell in it, so `kubectl exec` is for `node -e`, not for poking around |
 | `DATABASE_URL` from `advent-wollbi-db-app`, key `uri` | Payload wants one connection string and CloudNativePG assembles it; see [the contract](https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract) |
-| `PAYLOAD_SECRET` from OpenBao | It signs every editor session. The `PushSecret` in `secrets.yaml` writes it once, `IfNotExists`, so a rebuilt cluster reads the same value back and nobody is logged out; see [Conventions → Real secrets come from OpenBao](conventions.md#7-real-secrets-come-from-openbao) |
+| `PAYLOAD_SECRET` from OpenBao | It signs every editor session and encrypts what Payload keeps encrypted. The `PushSecret` in `secrets.yaml` writes it once, `IfNotExists`, so a rebuilt cluster reads the same value back and nobody is logged out; see [Conventions → Real secrets come from OpenBao](conventions.md#7-real-secrets-come-from-openbao) |
 | `NEXT_PUBLIC_SERVER_URL` | The origin Payload trusts for CSRF and builds absolute URLs from. TLS ends at the Gateway, so the pod's own address is the wrong answer — see [Behind the Gateway](conventions.md#behind-the-gateway) |
 | An `emptyDir` on `/app/.next/cache` | Next.js writes its render cache at runtime and the root filesystem is read-only. It is a cache: losing it on a restart costs one slow first request |
 | Two rules on one `HTTPRoute` | Every path reaches the app, `/admin` and `/api` included: Payload checks the editor's session itself, so the Gateway has nothing to gate. `/seed` redirects to `/`: the seed hook calls the Service, so nothing outside the namespace has a reason to reach it, and Gateway API has no rule that refuses a request |
-| The media collection accepts PDFs and `text/calendar` | The flyer and the `.ics` are content here, not attachments; as uploads the CMS knows about them, where the Pelican site had them as links in prose that outlive the file |
-| `advent-wollbi-db` with two instances and a topology spread | The site is public and editors work in it through December; with one instance every node drain took it down for the move, about four minutes. A replica on another node turns a drain into a switchover of seconds, and the operator's PodDisruptionBudgets stay on so the drain waits for it, see [Conventions](conventions.md) |
+| The media collection accepts PDFs and `text/calendar` | The flyer and the `.ics` are content here, not attachments; as uploads the CMS knows about them |
+| `advent-wollbi-db` with a replica and a topology spread ([`database.yaml`](https://github.com/JanWelker/homelab-apps/blob/main/advent-wollbi/database.yaml)) | The site is public and editors work in it through December; a replica on another node turns a drain into a switchover instead of downtime, and the operator's PodDisruptionBudgets stay on so the drain waits for it, see [Conventions → rule 3](conventions.md#3-postgresql-is-always-a-cloudnativepg-cluster) |
 | `/healthz` answers without the database | A database outage should show as an empty page, not as a pod the kubelet restarts in a loop |
 
 ### Seeding
@@ -51,9 +50,8 @@ every sync rather than once by hand.
 What it does, in order, and only on an empty database:
 
 1. Imports every file in the site repository's `public/seed/images/` as
-   media — ten of them, including the flyers of 2023 and 2024 and the 2024
-   calendar, which the current site no longer links but which are the record
-   of those years.
+   media, including past flyers and calendars the current site no longer
+   links, which are the record of those years.
 2. Writes the two pages: Willkommen and Info.
 
 Afterwards the database is the source of truth and the seed is a no-op.
@@ -73,6 +71,8 @@ the platform repository, which also reads the client secret; see
 | The `payload-oauth2` plugin, local strategy off | Payload has no built-in OIDC; with the local strategy off there are no passwords to leak or reset |
 | The group checked twice | Authentik's binding refuses everyone else; the app also refuses a `groups` claim without `wollbi-editors`, so an unbound application does not open the site to every Authentik account |
 | Users matched by email | An editor created before the switch keeps their pages when they first sign in with the same email |
+
+### Network policy
 
 The rules in
 [`advent-wollbi/networkpolicy.yaml`](https://github.com/JanWelker/homelab-apps/blob/main/advent-wollbi/networkpolicy.yaml),
@@ -107,8 +107,8 @@ by a `PushSecret` in `secrets.yaml` and never overwritten — see [Generated sec
 ### Editing
 
 `https://advent.wollbi.ch/admin`, then **Mit Authentik anmelden**. Members of `wollbi-editors` get a Payload editor on their first sign-in, matched by email; add someone to the group in Authentik to make them an editor.
-Pages are made of three blocks, which are the three shapes the Pelican pages
-had: prose, a run of images under a heading, and a download.
+Pages are made of three blocks: prose, a run of images under a heading, and a
+download.
 
 ## Health check
 
@@ -140,5 +140,5 @@ as `{namespace="advent-wollbi", container="seed"}`.
   ([Point-in-time restore](https://homelab.wlkr.ch/platform/cloudnative-pg/#point-in-time-restore)),
   or records point at files that are gone.
 - **The site is seasonal and the cluster is not.** Nothing scales it down in
-  January; it is one small pod and one small database all year, which is
-  cheaper than remembering to turn it back on in November.
+  January; it runs all year, which is cheaper than remembering to turn it
+  back on in November.

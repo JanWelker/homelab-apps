@@ -26,14 +26,6 @@ platform's.
 | Secrets | `kv/claude-<session>/github`, and `kv/claude-<session>/argocd` where `argocd.enabled`, in OpenBao |
 | Files | One `claude-<session>/` per session, see [Sessions](#sessions) |
 
-## Sessions
-
-| Session | Repositories | Cluster access | Why it is its own session |
-| --- | --- | --- | --- |
-| [`homelab`](https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab) | `homelab`, `homelab-apps`, `agent-mooring`, `flowscape`, `knead-time`, `fest.wollbi.ch`, `advent.wollbi.ch`, `renovate-config` | read, Argo CD, Prometheus, Hubble, OpenBao; the Internet but not the LAN | Everything that runs on or ships to the cluster, so one agent sees both halves of a rollout |
-| [`sitzplan`](https://github.com/JanWelker/homelab-apps/tree/main/claude-sitzplan) | `sitzplan.schlumpf.me` | none | Hosted outside the cluster; needs only npm besides GitHub |
-| [`virgil`](https://github.com/JanWelker/homelab-apps/tree/main/claude-virgil) | `virgil` | none | An iOS app: the agent edits and opens pull requests, CI builds, because there is no Xcode on Linux |
-
 ## Configuration
 
 | Setting | Why |
@@ -42,7 +34,7 @@ platform's.
 | Only the directory source has a `directory.exclude` | `exclude` filters a Git directory source. An OCI chart has none, so there is nothing for `application.yaml` to be excluded from |
 | The namespace enforces `restricted` | The image runs as uid 1000 with every capability dropped and a read-only root filesystem |
 | `secrets.yaml` holds `external-secrets-vault`, the identity the `openbao-apps` store logs in as | The store then reaches `kv/claude-<session>/` and no other prefix; it grants create, read and update there, so a session's own pod could rewrite its token |
-| `claude-reader` and `claude-writer` are created in `claude-homelab` with `automountServiceAccountToken: false` | The platform binds them to the read and write ClusterRoles, and only for that namespace. A pod gets a token only by setting `kubernetes.access`, which keeps the choice visible in the session's own file |
+| `claude-reader` and `claude-writer` are created in `claude-homelab` with `automountServiceAccountToken: false` | The platform binds both to the read ClusterRole cluster-wide and the write role nowhere ([Agent RBAC](https://homelab.wlkr.ch/platform/security-policies/#agent-rbac)). A pod gets a token only by setting `kubernetes.access`, which keeps the choice visible in the session's own file |
 | `kubernetes.access`, per session | Only the cluster session has a token, and a read-only one: it investigates and opens pull requests; the cluster changes through Git and ArgoCD, not through the agent. The sessions hosted elsewhere set no access |
 | `argocd.enabled`, per session | On for the cluster session only. Lets the agent read applications with the `claude` account's token instead of guessing from the Git side. The platform binds that account to `role:readonly`, so it cannot sync. Through `argo-grpc` it also needs the `homelab-session` rule to the server pod; the chart's name rule alone gets a 403 ([agent-mooring#3](https://github.com/JanWelker/agent-mooring/issues/3)) |
 | `repos` set per session | Clones each repository once into `$HOME` and creates the GitHub token `ExternalSecret`; one token covers the list. Without repositories or `skills.repo` there is no clone, no token and no GitHub egress |
@@ -51,8 +43,16 @@ platform's.
 | `extraEgressFQDNs` per session | A session reaches the package registries its own build needs, and no others |
 | `targetRevision` is the only version | The chart's `appVersion` is the Claude Code version and its packaged values pin the image by digest, so a Claude Code or base-image release is a chart release and a re-pushed tag cannot change a running session |
 | TLS ends in a proxy sidecar from the same image, with a per-session `Certificate` | Cilium's Gateway only passes `TLSRoute` traffic through, it cannot terminate it; sshd itself listens on loopback only |
-| `resources` in each session's values | An agent idles between prompts at a few hundred MiB; the chart's default request does not fit beside the rest of the workers. The limit leaves room for builds and subagents |
+| `resources` in each session's values | An agent idles between prompts; the chart's default request does not fit beside the rest of the workers. The limit leaves room for builds and subagents |
 | `ssh.authorizedKeys` holds one key per session, used for nothing else | The listener is on the public Gateway, so a key is a login from the Internet; a leaked key opens its own session only, not the one with the homelab write token. Public keys are not secret; the private ones are guarded like the laptop itself |
+
+### Sessions
+
+| Session | Repositories | Cluster access | Why it is its own session |
+| --- | --- | --- | --- |
+| [`homelab`](https://github.com/JanWelker/homelab-apps/tree/main/claude-homelab) | `homelab`, `homelab-apps`, `agent-mooring`, `flowscape`, `knead-time`, `fest.wollbi.ch`, `advent.wollbi.ch`, `renovate-config` | read, Argo CD, Prometheus, Hubble, OpenBao; the Internet but not the LAN | Everything that runs on or ships to the cluster, so one agent sees both halves of a rollout |
+| [`sitzplan`](https://github.com/JanWelker/homelab-apps/tree/main/claude-sitzplan) | `sitzplan.schlumpf.me` | none | Hosted outside the cluster; needs only npm besides GitHub |
+| [`virgil`](https://github.com/JanWelker/homelab-apps/tree/main/claude-virgil) | `virgil` (private) | none | An iOS app: the agent edits and opens pull requests, CI builds, because there is no Xcode on Linux |
 
 ### Network policy
 

@@ -7,9 +7,7 @@ description: "OpenCloud on the cluster: plain manifests around the official imag
 [OpenCloud](https://opencloud.eu/) is the household's file sync and share:
 one Go binary, no database, with desktop, iOS and Android clients. Upstream
 publishes no open Helm chart, so `opencloud/` is plain manifests around the
-official image: `deployment.yaml`, `service.yaml`, `pvc.yaml`,
-`httproute.yaml`, `servicemonitor.yaml`, `secrets.yaml`, `networkpolicy.yaml`,
-`namespace.yaml` and the `csp.yaml` ConfigMap, per
+official image, per
 [Conventions → Official upstream sources only](conventions.md#2-official-upstream-sources-only).
 
 ## At a glance
@@ -22,25 +20,6 @@ official image: `deployment.yaml`, `service.yaml`, `pvc.yaml`,
 | Database | None; metadata lives in extended attributes and the embedded NATS store |
 | Secrets | `kv/opencloud/config` in OpenBao, generated once |
 | Files | [`opencloud/`](https://github.com/JanWelker/homelab-apps/tree/main/opencloud) |
-
-## Storage
-
-PosixFS keeps the files on the volume in the tree the user sees, with the
-metadata in xattrs, which ext4 provides, and versions, trash and the search
-index beside them. One volume holds the whole instance, so the nightly
-[Velero snapshot](https://homelab.wlkr.ch/operations/backups/) is a complete
-copy, and a restore is readable with `ls`. The driver's non-collaborative
-mode requires that nothing else writes to the tree, which a single
-Deployment on a `ReadWriteOnce` volume guarantees.
-
-The alternative, blobs in an S3 bucket with metadata on a volume, splits
-one instance across two backup mechanisms, one of which does not exist for
-buckets here, and upstream documents no migration into or out of it.
-
-Upstream's backup guidance is to stop the instance first. The RBD snapshot
-is crash-consistent instead: metadata is written per operation on the same
-filesystem, and the nightly [Velero](https://homelab.wlkr.ch/platform/velero/) run sees no sync traffic. The search index
-is rebuilt if it disagrees after a restore; nothing is lost.
 
 ## Configuration
 
@@ -66,6 +45,25 @@ The values in `opencloud/deployment.yaml` that are not self-explanatory:
 | `FRONTEND_CHECK_FOR_UPDATES=false` | The web frontend's version check is the one outbound call the server makes on its own. Nothing phones home, the same rule as every platform component |
 | `PROXY_DEBUG_ADDR=0.0.0.0:9205` | Every service in the binary has a debug port; the proxy's carries the request metrics, the health endpoints and the one `ServiceMonitor` |
 | `HTTPRoute` on `infra-gateway`, not `apps-gateway` | Only `apps-gateway` gets a public DNS record. Phones sync on the LAN and the VPN; moving to the public gateway is one route change |
+
+### Storage
+
+PosixFS keeps the files on the volume in the tree the user sees, with the
+metadata in xattrs, which ext4 provides, and versions, trash and the search
+index beside them. One volume holds the whole instance, so the nightly
+[Velero snapshot](https://homelab.wlkr.ch/operations/backups/) is a complete
+copy, and a restore is readable with `ls`. The driver's non-collaborative
+mode requires that nothing else writes to the tree, which a single
+Deployment on a `ReadWriteOnce` volume guarantees.
+
+The alternative, blobs in an S3 bucket with metadata on a volume, splits
+one instance across two backup mechanisms, one of which does not exist for
+buckets here, and upstream documents no migration into or out of it.
+
+Upstream's backup guidance is to stop the instance first. The RBD snapshot
+is crash-consistent instead: metadata is written per operation on the same
+filesystem, and the nightly [Velero](https://homelab.wlkr.ch/platform/velero/) run sees no sync traffic. The search index
+is rebuilt if it disagrees after a restore; nothing is lost.
 
 ### OIDC
 

@@ -8,9 +8,7 @@ description: "Umami on the cluster: cookieless web analytics for every site, pla
 documentation sites, the GitHub Pages projects and Home Assistant.
 It sets no cookie and stores no address, so the sites need no consent banner.
 Upstream publishes an image and no chart, so `umami/` is plain manifests
-around the official image: `deployment.yaml`, `service.yaml`, `pdb.yaml`,
-`httproute.yaml`, `database.yaml` with `backup.yaml`, `secrets.yaml`,
-`networkpolicy.yaml` and `namespace.yaml`, per
+around the official image, per
 [Conventions → Official upstream sources only](conventions.md#2-official-upstream-sources-only).
 
 ## At a glance

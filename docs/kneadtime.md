@@ -26,13 +26,6 @@ image, per
 | Dials | The browsers' push services, over HTTPS |
 | Files | [`kneadtime/`](https://github.com/JanWelker/homelab-apps/tree/main/kneadtime) |
 
-## State
-
-| State | Where | Rebuildable? |
-| --- | --- | --- |
-| Push subscriptions and the reminders queued for them | PostgreSQL, via CloudNativePG | Only by every phone tapping **Remind me** again; a lost database means one missed bake, not a lost account |
-| The VAPID private key | OpenBao `kv/kneadtime/config`, through an ExternalSecret | No — rotating it retires every subscription taken with the old key |
-
 ## Configuration
 
 | Setting | Why |
@@ -48,6 +41,13 @@ image, per
 | `HTTPRoute` targets the app's own Service | Nobody logs in — browsers call the API on behalf of a phone that already gave its subscription. The Dependency-Track shape, not the Flowscape one |
 | `HTTPRoute` matches `/v1` only | The app serves its API, its probes and `/metrics` on one port; the browser calls only `/v1/vapid` and `/v1/schedules` (`src/lib/push/api.ts` in the app repository), and the counters describe usage that is nobody else's business |
 | `revisionHistoryLimit: 2` | Superseded ReplicaSets keep their Trivy config-audit reports until garbage collection; the default keeps ten |
+
+### State
+
+| State | Where | Rebuildable? |
+| --- | --- | --- |
+| Push subscriptions and the reminders queued for them | PostgreSQL, via CloudNativePG | Only by every phone tapping **Remind me** again; a lost database means one missed bake, not a lost account |
+| The VAPID private key | OpenBao `kv/kneadtime/config`, through an ExternalSecret | No — rotating it retires every subscription taken with the old key |
 
 ### Network policy
 

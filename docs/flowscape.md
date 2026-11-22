@@ -94,7 +94,7 @@ port-forward.
 `status.relay` should read `connected` with an empty `unavailable` list. In
 Grafana, `flowscape_relay_connected` and `flowscape_relay_unavailable_nodes`
 say the same over time, and `rate(flowscape_flows_received_total[5m])` should
-sit in the hundreds per second.
+stay above zero.
 
 ## Pitfalls
 

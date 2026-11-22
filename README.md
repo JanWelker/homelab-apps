@@ -16,29 +16,24 @@ Kubeadm, Cilium, Rook-Ceph, ArgoCD and everything under them — is in
 [llms-full.txt](https://homelab-apps.wlkr.ch/llms-full.txt); the platform site
 publishes the same two files.
 
-## Applications
-
-| Application | URL | Auth | Manifests | Page |
-| --- | --- | --- | --- | --- |
-| Claude agents | `<session>.ssh.wlkr.ch` | SSH keys | one `claude-<session>/` per session | [docs](https://homelab-apps.wlkr.ch/claude-agents/) |
-| Dependency-Track | `sbom.infra.k8s.wlkr.ch` | Authentik OIDC | [`dependency-track/`](dependency-track/) | [docs](https://homelab-apps.wlkr.ch/dependency-track/) |
-| Extractor admin UI | `extractor-admin.k8s.wlkr.ch` | Authentik proxy | [`extractor-admin/`](extractor-admin/) | [docs](https://homelab-apps.wlkr.ch/extractor-admin/) |
-| Flowscape | `flowscape.k8s.wlkr.ch` ([live demo](https://janwelker.github.io/flowscape/)) | Authentik proxy | [`flowscape/`](flowscape/) | [docs](https://homelab-apps.wlkr.ch/flowscape/) |
-| Home Assistant | `home.k8s.wlkr.ch` | Authentik proxy | [`home-assistant/`](home-assistant/) | [docs](https://homelab-apps.wlkr.ch/home-assistant/) |
-| Knead Time | `kneadtime.k8s.wlkr.ch` | None; CORS | [`kneadtime/`](kneadtime/) | [docs](https://homelab-apps.wlkr.ch/kneadtime/) |
-| OpenCloud | `cloud.infra.k8s.wlkr.ch` | Authentik OIDC | [`opencloud/`](opencloud/) | [docs](https://homelab-apps.wlkr.ch/opencloud/) |
-| Shot Timer bridge | `shot.k8s.wlkr.ch` | Bridge API key | [`shot-bridge/`](shot-bridge/) | [docs](https://homelab-apps.wlkr.ch/shot-bridge/) |
-| Umami | `analytics.k8s.wlkr.ch` | Authentik proxy | [`umami/`](umami/) | [docs](https://homelab-apps.wlkr.ch/umami/) |
-| Wollbi Adventsfenster | `advent.wollbi.ch` | Public; Authentik proxy on `/admin` | [`advent-wollbi/`](advent-wollbi/) | [docs](https://homelab-apps.wlkr.ch/advent-wollbi/) |
-| Wollbi-Fescht | `fest.wollbi.ch` | Public; Authentik proxy on `/admin` | [`fest-wollbi/`](fest-wollbi/) | [docs](https://homelab-apps.wlkr.ch/fest-wollbi/) |
-
-## How it works
-
-The `apps` ApplicationSet in the homelab repository generates an ArgoCD
-Application from every `*/application.yaml` here, so pushing a directory
-deploys an application. Every Application syncs automatically, retries a
-failed sync and reverts a hand-edited resource within minutes. The flow is on the
+The applications, what each stores and how it signs in, and how a directory
+becomes an ArgoCD Application are on the
 [documentation home page](https://homelab-apps.wlkr.ch/).
+
+## Forking
+
+The platform names this repository twice, in the `apps` ApplicationSet's
+`repoURL` and the `apps` project's `sourceRepos`, and lists workload
+namespaces by name (rules 6 and 7 of [the conventions](docs/conventions.md)).
+Here, the author's values sit in:
+
+- every `*/application.yaml` `repoURL` that points at this repository
+- `docs/CNAME`
+- `zensical.toml`: `site_url`, `repo_url`, `copyright`
+- `.github/CODEOWNERS`
+- the reusable workflow `.github/workflows/ci-ok.yaml` calls
+- the shared Renovate preset `renovate.json` extends
+- the analytics partial in `overrides/partials/integrations/analytics/`
 
 ## Adding an application
 
