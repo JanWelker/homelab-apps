@@ -28,7 +28,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: advent-wollbi
-          image: ghcr.io/janwelker/advent-wollbi-ch:1.0.3@sha256:3e8f56bae77a6a8dddea83cf4d197d7eb42662f2af4f2d116cd54845fe173dd9
+          image: ghcr.io/janwelker/advent-wollbi-ch:1.0.4@sha256:b7f25bbefbf36fb0d00208a11451b78c4cdc533ba3d814c37035bc9b045e6516
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
