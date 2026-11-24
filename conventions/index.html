@@ -1487,6 +1487,11 @@ repositories diff and apply the same way.</p>
 <td>A <code>ServiceMonitor</code> or <code>PodMonitor</code></td>
 <td>Prometheus scrapes it</td>
 </tr>
+<tr>
+<td>Priority under memory pressure</td>
+<td>Nothing for a service, <code>priorityClassName: batch</code> for a Job or CronJob</td>
+<td>Services rank below the platform and above its monitoring; any other class is refused, see <a href="https://homelab.wlkr.ch/platform/#priority-classes">Priority classes</a></td>
+</tr>
 </tbody>
 </table>
 <h2 id="writing-an-httproute">Writing an <code>HTTPRoute</code><a class="headerlink" href="#writing-an-httproute" title="Permanent link">&para;</a></h2>
