@@ -44,7 +44,7 @@ The chart values in `application.yaml` that are not defaults:
 | `DT_TELEMETRY_SUBMISSION_DEFAULT_ENABLED: "false"` | No phone-home. The property seeds the setting once, so it has to be off before the first start; the egress policy would drop the request anyway |
 | `DT_OIDC_*` and the frontend's `OIDC_*` | Both halves must name the same issuer and client ID; the API server validates the ID token the browser obtained. `preferred_username` is Authentik's username claim, which is safe only while users cannot change it (see [Conventions → Authentication](conventions.md#6-authentication-is-authentiks-not-the-applications)); Dependency-Track also stores each account's first `sub` and refuses a later login under another, so a rename could only claim an account that has never logged in. `groups` arrives with the `profile` scope, so team membership follows Authentik's groups. See [OIDC](#oidc) |
 | `apiServer.web.resources`, below upstream's advice | The JVM sizes its heap from the limit, and upstream's production advice is for a far larger portfolio than this cluster's |
-| `dependency-track-db` resources | The largest database here, holding the vulnerability data; the request is the measured median and the limit 2.5x the peak, per the [platform rule](https://homelab.wlkr.ch/platform/#components) |
+| `dependency-track-db` resources and parameters | The largest database here, holding the vulnerability data; the request is the measured median and the limit 2.5x the peak, per the [platform rule](https://homelab.wlkr.ch/platform/#components). The parameters are upstream's [tuning recommendations](https://dependencytrack.github.io/docs/next/reference/configuration/database/#tuning-parameters) without a size-dependent trade-off |
 | `serviceMonitor.namespace: dependency-track` | The chart defaults to the `monitoring` namespace, which the `apps` project may not write to. Prometheus reads it from here like every other application's |
 | `httpRoute` on `infra-gateway`, not `apps-gateway` | The whole vulnerability portfolio sits behind one login, so it is not on the Internet; the upload job uses the Service, and only `apps-gateway` gets a public DNS record. The chart's route sends `/api` to the API server and everything else to the frontend on one hostname, so the frontend's `API_BASE_URL` stays empty and the browser uses relative URLs |
 | `apiServer.image.tag` and `frontend.image.tag` pinned by digest, though the chart derives both from its `appVersion` | A tag re-pushed upstream would otherwise change what runs without a commit, and Renovate sees a rebuild only through a digest. The chart and the two pins are one Renovate group, so a chart bump cannot leave a pod on the previous release. |
@@ -84,7 +84,7 @@ each distinct image that is running, once, to `PUT /api/v1/bom` with
 | Two digests under one tag are one upload | They are one project version; the namespaces of both become its tags |
 | Reads `report.components` from the report, unchanged | Trivy Operator already writes CycloneDX; Dependency-Track accepts the same document, `specVersion` 1.7 included |
 | The `ClusterRole` that lets it list reports, ReplicaSets and Jobs is the platform's | The `apps` project may not create cluster-scoped RBAC, and who may read Trivy's findings is the platform's call. It is `sbom-readers.yaml` next to the operator in the homelab repository |
-| The API key is `optional` on the container, and its `ExternalSecret` is at sync wave 1 | A missing Secret would leave the pod in `CreateContainerConfigError`, and a `Forbid` CronJob never runs again behind a Job that never finishes; the script exits 1 with the reason instead. The wave is the same argument one level up: this is the one secret only a running Dependency-Track can issue, so it is fetched after the application, never in a wave that gates it. `make bao-secrets` writes the path empty rather than leaving it absent, for the same reason |
+| The API key is `optional` on the container, and its `ExternalSecret` is at sync wave 1 | A missing Secret would leave the pod in `CreateContainerConfigError`, and a `Forbid` CronJob never runs again behind a Job that never finishes; the script exits 1 with the reason instead. The wave is the same argument one level up: this is the one secret only a running Dependency-Track can issue, so it is fetched after the application, never in a wave that gates it. |
 | Runs before the platform's [`findings-history`](https://homelab.wlkr.ch/platform/trivy-operator/#history) job | Both read the same reports; neither depends on the other |
 | `activeDeadlineSeconds` ends the Job before `findings-history` starts | `concurrencyPolicy: Forbid` never starts tonight's run behind one still hanging on a request, and the later job reads the same reports; a run that overran is killed in time for both |
 
@@ -114,9 +114,6 @@ projects.
 | Only projects with a `namespace:` tag | That is the job's mark; a project created by hand is not the job's to retire |
 | Every upload asks for an active project | An image that runs again after a rollback is part of the portfolio again |
 | Without `PORTFOLIO_MANAGEMENT_UPDATE` the job says so and succeeds | The uploads are what the job is for |
-
-How many retired versions of a project stay is the retention setting's
-to say, not the job's.
 
 ### OIDC
 
@@ -153,9 +150,7 @@ platform repository.
 
 The API key is its own path because Dependency-Track issues it, after the
 first start, and a `bao kv put` replaces a path wholesale: writing it later
-into the first path would have deleted the KEK. The script asks for it and
-accepts an empty answer, so the path exists before Dependency-Track can issue
-a key. The database password is not here; CloudNativePG generates it.
+into the first path would have deleted the KEK. The database password is not here; CloudNativePG generates it.
 
 ## Usage
 
@@ -296,9 +291,12 @@ UI, the Dashboard's portfolio count should match the images number.
 - **A sync that fails at the `sbom-upload` `ExternalSecret`** with `could
   not get secret data from provider` is `kv/dependency-track/sbom-upload`
   missing entirely. Run `make bao-secrets` in the platform repository, which
-  writes the path empty when there is no key yet; an absent path fails the
-  `ExternalSecret`. It sits at wave 1, so Dependency-Track itself is up, only
-  the job's key is not.
+  writes the path empty when there is no key yet. It sits at wave 1, so
+  Dependency-Track itself is up, only the job's key is not.
+- **A KEV mirror that fails with 404** is a feed URL that moved upstream.
+  The URLs live in the database under Administration → KEV Sources, and an
+  upgrade does not change them
+  ([5.2.2 upgrade guide](https://dependencytrack.github.io/docs/next/guides/upgrading/v5.2.2/)).
 - **Old image versions pile up as projects** when inactive project
   deletion is off under Maintenance, or the team lacks the permission to
   [retire](#retired-projects) them. The job never deletes.
