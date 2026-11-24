@@ -28,6 +28,9 @@ spec:
   postgresql:
     parameters:
       shared_buffers: 256MB
+      jit: "off"
+      wal_compression: lz4
+      default_toast_compression: lz4
 
   # Request at the measured median, limit at 2.5x the peak; see docs/dependency-track.md
   resources:
