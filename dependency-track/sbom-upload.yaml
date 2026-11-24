@@ -376,6 +376,7 @@ spec:
             # Selected by the network policy; job-name alone is not stable.
             app.kubernetes.io/name: sbom-upload
         spec:
+          priorityClassName: batch
           serviceAccountName: sbom-upload
           automountServiceAccountToken: true
           restartPolicy: Never
