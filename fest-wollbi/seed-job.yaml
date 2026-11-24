@@ -20,6 +20,7 @@ spec:
       labels:
         app.kubernetes.io/name: fest-wollbi-seed
     spec:
+      priorityClassName: batch
       restartPolicy: Never
       automountServiceAccountToken: false
       securityContext:
