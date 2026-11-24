@@ -66,13 +66,17 @@ same namespace through its external-database settings.
 A single-instance `Cluster` sets `enablePDB: false`: the operator's
 `<cluster>-primary` PodDisruptionBudget otherwise never allows an eviction,
 so a drain of that node hangs until Kured's timeout and the node is never
-rebooted. The pod moves and the database is down for the move either way.
+rebooted.
 
 Every `Cluster` sets `smartShutdownTimeout: 15`, and one with replicas
 `primaryUpdateMethod: switchover`; the reasoning is in
 [the contract](https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract).
-Each application holds a connection pool, so the default 180-second smart
-shutdown never ends early and only lengthens every restart and every move.
+Each application holds a connection pool, so the default smart shutdown only
+lengthens every restart and move.
+
+Use the `standard` image: `system` only adds the in-core Barman Cloud the
+plugin replaces and is deprecated. Ship a `PodMonitor` instead of the
+deprecated `monitoring.enablePodMonitor`.
 
 Every `Cluster` gets a `backup.yaml` beside it, the
 [stanza from the platform](https://homelab.wlkr.ch/platform/cloudnative-pg/#backing-up-a-database)
@@ -81,8 +85,8 @@ in the `Cluster`. Its S3 user writes only its own prefix of the bucket the
 [off-cluster copy](https://homelab.wlkr.ch/operations/backups/#off-cluster-copy)
 pulls, and is named `<namespace>.<purpose>` or the platform refuses it. So
 is a `Cluster` without the `plugins` entry, unless it carries
-`homelab.wlkr.ch/backup-exempt` with the reason. Velero's nightly PVC snapshot alone restores only to the night
-it was taken; the WAL archive restores to any second.
+`homelab.wlkr.ch/backup-exempt` with the reason. Velero's nightly snapshot
+restores only to that night; the WAL archive to any second.
 
 The operator writes a `<cluster-name>-app` Secret with `username`, `password`,
 `host`, `port`, `dbname` and a ready-assembled `uri`. Consume those keys; never
