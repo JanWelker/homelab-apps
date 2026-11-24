@@ -28,6 +28,8 @@ spec:
 
   postgresql:
     parameters:
+      # No node reserves huge pages, and SELinux denies container_t the probe
+      huge_pages: "off"
       shared_buffers: 64MB
       max_connections: "20"
 
