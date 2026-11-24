@@ -14,7 +14,7 @@ spec:
   # One instance: the -primary PDB would refuse every drain; see docs/conventions.md
   enablePDB: false
 
-  imageName: ghcr.io/cloudnative-pg/postgresql:18.7-system-trixie@sha256:c437b7c6c00aa7e66f5d6de1dd83602391fdebd4ff776ffb1ab7aaba5e7351ad
+  imageName: ghcr.io/cloudnative-pg/postgresql:18.7-standard-trixie@sha256:1abcfd1cac6d53cda5185706819aab36d66a4ed88e99fc2ae44ab0826aa99f00
 
   storage:
     size: 10Gi
@@ -46,6 +46,16 @@ spec:
       isWALArchiver: true
       parameters:
         barmanObjectName: dependency-track-db
-
-  monitoring:
-    enablePodMonitor: true
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: dependency-track-db-metrics
+  namespace: dependency-track
+spec:
+  selector:
+    matchLabels:
+      cnpg.io/cluster: dependency-track-db
+      cnpg.io/podRole: instance
+  podMetricsEndpoints:
+    - port: metrics
