@@ -94,7 +94,8 @@ def fixable_criticals(image):
     """Set of (CVE, package) pairs with a fix, CRITICAL only."""
     result = subprocess.run(
         ["trivy", "image", "--quiet", "--severity", "CRITICAL", "--ignore-unfixed",
-         "--scanners", "vuln", "--format", "json", image],
+         "--scanners", "vuln", "--disable-telemetry", "--skip-version-check",
+         "--format", "json", image],
         capture_output=True, text=True, check=False)
     if result.returncode != 0:
         print(f"::warning title={image}::trivy failed: {result.stderr.strip()[-400:]}")
