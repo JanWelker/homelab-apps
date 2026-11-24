@@ -44,6 +44,8 @@ spec:
 
   postgresql:
     parameters:
+      # No node reserves huge pages, and SELinux denies container_t the probe
+      huge_pages: "off"
       shared_buffers: 32MB
       # The bridge's pool holds at most 4, migrate-sqlite 4 more while it runs.
       max_connections: "20"
