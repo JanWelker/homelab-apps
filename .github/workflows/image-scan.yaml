@@ -35,11 +35,16 @@ jobs:
         with:
           version: v0.76.2
 
-      - name: Install PyYAML
-        env:
-          # renovate: datasource=pypi depName=pyyaml
-          PYYAML_VERSION: 6.0.4
-        run: pip install --quiet "pyyaml==${PYYAML_VERSION}"
+      - name: Install uv
+        uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          version: "0.13.9"
+
+      - name: Install the project
+        working-directory: head
+        run: |
+          uv python install
+          uv sync --locked --dev
 
       - name: Scan changed images
-        run: python3 head/scripts/image-scan-diff.py base head
+        run: uv run --project head head/scripts/image-scan-diff.py base head
