@@ -1251,8 +1251,8 @@ around the official image, per
 <td>The outpost authenticates and forwards to <code>umami.umami.svc:3000</code>. The provider's <code>skip_path_regex</code>, in the platform repository, exempts exactly <code>/script.js</code> and <code>/api/send</code>: the tracker every visitor loads and the endpoint it posts to. Everything else, the dashboard and the rest of the API, is behind the login. The cross-namespace <code>backendRef</code> works only because the platform's <code>referencegrant.yaml</code> names this namespace; pointing the route at the Umami Service removes the authentication layer, so it deserves a second look in review</td>
 </tr>
 <tr>
-<td>No <code>CLIENT_IP_HEADER</code></td>
-<td>The Gateway's Envoy appends the visitor to <code>X-Forwarded-For</code> and the outpost passes it on; Umami reads that header by default. Only the country is stored, from the bundled GeoLite database, never the address</td>
+<td><code>CLIENT_IP_HEADER</code>, the pod CIDR in <code>TRUSTED_PROXIES</code></td>
+<td>Only <code>X-Forwarded-For</code> is read, from the right, so a forged prefix or CDN header is ignored; see <a href="../conventions/#behind-the-gateway">Behind the Gateway</a>. Only the country is stored</td>
 </tr>
 </tbody>
 </table>
@@ -1323,9 +1323,9 @@ the Deployment that reads it, and keeps its Secret when deleted
 generates it and nothing outside the cluster needs it.</p>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
 <h3 id="first-login">First login<a class="headerlink" href="#first-login" title="Permanent link">&para;</a></h3>
-<p>Umami creates <code>admin</code> with the password <code>umami</code> on its first start. Change it
-under Profile before adding a website; it is the only account, and the only
-credential Umami keeps that OpenBao does not.</p>
+<p>Umami creates <code>admin</code> / <code>umami</code> on its first start and forces a new password
+at the first login; later changes are under Settings → Security. It is the
+only account and the only credential OpenBao does not hold.</p>
 <h3 id="adding-a-site">Adding a site<a class="headerlink" href="#adding-a-site" title="Permanent link">&para;</a></h3>
 <ol>
 <li>Settings → Websites → Add website: a name and the hostname. The website

@@ -1150,7 +1150,7 @@ publishes no Helm chart and the community ones are repackagers, so
 <tbody>
 <tr>
 <td>Plain manifests, no chart</td>
-<td>Home Assistant is one stateful process with one volume and one port; a Deployment is less work than auditing a third-party chart on every bump</td>
+<td>One stateful process, one volume, one port; a Deployment is less work than auditing a third-party chart on every bump</td>
 </tr>
 <tr>
 <td><code>strategy: Recreate</code>, one replica</td>
@@ -1162,11 +1162,15 @@ publishes no Helm chart and the community ones are repackagers, so
 </tr>
 <tr>
 <td>Root with every capability dropped, no API token; the namespace enforces <code>baseline</code></td>
-<td>The image runs as root under s6 and writes <code>/config</code>, and upstream does not support running it otherwise, so <code>runAsNonRoot</code> and a read-only root do not apply. Root owns everything it touches; no capability is added back, because every port it opens is above 1024 and <code>NET_BIND_SERVICE</code> only matters below; an integration that binds a privileged port needs it added back with that reason here. <code>baseline</code> forbids adding <code>NET_RAW</code>, so DHCP discovery joins the <a href="#pitfalls">discovery that does not work here</a> anyway. Nothing in the pod talks to the API server, so the <code>default</code> ServiceAccount's token stays unmounted, per <a href="https://homelab.wlkr.ch/platform/security-policies/#default-serviceaccount-tokens">Default ServiceAccount tokens</a></td>
+<td>The image runs as root under s6 and writes <code>/config</code>, and upstream supports nothing else, so <code>runAsNonRoot</code> and a read-only root do not apply. No capability is added back: every port it opens is above 1024; an integration that binds a privileged port needs <code>NET_BIND_SERVICE</code> added back with that reason here. <code>baseline</code> forbids adding <code>NET_RAW</code>, so DHCP discovery joins the <a href="#pitfalls">discovery that does not work here</a> anyway. Nothing in the pod talks to the API server, so the <code>default</code> ServiceAccount's token stays unmounted, per <a href="https://homelab.wlkr.ch/platform/security-policies/#default-serviceaccount-tokens">Default ServiceAccount tokens</a></td>
 </tr>
 <tr>
 <td>An init container from the same image seeds <code>/config</code> on every start</td>
 <td><code>configuration.yaml</code> includes <code>automations.yaml</code>, <code>scripts.yaml</code> and <code>scenes.yaml</code> so the UI editors can save; on a fresh volume they do not exist and Home Assistant fails to start rather than create them. Same image as the main container because Renovate updates every occurrence in one pull request, so the two cannot drift</td>
+</tr>
+<tr>
+<td>A longer <code>terminationGracePeriodSeconds</code>, upstream's <a href="https://www.home-assistant.io/installation/linux#allow-time-for-a-clean-shutdown">stop timeout</a></td>
+<td>The Kubernetes default can kill Home Assistant before its final <code>/config/.storage</code> write and the recorder finish; an upper bound, not a delay</td>
 </tr>
 <tr>
 <td>A long <code>startupProbe</code></td>
@@ -1178,7 +1182,7 @@ publishes no Helm chart and the community ones are repackagers, so
 </tr>
 <tr>
 <td><code>secrets.yaml</code> written by the init container on every start</td>
-<td>Home Assistant has no <code>!env_var</code> tag, so the database URL reaches <code>configuration.yaml</code> through <code>!secret</code>, from CloudNativePG's Secret, which the operator rotates. The value is written through <code>json.dumps</code> so it is valid YAML whatever the generated password contains. Anything added to that file by hand is lost at the next restart; secrets belong in <a href="https://homelab.wlkr.ch/platform/openbao/">OpenBao</a></td>
+<td>Home Assistant has no <code>!env_var</code> tag, so the database URL reaches <code>configuration.yaml</code> through <code>!secret</code>, from CloudNativePG's Secret, which the operator rotates. The value is written through <code>json.dumps</code> so it is valid YAML whatever the generated password contains. Hand edits to that file are lost at restart; secrets belong in <a href="https://homelab.wlkr.ch/platform/openbao/">OpenBao</a></td>
 </tr>
 <tr>
 <td><code>use_x_forwarded_for</code> with the pod CIDR in <code>trusted_proxies</code></td>
@@ -1186,7 +1190,7 @@ publishes no Helm chart and the community ones are repackagers, so
 </tr>
 <tr>
 <td><code>HTTPRoute</code> targets <code>authentik-server</code>, not the app</td>
-<td>The outpost authenticates and forwards to <code>home-assistant.home-assistant.svc:8123</code>. Home Assistant and <a href="../umami/">Umami</a> are the proxied apps with a login of their own, so browser users log in twice: defence in depth, not SSO. The cross-namespace <code>backendRef</code> works only because the platform's <code>referencegrant.yaml</code> names this namespace. Pointing the route at the Home Assistant Service instead silently removes the whole authentication layer, so it deserves a second look in review</td>
+<td>The outpost authenticates and forwards to <code>home-assistant.home-assistant.svc:8123</code>. Home Assistant and <a href="../umami/">Umami</a> are the proxied apps with a login of their own, so browser users log in twice: defence in depth, not SSO. The cross-namespace <code>backendRef</code> works only because the platform's <code>referencegrant.yaml</code> names this namespace. Pointing the route at the Home Assistant Service silently removes the authentication layer, so review it twice</td>
 </tr>
 <tr>
 <td><code>frontend.extra_module_url</code>, with <code>umami.js</code> from the ConfigMap mounted under <code>/config/www</code></td>
@@ -1271,7 +1275,7 @@ itself stays on the PVC underneath. The file is read once at startup, so a
 merged change does nothing until the pod restarts:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>home-assistant<span class="w"> </span>rollout<span class="w"> </span>restart<span class="w"> </span>deploy/home-assistant
 </span></code></pre></div>
-<p>The UI's own restart button does the same from inside.</p>
+<p>The UI's restart button does the same.</p>
 <h2 id="health-check">Health check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>home-assistant<span class="w"> </span>get<span class="w"> </span>pods,pvc
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>kubectl<span class="w"> </span>-n<span class="w"> </span>home-assistant<span class="w"> </span>get<span class="w"> </span>cluster<span class="w"> </span>home-assistant-db

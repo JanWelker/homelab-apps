@@ -541,7 +541,7 @@ The chart values in `application.yaml` that are not defaults:
 | `DT_TELEMETRY_SUBMISSION_DEFAULT_ENABLED: "false"` | No phone-home. The property seeds the setting once, so it has to be off before the first start; the egress policy would drop the request anyway |
 | `DT_OIDC_*` and the frontend's `OIDC_*` | Both halves must name the same issuer and client ID; the API server validates the ID token the browser obtained. `preferred_username` is Authentik's username claim, which is safe only while users cannot change it (see [Conventions → Authentication](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>)); Dependency-Track also stores each account's first `sub` and refuses a later login under another, so a rename could only claim an account that has never logged in. `groups` arrives with the `profile` scope, so team membership follows Authentik's groups. See [OIDC](<#oidc>) |
 | `apiServer.web.resources`, below upstream's advice | The JVM sizes its heap from the limit, and upstream's production advice is for a far larger portfolio than this cluster's |
-| `dependency-track-db` resources | The largest database here, holding the vulnerability data; the request is the measured median and the limit 2.5x the peak, per the [platform rule](<https://homelab.wlkr.ch/platform/#components>) |
+| `dependency-track-db` resources and parameters | The largest database here, holding the vulnerability data; the request is the measured median and the limit 2.5x the peak, per the [platform rule](<https://homelab.wlkr.ch/platform/#components>). The parameters are upstream's [tuning recommendations](<https://dependencytrack.github.io/docs/next/reference/configuration/database/#tuning-parameters>) without a size-dependent trade-off |
 | `serviceMonitor.namespace: dependency-track` | The chart defaults to the `monitoring` namespace, which the `apps` project may not write to. Prometheus reads it from here like every other application's |
 | `httpRoute` on `infra-gateway`, not `apps-gateway` | The whole vulnerability portfolio sits behind one login, so it is not on the Internet; the upload job uses the Service, and only `apps-gateway` gets a public DNS record. The chart's route sends `/api` to the API server and everything else to the frontend on one hostname, so the frontend's `API_BASE_URL` stays empty and the browser uses relative URLs |
 | `apiServer.image.tag` and `frontend.image.tag` pinned by digest, though the chart derives both from its `appVersion` | A tag re-pushed upstream would otherwise change what runs without a commit, and Renovate sees a rebuild only through a digest. The chart and the two pins are one Renovate group, so a chart bump cannot leave a pod on the previous release. |
@@ -576,7 +576,7 @@ Every rule in `dependency-track/networkpolicy.yaml`, and why it is there. The sh
 | Two digests under one tag are one upload | They are one project version; the namespaces of both become its tags |
 | Reads `report.components` from the report, unchanged | Trivy Operator already writes CycloneDX; Dependency-Track accepts the same document, `specVersion` 1.7 included |
 | The `ClusterRole` that lets it list reports, ReplicaSets and Jobs is the platform's | The `apps` project may not create cluster-scoped RBAC, and who may read Trivy's findings is the platform's call. It is `sbom-readers.yaml` next to the operator in the homelab repository |
-| The API key is `optional` on the container, and its `ExternalSecret` is at sync wave 1 | A missing Secret would leave the pod in `CreateContainerConfigError`, and a `Forbid` CronJob never runs again behind a Job that never finishes; the script exits 1 with the reason instead. The wave is the same argument one level up: this is the one secret only a running Dependency-Track can issue, so it is fetched after the application, never in a wave that gates it. `make bao-secrets` writes the path empty rather than leaving it absent, for the same reason |
+| The API key is `optional` on the container, and its `ExternalSecret` is at sync wave 1 | A missing Secret would leave the pod in `CreateContainerConfigError`, and a `Forbid` CronJob never runs again behind a Job that never finishes; the script exits 1 with the reason instead. The wave is the same argument one level up: this is the one secret only a running Dependency-Track can issue, so it is fetched after the application, never in a wave that gates it. |
 | Runs before the platform's [`findings-history`](<https://homelab.wlkr.ch/platform/trivy-operator/#history>) job | Both read the same reports; neither depends on the other |
 | `activeDeadlineSeconds` ends the Job before `findings-history` starts | `concurrencyPolicy: Forbid` never starts tonight's run behind one still hanging on a request, and the later job reads the same reports; a run that overran is killed in time for both |
 
@@ -602,8 +602,6 @@ A project the job created and did not upload in a run is marked inactive, since 
 | Every upload asks for an active project | An image that runs again after a rollback is part of the portfolio again |
 | Without `PORTFOLIO_MANAGEMENT_UPDATE` the job says so and succeeds | The uploads are what the job is for |
 
-How many retired versions of a project stay is the retention setting's to say, not the job's.
-
 ### OIDC
 
 The provider's blueprint is in the platform repository, per [Conventions → Authentication](<https://homelab-apps.wlkr.ch/conventions/index.md#6-authentication-is-authentiks-not-the-applications>). What the workload side has to match:
@@ -627,7 +625,7 @@ Two paths. `kv/dependency-track/config` is written once by the `PushSecret` in `
 | `kv/dependency-track/config` | `oidc-client-id` | The API server, the frontend **and** Authentik, through two `ExternalSecret`s |
 | `kv/dependency-track/sbom-upload` | `api-key` | The upload job |
 
-The API key is its own path because Dependency-Track issues it, after the first start, and a `bao kv put` replaces a path wholesale: writing it later into the first path would have deleted the KEK. The script asks for it and accepts an empty answer, so the path exists before Dependency-Track can issue a key. The database password is not here; CloudNativePG generates it.
+The API key is its own path because Dependency-Track issues it, after the first start, and a `bao kv put` replaces a path wholesale: writing it later into the first path would have deleted the KEK. The database password is not here; CloudNativePG generates it.
 
 ## Usage
 
@@ -713,7 +711,8 @@ The database should report `Cluster in healthy state`, the version endpoint answ
 - **A login that fails on `iss`** is a mismatch between the issuer in `application.yaml` and Authentik's, usually the trailing slash. The value is written twice there, as `DT_OIDC_ISSUER` and the frontend's `OIDC_ISSUER`; change both.
 - **A first login that lands nowhere** is a user with no team. Provisioning creates the account; the group mapping in [First login](<#first-login>) is what grants it anything.
 - **A job that reports `no API key yet`** is the [first-login](<#first-login>) step not done, or the `ExternalSecret` not refreshed since it was; the Secret carries a `data-hash` annotation that moves when the value does.
-- **A sync that fails at the `sbom-upload` `ExternalSecret`** with `could   not get secret data from provider` is `kv/dependency-track/sbom-upload` missing entirely. Run `make bao-secrets` in the platform repository, which writes the path empty when there is no key yet; an absent path fails the `ExternalSecret`. It sits at wave 1, so Dependency-Track itself is up, only the job's key is not.
+- **A sync that fails at the `sbom-upload` `ExternalSecret`** with `could   not get secret data from provider` is `kv/dependency-track/sbom-upload` missing entirely. Run `make bao-secrets` in the platform repository, which writes the path empty when there is no key yet. It sits at wave 1, so Dependency-Track itself is up, only the job's key is not.
+- **A KEV mirror that fails with 404** is a feed URL that moved upstream. The URLs live in the database under Administration → KEV Sources, and an upgrade does not change them ([5.2.2 upgrade guide](<https://dependencytrack.github.io/docs/next/guides/upgrading/v5.2.2/>)).
 - **Old image versions pile up as projects** when inactive project deletion is off under Maintenance, or the team lacks the permission to [retire](<#retired-projects>) them. The job never deletes.
 
 # Extractor admin UI
@@ -945,16 +944,17 @@ The image is distroless, so there is no shell to `exec` into, and the route answ
 
 | Setting | Why |
 | --- | --- |
-| Plain manifests, no chart | Home Assistant is one stateful process with one volume and one port; a Deployment is less work than auditing a third-party chart on every bump |
+| Plain manifests, no chart | One stateful process, one volume, one port; a Deployment is less work than auditing a third-party chart on every bump |
 | `strategy: Recreate`, one replica | The `/config` PVC is `ReadWriteOnce`, and two Home Assistant processes against one `/config` corrupt the `.storage` registries |
 | `revisionHistoryLimit: 2` | Superseded ReplicaSets keep their Trivy config-audit reports until they are garbage-collected; the Kubernetes default keeps ten |
-| Root with every capability dropped, no API token; the namespace enforces `baseline` | The image runs as root under s6 and writes `/config`, and upstream does not support running it otherwise, so `runAsNonRoot` and a read-only root do not apply. Root owns everything it touches; no capability is added back, because every port it opens is above 1024 and `NET_BIND_SERVICE` only matters below; an integration that binds a privileged port needs it added back with that reason here. `baseline` forbids adding `NET_RAW`, so DHCP discovery joins the [discovery that does not work here](<#pitfalls>) anyway. Nothing in the pod talks to the API server, so the `default` ServiceAccount's token stays unmounted, per [Default ServiceAccount tokens](<https://homelab.wlkr.ch/platform/security-policies/#default-serviceaccount-tokens>) |
+| Root with every capability dropped, no API token; the namespace enforces `baseline` | The image runs as root under s6 and writes `/config`, and upstream supports nothing else, so `runAsNonRoot` and a read-only root do not apply. No capability is added back: every port it opens is above 1024; an integration that binds a privileged port needs `NET_BIND_SERVICE` added back with that reason here. `baseline` forbids adding `NET_RAW`, so DHCP discovery joins the [discovery that does not work here](<#pitfalls>) anyway. Nothing in the pod talks to the API server, so the `default` ServiceAccount's token stays unmounted, per [Default ServiceAccount tokens](<https://homelab.wlkr.ch/platform/security-policies/#default-serviceaccount-tokens>) |
 | An init container from the same image seeds `/config` on every start | `configuration.yaml` includes `automations.yaml`, `scripts.yaml` and `scenes.yaml` so the UI editors can save; on a fresh volume they do not exist and Home Assistant fails to start rather than create them. Same image as the main container because Renovate updates every occurrence in one pull request, so the two cannot drift |
+| A longer `terminationGracePeriodSeconds`, upstream's [stop timeout](<https://www.home-assistant.io/installation/linux#allow-time-for-a-clean-shutdown>) | The Kubernetes default can kill Home Assistant before its final `/config/.storage` write and the recorder finish; an upper bound, not a delay |
 | A long `startupProbe` | Home Assistant loads every integration before it serves anything, minutes rather than seconds on a cold start with a populated registry. The startup probe buys that time without making the liveness probe useless afterwards |
 | Recorder on CloudNativePG, not SQLite | SQLite's locking on a network block device is the usual cause of a Home Assistant that feels slow. `purge_keep_days` is raised because the default of 10 is shorter than the moment you look for a graph. See [the contract](<https://homelab.wlkr.ch/platform/cloudnative-pg/#the-contract>) |
-| `secrets.yaml` written by the init container on every start | Home Assistant has no `!env_var` tag, so the database URL reaches `configuration.yaml` through `!secret`, from CloudNativePG's Secret, which the operator rotates. The value is written through `json.dumps` so it is valid YAML whatever the generated password contains. Anything added to that file by hand is lost at the next restart; secrets belong in [OpenBao](<https://homelab.wlkr.ch/platform/openbao/>) |
+| `secrets.yaml` written by the init container on every start | Home Assistant has no `!env_var` tag, so the database URL reaches `configuration.yaml` through `!secret`, from CloudNativePG's Secret, which the operator rotates. The value is written through `json.dumps` so it is valid YAML whatever the generated password contains. Hand edits to that file are lost at restart; secrets belong in [OpenBao](<https://homelab.wlkr.ch/platform/openbao/>) |
 | `use_x_forwarded_for` with the pod CIDR in `trusted_proxies` | Requests arrive from Cilium's Envoy and the outpost. Without it every request has one source address, so the ban list and rate limiting count the household as one user |
-| `HTTPRoute` targets `authentik-server`, not the app | The outpost authenticates and forwards to `home-assistant.home-assistant.svc:8123`. Home Assistant and [Umami](<https://homelab-apps.wlkr.ch/umami/index.md>) are the proxied apps with a login of their own, so browser users log in twice: defence in depth, not SSO. The cross-namespace `backendRef` works only because the platform's `referencegrant.yaml` names this namespace. Pointing the route at the Home Assistant Service instead silently removes the whole authentication layer, so it deserves a second look in review |
+| `HTTPRoute` targets `authentik-server`, not the app | The outpost authenticates and forwards to `home-assistant.home-assistant.svc:8123`. Home Assistant and [Umami](<https://homelab-apps.wlkr.ch/umami/index.md>) are the proxied apps with a login of their own, so browser users log in twice: defence in depth, not SSO. The cross-namespace `backendRef` works only because the platform's `referencegrant.yaml` names this namespace. Pointing the route at the Home Assistant Service silently removes the authentication layer, so review it twice |
 | `frontend.extra_module_url`, with `umami.js` from the ConfigMap mounted under `/config/www` | The Umami snippet. The frontend loads the URL through `import()`, and the tracker reads its website ID off its own `<script>` tag, so the module appends that tag rather than being it. See [Umami → Usage](<https://homelab-apps.wlkr.ch/umami/index.md#usage>) |
 
 ### State
@@ -987,7 +987,7 @@ The ConfigMap is mounted over `/config/configuration.yaml`, so Git is the source
 kubectl -n home-assistant rollout restart deploy/home-assistant
 ```
 
-The UI's own restart button does the same from inside.
+The UI's restart button does the same.
 
 ## Health check
 
@@ -1377,7 +1377,7 @@ kubectl -n shot-bridge logs deploy/shot-bridge
 | Probes on `/api/heartbeat`, a long `startupProbe` | The first start runs the Prisma migrations before the server answers |
 | `revisionHistoryLimit: 2` | Superseded ReplicaSets keep their Trivy config-audit reports until garbage collection; the default keeps ten |
 | `HTTPRoute` targets `authentik-server`, not the app | The outpost authenticates and forwards to `umami.umami.svc:3000`. The provider's `skip_path_regex`, in the platform repository, exempts exactly `/script.js` and `/api/send`: the tracker every visitor loads and the endpoint it posts to. Everything else, the dashboard and the rest of the API, is behind the login. The cross-namespace `backendRef` works only because the platform's `referencegrant.yaml` names this namespace; pointing the route at the Umami Service removes the authentication layer, so it deserves a second look in review |
-| No `CLIENT_IP_HEADER` | The Gateway's Envoy appends the visitor to `X-Forwarded-For` and the outpost passes it on; Umami reads that header by default. Only the country is stored, from the bundled GeoLite database, never the address |
+| `CLIENT_IP_HEADER`, the pod CIDR in `TRUSTED_PROXIES` | Only `X-Forwarded-For` is read, from the right, so a forged prefix or CDN header is ignored; see [Behind the Gateway](<https://homelab-apps.wlkr.ch/conventions/index.md#behind-the-gateway>). Only the country is stored |
 
 ### Network policy
 
@@ -1407,7 +1407,7 @@ The `ExternalSecret` sits at sync wave `-1`, with the database and ahead of the 
 
 ### First login
 
-Umami creates `admin` with the password `umami` on its first start. Change it under Profile before adding a website; it is the only account, and the only credential Umami keeps that OpenBao does not.
+Umami creates `admin` / `umami` on its first start and forces a new password at the first login; later changes are under Settings → Security. It is the only account and the only credential OpenBao does not hold.
 
 ### Adding a site
 

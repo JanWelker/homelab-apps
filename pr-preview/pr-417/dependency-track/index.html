@@ -1333,8 +1333,8 @@ whether a policy holds across the portfolio.</p>
 <td>The JVM sizes its heap from the limit, and upstream's production advice is for a far larger portfolio than this cluster's</td>
 </tr>
 <tr>
-<td><code>dependency-track-db</code> resources</td>
-<td>The largest database here, holding the vulnerability data; the request is the measured median and the limit 2.5x the peak, per the <a href="https://homelab.wlkr.ch/platform/#components">platform rule</a></td>
+<td><code>dependency-track-db</code> resources and parameters</td>
+<td>The largest database here, holding the vulnerability data; the request is the measured median and the limit 2.5x the peak, per the <a href="https://homelab.wlkr.ch/platform/#components">platform rule</a>. The parameters are upstream's <a href="https://dependencytrack.github.io/docs/next/reference/configuration/database/#tuning-parameters">tuning recommendations</a> without a size-dependent trade-off</td>
 </tr>
 <tr>
 <td><code>serviceMonitor.namespace: dependency-track</code></td>
@@ -1447,7 +1447,7 @@ each distinct image that is running, once, to <code>PUT /api/v1/bom</code> with
 </tr>
 <tr>
 <td>The API key is <code>optional</code> on the container, and its <code>ExternalSecret</code> is at sync wave 1</td>
-<td>A missing Secret would leave the pod in <code>CreateContainerConfigError</code>, and a <code>Forbid</code> CronJob never runs again behind a Job that never finishes; the script exits 1 with the reason instead. The wave is the same argument one level up: this is the one secret only a running Dependency-Track can issue, so it is fetched after the application, never in a wave that gates it. <code>make bao-secrets</code> writes the path empty rather than leaving it absent, for the same reason</td>
+<td>A missing Secret would leave the pod in <code>CreateContainerConfigError</code>, and a <code>Forbid</code> CronJob never runs again behind a Job that never finishes; the script exits 1 with the reason instead. The wave is the same argument one level up: this is the one secret only a running Dependency-Track can issue, so it is fetched after the application, never in a wave that gates it.</td>
 </tr>
 <tr>
 <td>Runs before the platform's <a href="https://homelab.wlkr.ch/platform/trivy-operator/#history"><code>findings-history</code></a> job</td>
@@ -1520,8 +1520,6 @@ projects.</p>
 </tr>
 </tbody>
 </table>
-<p>How many retired versions of a project stay is the retention setting's
-to say, not the job's.</p>
 <h3 id="oidc">OIDC<a class="headerlink" href="#oidc" title="Permanent link">&para;</a></h3>
 <p>The provider's blueprint is in the platform repository, per
 <a href="../conventions/#6-authentication-is-authentiks-not-the-applications">Conventions → Authentication</a>.
@@ -1591,9 +1589,7 @@ platform repository.</p>
 </table>
 <p>The API key is its own path because Dependency-Track issues it, after the
 first start, and a <code>bao kv put</code> replaces a path wholesale: writing it later
-into the first path would have deleted the KEK. The script asks for it and
-accepts an empty answer, so the path exists before Dependency-Track can issue
-a key. The database password is not here; CloudNativePG generates it.</p>
+into the first path would have deleted the KEK. The database password is not here; CloudNativePG generates it.</p>
 <h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
 <h3 id="first-login">First login<a class="headerlink" href="#first-login" title="Permanent link">&para;</a></h3>
 <p>The first start seeds <code>admin</code> with the password <code>admin</code> and asks for a new
@@ -1743,9 +1739,12 @@ restore of the database is only a restore together with the key.</p>
 <li><strong>A sync that fails at the <code>sbom-upload</code> <code>ExternalSecret</code></strong> with <code>could
   not get secret data from provider</code> is <code>kv/dependency-track/sbom-upload</code>
   missing entirely. Run <code>make bao-secrets</code> in the platform repository, which
-  writes the path empty when there is no key yet; an absent path fails the
-  <code>ExternalSecret</code>. It sits at wave 1, so Dependency-Track itself is up, only
-  the job's key is not.</li>
+  writes the path empty when there is no key yet. It sits at wave 1, so
+  Dependency-Track itself is up, only the job's key is not.</li>
+<li><strong>A KEV mirror that fails with 404</strong> is a feed URL that moved upstream.
+  The URLs live in the database under Administration → KEV Sources, and an
+  upgrade does not change them
+  (<a href="https://dependencytrack.github.io/docs/next/guides/upgrading/v5.2.2/">5.2.2 upgrade guide</a>).</li>
 <li><strong>Old image versions pile up as projects</strong> when inactive project
   deletion is off under Maintenance, or the team lacks the permission to
   <a href="#retired-projects">retire</a> them. The job never deletes.</li>
