@@ -84,7 +84,7 @@
       "updateNotScheduled": false
     },
     {
-      "description": "Automerge an agent-mooring chart patch, a new Claude Code release, once ci-ok is green. Patch only: a minor changes what the sessions do (0.3.0 added the skills repository) and the shared preset holds a major. Renovate merges it itself, not GitHub auto-merge, because a platform automerge armed at PR creation ignores automergeSchedule and merged patches during the day.",
+      "description": "Automerge an agent-mooring chart patch, a new Claude Code release, once ci-ok is green. Patch only: a minor changes what the sessions do (0.3.0 added the skills repository) and the shared preset holds a major. Renovate merges it itself, not GitHub auto-merge, because a platform automerge armed at PR creation ignores automergeSchedule.",
       "matchDatasources": [
         "docker"
       ],
