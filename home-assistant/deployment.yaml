@@ -18,6 +18,7 @@ spec:
         app.kubernetes.io/name: home-assistant
     spec:
       automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 60
       securityContext:
         seccompProfile:
           type: RuntimeDefault
