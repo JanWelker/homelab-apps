@@ -67,6 +67,10 @@ spec:
               value: "1"
             - name: PRIVATE_MODE
               value: "1"
+            - name: CLIENT_IP_HEADER
+              value: "x-forwarded-for"
+            - name: TRUSTED_PROXIES
+              value: "10.244.0.0/16"
           volumeMounts:
             - name: tmp
               mountPath: /tmp
