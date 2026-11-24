@@ -36,7 +36,7 @@ around the official image, per
 | Probes on `/api/heartbeat`, a long `startupProbe` | The first start runs the Prisma migrations before the server answers |
 | `revisionHistoryLimit: 2` | Superseded ReplicaSets keep their Trivy config-audit reports until garbage collection; the default keeps ten |
 | `HTTPRoute` targets `authentik-server`, not the app | The outpost authenticates and forwards to `umami.umami.svc:3000`. The provider's `skip_path_regex`, in the platform repository, exempts exactly `/script.js` and `/api/send`: the tracker every visitor loads and the endpoint it posts to. Everything else, the dashboard and the rest of the API, is behind the login. The cross-namespace `backendRef` works only because the platform's `referencegrant.yaml` names this namespace; pointing the route at the Umami Service removes the authentication layer, so it deserves a second look in review |
-| No `CLIENT_IP_HEADER` | The Gateway's Envoy appends the visitor to `X-Forwarded-For` and the outpost passes it on; Umami reads that header by default. Only the country is stored, from the bundled GeoLite database, never the address |
+| `CLIENT_IP_HEADER`, the pod CIDR in `TRUSTED_PROXIES` | Only `X-Forwarded-For` is read, from the right, so a forged prefix or CDN header is ignored; see [Behind the Gateway](conventions.md#behind-the-gateway). Only the country is stored |
 
 ### Network policy
 
@@ -74,9 +74,9 @@ generates it and nothing outside the cluster needs it.
 
 ### First login
 
-Umami creates `admin` with the password `umami` on its first start. Change it
-under Profile before adding a website; it is the only account, and the only
-credential Umami keeps that OpenBao does not.
+Umami creates `admin` / `umami` on its first start and forces a new password
+at the first login; later changes are under Settings → Security. It is the
+only account and the only credential OpenBao does not hold.
 
 ### Adding a site
 
