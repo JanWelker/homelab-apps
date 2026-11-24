@@ -83,6 +83,7 @@ jobs:
         with:
           folder: site
           branch: gh-pages
+          force: false
           clean: true
           # Preserve the PR previews published by preview.yaml.
           clean-exclude: |
