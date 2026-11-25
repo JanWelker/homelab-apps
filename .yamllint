@@ -4,6 +4,7 @@ ignore: |
   .venv/
   site/
   .cache/
+  output/
   .playwright-mcp/
   .pytest_cache/
   .ruff_cache/
