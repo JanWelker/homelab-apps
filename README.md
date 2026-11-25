@@ -58,7 +58,12 @@ npx --package markdownlint-cli2 markdownlint-cli2 '**/*.md' '!**/.venv' '!site'
 npx --package renovate@latest renovate-config-validator
 uv run ruff check . && uv run ruff format --check .   # scripts/ and tests/
 uv run pytest -q
+shellcheck -x --severity=warning scripts/*.sh   # shell only
+actionlint && uvx zizmor .github/workflows   # workflows only
 ```
+
+`Lint Shell and Actions` runs the last two lines' tools from images pinned at
+the pre-commit hooks' versions.
 
 The `Secret Scan` workflow runs gitleaks over every pull request's commits, at the
 version of the pre-commit hook; a manual run scans the whole history.

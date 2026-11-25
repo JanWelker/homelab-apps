@@ -9,6 +9,7 @@ permissions:
       - "main"
     paths:
       - "**/*.md"
+      - ".github/tools/**"
   # No path filter on pull requests: this check is required by the ruleset
   # on main, and a required check that never reports leaves the pull
   # request waiting on it forever. It is seconds of work either way.
@@ -26,13 +27,11 @@ jobs:
         with:
           persist-credentials: false
 
-      # Same version as .pre-commit-config.yaml, so a new rule cannot fail
-      # main while the commit hook passes. Renovate moves both.
+      # From the lockfile, at the version of .pre-commit-config.yaml, so a new
+      # rule cannot fail main while the commit hook passes. Renovate moves
+      # both.
       - name: Install markdownlint-cli2
-        env:
-          # renovate: datasource=npm depName=markdownlint-cli2
-          MARKDOWNLINT_CLI2_VERSION: "0.24.2"
-        run: npm install -g "markdownlint-cli2@$MARKDOWNLINT_CLI2_VERSION"
+        run: npm ci --ignore-scripts --prefix .github/tools
 
       - name: Run markdownlint
-        run: markdownlint-cli2 '**/*.md' '!**/.venv' '!site'
+        run: .github/tools/node_modules/.bin/markdownlint-cli2 '**/*.md' '!**/.venv' '!**/node_modules' '!site'

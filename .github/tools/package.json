@@ -1,0 +1,8 @@
+{
+  "name": "homelab-apps-ci-tools",
+  "private": true,
+  "description": "CI linters installed from package-lock.json by npm ci; see the Lint Markdown workflow",
+  "devDependencies": {
+    "markdownlint-cli2": "0.24.2"
+  }
+}

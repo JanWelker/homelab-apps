@@ -32,6 +32,29 @@
       "groupName": "gitleaks"
     },
     {
+      "description": "The Lint Markdown workflow and the pre-commit hook must run the same markdownlint-cli2, or a commit passes locally and fails CI.",
+      "matchDepNames": [
+        "markdownlint-cli2",
+        "DavidAnson/markdownlint-cli2"
+      ],
+      "groupName": "markdownlint-cli2"
+    },
+    {
+      "description": "The Lint Shell and Actions workflow and the pre-commit hook must run the same actionlint, or a commit passes locally and fails CI.",
+      "matchDepNames": [
+        "rhysd/actionlint"
+      ],
+      "groupName": "actionlint"
+    },
+    {
+      "description": "The Lint Shell and Actions workflow and the pre-commit hook must run the same zizmor, or a commit passes locally and fails CI.",
+      "matchDepNames": [
+        "ghcr.io/zizmorcore/zizmor",
+        "zizmorcore/zizmor-pre-commit"
+      ],
+      "groupName": "zizmor"
+    },
+    {
       "description": "A PostgreSQL major version is an offline migration that takes the workload down while it runs, and it is not reversible. The preset already holds every major for a human; this rule labels it. See cloudnative-pg.md in the homelab docs.",
       "matchDatasources": [
         "docker"

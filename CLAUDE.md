@@ -34,6 +34,8 @@ npx --package markdownlint-cli2 markdownlint-cli2 '**/*.md' '!**/.venv' '!site'
 npx --package renovate@latest renovate-config-validator
 uv run ruff check . && uv run ruff format --check .   # python only
 uv run pytest -q                              # python only
+shellcheck -x --severity=warning scripts/*.sh   # shell only
+actionlint && uvx zizmor .github/workflows   # workflows only
 make dry-run-input && uv run pytest -q        # conventions over the render
 make dry-run                                  # a kind cluster and ../homelab at main
 ```

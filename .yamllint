@@ -5,6 +5,7 @@ ignore: |
   site/
   .cache/
   output/
+  node_modules/
   .playwright-mcp/
   .pytest_cache/
   .ruff_cache/
