@@ -13,7 +13,7 @@ spec:
     # Why each value is what it is: docs/shot-bridge.md#configuration
     - repoURL: ghcr.io/somuch-cloud/charts
       chart: shot-bridge
-      targetRevision: 0.3.1
+      targetRevision: 0.3.2
       helm:
         valuesObject:
           timeZone: Europe/Zurich
@@ -44,6 +44,17 @@ spec:
                 name: apps-gateway
                 namespace: kube-system
                 sectionName: https
+            # Security headers; see docs/conventions.md
+            filters:
+              - type: ResponseHeaderModifier
+                responseHeaderModifier:
+                  set:
+                    - name: Strict-Transport-Security
+                      value: max-age=31536000
+                    - name: X-Content-Type-Options
+                      value: nosniff
+                    - name: X-Frame-Options
+                      value: SAMEORIGIN
           networkPolicy:
             enabled: true
             annotations:

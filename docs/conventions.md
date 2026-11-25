@@ -274,8 +274,7 @@ A route on `apps-gateway` also carries a `ResponseHeaderModifier` that sets
 It `set`s rather than `add`s, since the Authentik outpost already sends them and a
 duplicated frame header is invalid. HSTS names no
 `includeSubDomains` or `preload`, because other names under these domains are
-not served from here. A route rendered by a chart that has no `filters` value
-(shot bridge, Extractor admin UI) cannot carry it until the chart does.
+not served from here. A chart-rendered route takes it as `httpRoute.filters`.
 
 ## Behind the Gateway
 
