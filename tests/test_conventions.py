@@ -37,10 +37,6 @@ AGENT_CHART = (
     "the agent-mooring chart renders it with no value to change it; JanWelker/agent-mooring"
 )
 SOMUCH_CHART = "the chart renders it with no value to change it; somuch-cloud, as #231 noted"
-CPU_DEFAULT = (
-    "the chart's default limit; ArgoCD drops a null under valuesObject, so only the chart"
-    " can unset it"
-)
 SESSIONS = ("homelab", "sitzplan", "virgil")
 SEED_REDIRECT = "the /seed rule only redirects; the page rule sets the headers"
 
@@ -58,10 +54,7 @@ ALLOWED = {
         "extractor-admin: CiliumNetworkPolicy extractor-admin/extractor-admin": SOMUCH_CHART,
         "shot-bridge: CiliumNetworkPolicy shot-bridge/shot-bridge": SOMUCH_CHART,
     },
-    "cpu-limits": {
-        "extractor-admin: Deployment extractor-admin/extractor-admin extractor-admin": CPU_DEFAULT,
-        "shot-bridge: Deployment shot-bridge/shot-bridge shot-bridge": CPU_DEFAULT,
-    },
+    "cpu-limits": {},
     "automount": {},
     "job-limits": {},
     "priority-class": {},
