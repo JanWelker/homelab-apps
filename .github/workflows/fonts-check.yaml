@@ -13,10 +13,6 @@ permissions:
       - "docs/assets/fonts/**"
       - ".github/workflows/fonts-check.yaml"
   pull_request:
-    paths:
-      - "scripts/update-fonts.sh"
-      - "docs/assets/fonts/**"
-      - ".github/workflows/fonts-check.yaml"
   workflow_dispatch:
 
 jobs:

@@ -12,9 +12,6 @@ permissions:
       - "renovate.json"
       - ".github/workflows/renovate-validate.yaml"
   pull_request:
-    paths:
-      - "renovate.json"
-      - ".github/workflows/renovate-validate.yaml"
   workflow_dispatch:
 
 jobs:

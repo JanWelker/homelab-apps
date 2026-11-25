@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 "on":
-  # No path filter on pull requests: ci-ok waits for every check, and a
+  # No path filter on pull requests: the ruleset requires this check, and a
   # platform change on homelab main can refuse a workload no file here
   # touched, so every pull request is judged against today's platform.
   pull_request:
