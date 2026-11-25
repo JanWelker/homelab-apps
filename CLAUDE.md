@@ -8,10 +8,10 @@ the separate `homelab` repository; this one holds only what runs on top.
 A directory with one `application.yaml` is an application; the `apps`
 ApplicationSet in `homelab` generates the ArgoCD Application and nothing else
 registers it. Everything an application must do is in `docs/conventions.md`,
-numbered; read it before adding or changing one. Rule 1 fails the whole set
-when missed, rule 4 leaves a privileged namespace or deletes the PVCs, rule 5
-blocks the probes or sticks a sync, and rule 6 means going behind SSO is two
-PRs across two repositories. How the platform syncs and retries is in the
+numbered and checked by `tests/test_conventions.py`; read it before adding or
+changing one. Rule 1 fails the whole set when missed, rule 4 leaves a
+privileged namespace or deletes the PVCs, rule 5 blocks the probes or sticks a
+sync, and rule 6 means going behind SSO is two PRs across two repositories. How the platform syncs and retries is in the
 platform docs ([GitOps Strategy](https://homelab.wlkr.ch/architecture/gitops/)).
 
 - Long explanations belong in `docs/`, not in YAML comments.
@@ -34,6 +34,7 @@ npx --package markdownlint-cli2 markdownlint-cli2 '**/*.md' '!**/.venv' '!site'
 npx --package renovate@latest renovate-config-validator
 uv run ruff check . && uv run ruff format --check .   # python only
 uv run pytest -q                              # python only
+make dry-run-input && uv run pytest -q        # conventions over the render
 make dry-run                                  # a kind cluster and ../homelab at main
 ```
 
