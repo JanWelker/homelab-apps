@@ -87,3 +87,11 @@ checked out beside this repository (`HOMELAB=<path>` otherwise):
 ```bash
 make dry-run
 ```
+
+The same workflow holds the render to [the conventions](docs/conventions.md)
+with `tests/test_conventions.py`, which skips its render checks until
+`make dry-run-input` has run (no cluster needed):
+
+```bash
+make dry-run-input && uv run pytest -q tests/test_conventions.py
+```

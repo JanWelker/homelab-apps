@@ -89,11 +89,21 @@ jobs:
         id: render
         working-directory: apps
         run: |
-          uv run --locked python scripts/render-charts.py --out "$RUNNER_TEMP/dry-run"
+          uv run --locked python scripts/render-charts.py --out "$RUNNER_TEMP/rendered"
+          cp -R "$RUNNER_TEMP/rendered" "$RUNNER_TEMP/dry-run"
           uv run --locked python scripts/platform-prerequisites.py \
             "$RUNNER_TEMP/platform" "$RUNNER_TEMP/dry-run"
 
+      - name: Conventions
+        working-directory: apps
+        run: uv run --locked pytest -q tests/test_conventions.py
+        env:
+          RENDERED_DIR: ${{ runner.temp }}/rendered
+          PLATFORM_RENDERED_DIR: ${{ runner.temp }}/platform
+
+      # Both report, whichever fails first.
       - name: Dry run
+        if: ${{ !cancelled() && steps.render.outcome == 'success' }}
         run: >-
           uv run --project homelab --locked --no-dev python
           homelab/scripts/server-dry-run.py "$RUNNER_TEMP/dry-run"

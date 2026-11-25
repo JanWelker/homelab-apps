@@ -6,7 +6,9 @@ description: "The rules every application directory in this repository follows, 
 
 Rules every directory in this repository follows, each with its reason.
 [Adding a Workload](https://homelab.wlkr.ch/development/add-workload/) in the
-platform documentation has the templates.
+platform documentation has the templates. `tests/test_conventions.py` holds
+the render to them on every pull request, and the platform's admission
+policies judge it in the same `Server Dry Run` workflow.
 
 ## Structure
 
@@ -235,6 +237,20 @@ out. ArgoCD never re-attempts a failed sync of the same revision without
 names would otherwise stay failed until someone ran `argocd app sync`.
 Server-side apply is what every platform Application uses, so the two
 repositories diff and apply the same way.
+
+### 9. Pods
+
+- **No CPU limit**, as on the
+  [platform](https://homelab.wlkr.ch/platform/#components): a limit throttles
+  the pod even on an idle node, and the request already ranks it under
+  contention.
+- **`automountServiceAccountToken: false`**, on the pod or its
+  ServiceAccount, unless it calls the API server: an unused token is only a
+  credential for whoever gets into the pod; see
+  [Default ServiceAccount tokens](https://homelab.wlkr.ch/platform/security-policies/#default-serviceaccount-tokens).
+- **A Job sets `activeDeadlineSeconds` and `ttlSecondsAfterFinished`**: a
+  hung run otherwise holds its sync or skips the CronJob's next run, and a
+  failed Job keeps `KubeJobFailed` firing after later runs succeed.
 
 ## What you do not have to write
 
