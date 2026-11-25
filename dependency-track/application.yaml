@@ -90,17 +90,9 @@ spec:
               - name: OIDC_LOGIN_BUTTON_TEXT
                 value: Authentik
 
+          # Own httproute.yaml instead: the chart's route takes no filters
           httpRoute:
-            enabled: true
-            hostnames:
-              - sbom.infra.k8s.wlkr.ch
-            # infra-gateway, not apps-gateway: LAN and VPN only. docs/dependency-track.md#configuration
-            parentRefs:
-              - group: gateway.networking.k8s.io
-                kind: Gateway
-                name: infra-gateway
-                namespace: kube-system
-                sectionName: https
+            enabled: false
     - repoURL: https://github.com/JanWelker/homelab-apps.git
       targetRevision: HEAD
       path: dependency-track
