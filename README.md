@@ -69,9 +69,21 @@ Previewing the docs site while writing:
 uv run zensical serve
 ```
 
-Rendering every chart-based application with its values, the way ArgoCD and
-the `Render Charts` workflow do, into `.cache/rendered/`:
+Rendering every application, charts with their values and directories
+alike, the way ArgoCD and the `Render Charts` workflow do, into
+`output/rendered/`:
 
 ```bash
 make render
+```
+
+The `Server Dry Run` workflow sends that render to a kind cluster holding the
+platform's CRDs, admission policies and namespaces, rendered from
+[homelab](https://github.com/JanWelker/homelab) at `main` with its own
+scripts, so an object the platform refuses fails the pull request under its
+Application. Locally, with a `kind-*` kubeconfig context and the platform
+checked out beside this repository (`HOMELAB=<path>` otherwise):
+
+```bash
+make dry-run
 ```

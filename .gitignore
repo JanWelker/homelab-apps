@@ -7,6 +7,8 @@
 # Zensical build output and cache
 site/
 .cache/
+# make render and make dry-run
+output/
 __pycache__/
 .pytest_cache/
 .ruff_cache/
