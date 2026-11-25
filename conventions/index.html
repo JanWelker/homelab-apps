@@ -1530,8 +1530,7 @@ table is <a href="https://homelab.wlkr.ch/platform/gateway-api/#configuration">G
 It <code>set</code>s rather than <code>add</code>s, since the Authentik outpost already sends them and a
 duplicated frame header is invalid. HSTS names no
 <code>includeSubDomains</code> or <code>preload</code>, because other names under these domains are
-not served from here. A route rendered by a chart that has no <code>filters</code> value
-(shot bridge, Extractor admin UI) cannot carry it until the chart does.</p>
+not served from here. A chart-rendered route takes it as <code>httpRoute.filters</code>.</p>
 <h2 id="behind-the-gateway">Behind the Gateway<a class="headerlink" href="#behind-the-gateway" title="Permanent link">&para;</a></h2>
 <p>Traffic arrives from Cilium's Envoy, not the client, and TLS ends at the
 Gateway. Set the application's trusted-proxies and overwrite-protocol
