@@ -41,13 +41,21 @@ def render_chart(root, source, values_refs):
         chart = [source["chart"], "--repo", source["repoURL"]]
     else:
         chart = [f"oci://{source['repoURL'].rstrip('/')}/{source['chart']}"]
-    args = ["helm", "template", "scan", *chart,
-            "--version", str(source["targetRevision"]), "--include-crds"]
+    args = [
+        "helm",
+        "template",
+        "scan",
+        *chart,
+        "--version",
+        str(source["targetRevision"]),
+        "--include-crds",
+    ]
     with tempfile.TemporaryDirectory() as workdir:
-        for i, values_file in enumerate(helm.get("valueFiles", [])):
+        for values_file in helm.get("valueFiles", []):
+            resolved = values_file
             for ref, ref_root in values_refs.items():
-                values_file = values_file.replace(f"${ref}/", f"{ref_root}/")
-            args += ["--values", values_file]
+                resolved = resolved.replace(f"${ref}/", f"{ref_root}/")
+            args += ["--values", resolved]
         if "valuesObject" in helm:
             path = pathlib.Path(workdir, "values.yaml")
             path.write_text(yaml.safe_dump(helm["valuesObject"]))
@@ -56,7 +64,8 @@ def render_chart(root, source, values_refs):
         # repository when both carry the chart's name.
         result = subprocess.run(args, cwd=workdir, capture_output=True, text=True, check=False)
     if result.returncode != 0:
-        print(f"::warning title={source['chart']}::helm template failed: {result.stderr.strip()[-400:]}")
+        reason = result.stderr.strip()[-400:]
+        print(f"::warning title={source['chart']}::helm template failed: {reason}")
         return ""
     return result.stdout
 
@@ -87,22 +96,44 @@ def all_images(root, globs):
 
 
 def repository(image):
-    return image.split("@", 1)[0].rsplit(":", 1)[0] if ":" in image.split("/")[-1] else image.split("@", 1)[0]
+    return (
+        image.split("@", 1)[0].rsplit(":", 1)[0]
+        if ":" in image.split("/")[-1]
+        else image.split("@", 1)[0]
+    )
 
 
 def fixable_criticals(image):
     """Set of (CVE, package) pairs with a fix, CRITICAL only."""
     result = subprocess.run(
-        ["trivy", "image", "--quiet", "--severity", "CRITICAL", "--ignore-unfixed",
-         "--scanners", "vuln", "--disable-telemetry", "--skip-version-check",
-         "--format", "json", image],
-        capture_output=True, text=True, check=False)
+        [
+            "trivy",
+            "image",
+            "--quiet",
+            "--severity",
+            "CRITICAL",
+            "--ignore-unfixed",
+            "--scanners",
+            "vuln",
+            "--disable-telemetry",
+            "--skip-version-check",
+            "--format",
+            "json",
+            image,
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
     if result.returncode != 0:
         print(f"::warning title={image}::trivy failed: {result.stderr.strip()[-400:]}")
         return None
     report = json.loads(result.stdout or "{}")
-    return {(v["VulnerabilityID"], v["PkgName"])
-            for r in report.get("Results") or [] for v in r.get("Vulnerabilities") or []}
+    return {
+        (v["VulnerabilityID"], v["PkgName"])
+        for r in report.get("Results") or []
+        for v in r.get("Vulnerabilities") or []
+    }
 
 
 def main(argv):
@@ -110,7 +141,7 @@ def main(argv):
     globs = tuple(argv[3:]) or DEFAULT_GLOBS
     base, head = all_images(base_root, globs), all_images(head_root, globs)
     changed = sorted(head - base)
-    summary = [f"## Image scan\n", f"{len(head)} images referenced, {len(changed)} changed.\n"]
+    summary = ["## Image scan\n", f"{len(head)} images referenced, {len(changed)} changed.\n"]
     if not changed:
         summary.append("Nothing to scan.\n")
     failed = False
@@ -137,7 +168,10 @@ def main(argv):
             summary.append(f"    - {cve} in `{pkg}`\n")
         if fresh:
             failed = True
-            print(f"::error title={image}::{len(fresh)} fixable critical(s) the previous image did not have")
+            print(
+                f"::error title={image}::{len(fresh)} fixable critical(s) "
+                "the previous image did not have"
+            )
     text = "".join(summary)
     print(text)
     if "GITHUB_STEP_SUMMARY" in os.environ:

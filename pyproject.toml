@@ -12,6 +12,8 @@ dev = [
     "yamllint>=1.37.1",
     "pre-commit>=4.5.1",
     "pyyaml>=6.0.3",
+    "ruff>=0.17.6",
+    "pytest>=9.2.0",
 ]
 
 [tool.uv]
@@ -19,3 +21,16 @@ dev = [
 # Renovate preset. Without it uv locks a newer release than the one Renovate
 # proposes, and Renovate rejects the lock file as an artifact failure.
 exclude-newer = "3 days"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+strict = true
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "PL", "SIM", "RUF"]
+ignore = [
+    "PLR2004", # a size threshold or a port number reads better inline than as a named constant
+]

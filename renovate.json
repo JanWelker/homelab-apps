@@ -24,6 +24,14 @@
       "allowedVersions": "/^3\\.14([.-]|$)/"
     },
     {
+      "description": "The Secret Scan workflow and the pre-commit hook must run the same gitleaks, or a commit passes locally and fails CI.",
+      "matchDepNames": [
+        "ghcr.io/gitleaks/gitleaks",
+        "gitleaks/gitleaks"
+      ],
+      "groupName": "gitleaks"
+    },
+    {
       "description": "A PostgreSQL major version is an offline migration that takes the workload down while it runs, and it is not reversible. The preset already holds every major for a human; this rule labels it. See cloudnative-pg.md in the homelab docs.",
       "matchDatasources": [
         "docker"

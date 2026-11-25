@@ -1,12 +1,43 @@
 repos:
+  # Local hooks run through uv so they use the versions in uv.lock: the same
+  # tool, at the same version, as the commands in CLAUDE.md and the CI
+  # workflows.
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: Ruff check
+        entry: uv run ruff check
+        language: unsupported
+        files: ^(scripts|tests)/.*\.py$
+
+      - id: ruff-format
+        name: Ruff format
+        entry: uv run ruff format --check
+        language: unsupported
+        files: ^(scripts|tests)/.*\.py$
+
+      - id: pytest
+        name: Pytest
+        entry: uv run pytest -q
+        language: unsupported
+        files: ^(scripts|tests)/.*\.py$
+        pass_filenames: false
+
+      - id: yamllint
+        name: YAML Lint
+        entry: uv run yamllint --strict -f github
+        language: unsupported
+        files: \.ya?ml$
+
+  # Scans the staged changes; the Secret Scan workflow runs the same version
+  # over every pull request.
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
   - repo: https://github.com/DavidAnson/markdownlint-cli2
     rev: v0.24.2
     hooks:
       - id: markdownlint-cli2
         files: \.md$
-
-  - repo: https://github.com/adrienverge/yamllint
-    rev: v1.38.0
-    hooks:
-      - id: yamllint
-        files: \.yaml$

@@ -62,7 +62,11 @@ def helm_show(what, source):
     with tempfile.TemporaryDirectory() as workdir:
         result = subprocess.run(
             ["helm", "show", what, *chart_args(source)],
-            cwd=workdir, capture_output=True, text=True, check=True)
+            cwd=workdir,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
     return yaml.safe_load(result.stdout) or {}
 
 
@@ -85,8 +89,10 @@ def check_tag(source):
     if pinned is None or expected is None:
         return f"cannot compare image.tag {tag} with appVersion {app_version}"
     if pinned[0] != expected[0] or pinned < expected:
-        return (f"image.tag {tag.split('@')[0]} is out of step with appVersion {app_version}; "
-                f"set it to the {app_version} tag with its digest in the same pull request")
+        return (
+            f"image.tag {tag.split('@')[0]} is out of step with appVersion {app_version}; "
+            f"set it to the {app_version} tag with its digest in the same pull request"
+        )
     return None
 
 
@@ -100,10 +106,21 @@ def render(name, source):
         values_file = pathlib.Path(workdir, "values.yaml")
         values_file.write_text(yaml.safe_dump(values))
         result = subprocess.run(
-            ["helm", "template", name, *chart_args(source),
-             "--namespace", name,
-             "--values", str(values_file)],
-            cwd=workdir, capture_output=True, text=True, check=False)
+            [
+                "helm",
+                "template",
+                name,
+                *chart_args(source),
+                "--namespace",
+                name,
+                "--values",
+                str(values_file),
+            ],
+            cwd=workdir,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
     if result.returncode != 0:
         return False, result.stderr.strip()
     return True, result.stdout
@@ -126,7 +143,10 @@ def main(argv):
                 print(f"{name}: plain manifests, nothing to render")
                 continue
             for source in sources:
-                label = f"{name} ({source['chart']} {source['targetRevision']} from {source['repoURL']})"
+                label = (
+                    f"{name} ({source['chart']} {source['targetRevision']} "
+                    f"from {source['repoURL']})"
+                )
                 ok, output = render(name, source)
                 if ok:
                     print(f"{label}: ok")
