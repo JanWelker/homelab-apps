@@ -267,14 +267,14 @@ fine. `sectionName` on the `parentRefs` entry picks the listener, and a
 listener pins one hostname pattern, so the wollbi sites name their own; the
 table is [Gateway API → Configuration](https://homelab.wlkr.ch/platform/gateway-api/#configuration).
 
-A route on `apps-gateway` also carries a `ResponseHeaderModifier` that sets
+Every route, on either Gateway, also carries a `ResponseHeaderModifier` that sets
 `Strict-Transport-Security`, `X-Content-Type-Options: nosniff` and
 `X-Frame-Options: SAMEORIGIN`; copy it from
 [`flowscape/httproute.yaml`](https://github.com/JanWelker/homelab-apps/blob/main/flowscape/httproute.yaml).
 It `set`s rather than `add`s, since the Authentik outpost already sends them and a
 duplicated frame header is invalid. HSTS names no
 `includeSubDomains` or `preload`, because other names under these domains are
-not served from here. A chart-rendered route takes it as `httpRoute.filters`.
+not served from here. A chart route takes it as `httpRoute.filters`, or is replaced by a plain one.
 
 ## Behind the Gateway
 

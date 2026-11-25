@@ -15,6 +15,16 @@ spec:
   hostnames:
     - "cloud.infra.k8s.wlkr.ch"
   rules:
-    - backendRefs:
+    - filters:
+        - type: ResponseHeaderModifier
+          responseHeaderModifier:
+            set:
+              - name: Strict-Transport-Security
+                value: max-age=31536000
+              - name: X-Content-Type-Options
+                value: nosniff
+              - name: X-Frame-Options
+                value: SAMEORIGIN
+      backendRefs:
         - name: opencloud
           port: 9200
