@@ -4,6 +4,9 @@ ignore: |
   .venv/
   site/
   .cache/
+  .playwright-mcp/
+  .pytest_cache/
+  .ruff_cache/
 
 rules:
   # Renovate writes its version annotations as "@<sha> # v1", with a single

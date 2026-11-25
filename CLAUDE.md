@@ -28,10 +28,12 @@ same two at <https://homelab-apps.wlkr.ch/llms.txt> and
 ## Checks before pushing
 
 ```bash
-uv run yamllint .
+uv run yamllint --strict -f github .
 uv run zensical build --clean --strict        # docs site; validates links and anchors
 npx --package markdownlint-cli2 markdownlint-cli2 '**/*.md' '!**/.venv' '!site'
 npx --package renovate@latest renovate-config-validator
+uv run ruff check . && uv run ruff format --check .   # python only
+uv run pytest -q                              # python only
 ```
 
 ## Writing docs

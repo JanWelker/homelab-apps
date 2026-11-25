@@ -36,4 +36,4 @@ jobs:
           uv sync --locked --all-extras --dev
 
       - name: Run yamllint
-        run: uv run yamllint -f github .
+        run: uv run yamllint --strict -f github .

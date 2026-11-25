@@ -52,11 +52,16 @@ The same linters CI runs:
 ```bash
 uv sync                      # once
 uv run pre-commit install    # once; runs the linters below on every commit
-uv run yamllint .
+uv run yamllint --strict -f github .
 uv run zensical build --clean --strict
 npx --package markdownlint-cli2 markdownlint-cli2 '**/*.md' '!**/.venv' '!site'
 npx --package renovate@latest renovate-config-validator
+uv run ruff check . && uv run ruff format --check .   # scripts/ and tests/
+uv run pytest -q
 ```
+
+The `Secret Scan` workflow runs gitleaks over every pull request's commits, at the
+version of the pre-commit hook; a manual run scans the whole history.
 
 Previewing the docs site while writing:
 
