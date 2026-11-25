@@ -676,6 +676,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#9-pods" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        9. Pods
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1170,6 +1181,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#9-pods" class="md-nav__link">
+    <span class="md-ellipsis">
+      <span class="md-typeset">
+        9. Pods
+      </span>
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1260,7 +1282,9 @@
 <h1 id="conventions">Conventions<a class="headerlink" href="#conventions" title="Permanent link">&para;</a></h1>
 <p>Rules every directory in this repository follows, each with its reason.
 <a href="https://homelab.wlkr.ch/development/add-workload/">Adding a Workload</a> in the
-platform documentation has the templates.</p>
+platform documentation has the templates. <code>tests/test_conventions.py</code> holds
+the render to them on every pull request, and the platform's admission
+policies judge it in the same <code>Server Dry Run</code> workflow.</p>
 <h2 id="structure">Structure<a class="headerlink" href="#structure" title="Permanent link">&para;</a></h2>
 <p>One directory per application, named after it, containing exactly one
 <code>application.yaml</code> — a complete ArgoCD <code>Application</code>, not a fragment. The <code>apps</code>
@@ -1444,6 +1468,20 @@ out. ArgoCD never re-attempts a failed sync of the same revision without
 names would otherwise stay failed until someone ran <code>argocd app sync</code>.
 Server-side apply is what every platform Application uses, so the two
 repositories diff and apply the same way.</p>
+<h3 id="9-pods">9. Pods<a class="headerlink" href="#9-pods" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>No CPU limit</strong>, as on the
+  <a href="https://homelab.wlkr.ch/platform/#components">platform</a>: a limit throttles
+  the pod even on an idle node, and the request already ranks it under
+  contention.</li>
+<li><strong><code>automountServiceAccountToken: false</code></strong>, on the pod or its
+  ServiceAccount, unless it calls the API server: an unused token is only a
+  credential for whoever gets into the pod; see
+  <a href="https://homelab.wlkr.ch/platform/security-policies/#default-serviceaccount-tokens">Default ServiceAccount tokens</a>.</li>
+<li><strong>A Job sets <code>activeDeadlineSeconds</code> and <code>ttlSecondsAfterFinished</code></strong>: a
+  hung run otherwise holds its sync or skips the CronJob's next run, and a
+  failed Job keeps <code>KubeJobFailed</code> firing after later runs succeed.</li>
+</ul>
 <h2 id="what-you-do-not-have-to-write">What you do not have to write<a class="headerlink" href="#what-you-do-not-have-to-write" title="Permanent link">&para;</a></h2>
 <p>The platform handles all of this; adding your own is the usual mistake:</p>
 <table>

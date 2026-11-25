@@ -1,6 +1,6 @@
 # Conventions
 
-Rules every directory in this repository follows, each with its reason. [Adding a Workload](<https://homelab.wlkr.ch/development/add-workload/>) in the platform documentation has the templates.
+Rules every directory in this repository follows, each with its reason. [Adding a Workload](<https://homelab.wlkr.ch/development/add-workload/>) in the platform documentation has the templates. `tests/test_conventions.py` holds the render to them on every pull request, and the platform's admission policies judge it in the same `Server Dry Run` workflow.
 
 ## Structure
 
@@ -108,6 +108,12 @@ Exception: the `claude-*` sessions' `ExternalSecret`s come from the chart and re
 ### 8\. The shared `syncPolicy`
 
 `automated` with `prune` and `selfHeal`, plus `retry` with a limit of 10 and a 30s backoff up to 5m, and `syncOptions` with `ServerSideApply=true`, copied from any sibling but the `claude-*` Applications, which leave the option out. ArgoCD never re-attempts a failed sync of the same revision without `retry`, and a workload that lands a minute before the platform resource it names would otherwise stay failed until someone ran `argocd app sync`. Server-side apply is what every platform Application uses, so the two repositories diff and apply the same way.
+
+### 9\. Pods
+
+- **No CPU limit**, as on the [platform](<https://homelab.wlkr.ch/platform/#components>): a limit throttles the pod even on an idle node, and the request already ranks it under contention.
+- **`automountServiceAccountToken: false`**, on the pod or its ServiceAccount, unless it calls the API server: an unused token is only a credential for whoever gets into the pod; see [Default ServiceAccount tokens](<https://homelab.wlkr.ch/platform/security-policies/#default-serviceaccount-tokens>).
+- **A Job sets `activeDeadlineSeconds` and `ttlSecondsAfterFinished`**: a hung run otherwise holds its sync or skips the CronJob's next run, and a failed Job keeps `KubeJobFailed` firing after later runs succeed.
 
 ## What you do not have to write
 
