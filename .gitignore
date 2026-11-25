@@ -12,3 +12,6 @@ output/
 __pycache__/
 .pytest_cache/
 .ruff_cache/
+
+# npm ci of .github/tools in the Lint Markdown workflow
+node_modules/
