@@ -31,7 +31,6 @@ Here, the author's values sit in:
 - `docs/CNAME`
 - `zensical.toml`: `site_url`, `repo_url`, `copyright`
 - `.github/CODEOWNERS`
-- the reusable workflow `.github/workflows/ci-ok.yaml` calls
 - the shared Renovate preset `renovate.json` extends
 - the analytics partial in `overrides/partials/integrations/analytics/`
 

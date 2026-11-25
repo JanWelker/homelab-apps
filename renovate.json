@@ -114,7 +114,7 @@
       ]
     },
     {
-      "description": "Automerge an agent-mooring chart patch, a new Claude Code release, once ci-ok is green. Patch only: a minor changes what the sessions do (0.3.0 added the skills repository) and the shared preset holds a major.",
+      "description": "Automerge an agent-mooring chart patch, a new Claude Code release, once the required checks are green. Patch only: a minor changes what the sessions do (0.3.0 added the skills repository) and the shared preset holds a major.",
       "matchDatasources": [
         "docker"
       ],
