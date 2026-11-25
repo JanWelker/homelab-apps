@@ -1341,8 +1341,8 @@ whether a policy holds across the portfolio.</p>
 <td>The chart defaults to the <code>monitoring</code> namespace, which the <code>apps</code> project may not write to. Prometheus reads it from here like every other application's</td>
 </tr>
 <tr>
-<td><code>httpRoute</code> on <code>infra-gateway</code>, not <code>apps-gateway</code></td>
-<td>The whole vulnerability portfolio sits behind one login, so it is not on the Internet; the upload job uses the Service, and only <code>apps-gateway</code> gets a public DNS record. The chart's route sends <code>/api</code> to the API server and everything else to the frontend on one hostname, so the frontend's <code>API_BASE_URL</code> stays empty and the browser uses relative URLs</td>
+<td><code>httpRoute.enabled: false</code>; <code>httproute.yaml</code> on <code>infra-gateway</code>, not <code>apps-gateway</code></td>
+<td>The whole vulnerability portfolio sits behind one login, so it is not on the Internet; the upload job uses the Service, and only <code>apps-gateway</code> gets a public DNS record. Our route replaces the chart's, which takes no header filters, and sends <code>/api</code> to the API server and everything else to the frontend on one hostname, so the frontend's <code>API_BASE_URL</code> stays empty and the browser uses relative URLs</td>
 </tr>
 <tr>
 <td><code>apiServer.image.tag</code> and <code>frontend.image.tag</code> pinned by digest, though the chart derives both from its <code>appVersion</code></td>

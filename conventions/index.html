@@ -1523,14 +1523,14 @@ away, which covers less than you might expect:</p>
 fine. <code>sectionName</code> on the <code>parentRefs</code> entry picks the listener, and a
 listener pins one hostname pattern, so the wollbi sites name their own; the
 table is <a href="https://homelab.wlkr.ch/platform/gateway-api/#configuration">Gateway API → Configuration</a>.</p>
-<p>A route on <code>apps-gateway</code> also carries a <code>ResponseHeaderModifier</code> that sets
+<p>Every route, on either Gateway, also carries a <code>ResponseHeaderModifier</code> that sets
 <code>Strict-Transport-Security</code>, <code>X-Content-Type-Options: nosniff</code> and
 <code>X-Frame-Options: SAMEORIGIN</code>; copy it from
 <a href="https://github.com/JanWelker/homelab-apps/blob/main/flowscape/httproute.yaml"><code>flowscape/httproute.yaml</code></a>.
 It <code>set</code>s rather than <code>add</code>s, since the Authentik outpost already sends them and a
 duplicated frame header is invalid. HSTS names no
 <code>includeSubDomains</code> or <code>preload</code>, because other names under these domains are
-not served from here. A chart-rendered route takes it as <code>httpRoute.filters</code>.</p>
+not served from here. A chart route takes it as <code>httpRoute.filters</code>, or is replaced by a plain one.</p>
 <h2 id="behind-the-gateway">Behind the Gateway<a class="headerlink" href="#behind-the-gateway" title="Permanent link">&para;</a></h2>
 <p>Traffic arrives from Cilium's Envoy, not the client, and TLS ends at the
 Gateway. Set the application's trusted-proxies and overwrite-protocol
